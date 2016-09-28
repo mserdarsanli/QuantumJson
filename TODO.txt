@@ -1,0 +1,74 @@
+######################################################
+# Don't bother reading this file, it is not for you. #
+######################################################
+
+
+TODO Add Value union type and OpaqueValue type to prevent serialization costs
+TODO FIXME `jc` does not give error when --in-source is not found
+
+# Benchmark
+TODO Add benchmark images to README
+TODO Add FB API example
+TODO verify -O3 is being used
+TODO benchmark against https://github.com/netheril96/StaticJSON
+TODO benchmark against protobuf/thrift etc. (if they support similar thing)
+
+# Refactor
+TODO move lib/LibTests.cpp
+TODO improve thrown exceptions
+
+# Parser
+TODO Add support for comments
+
+
+## Extra
+## Attributes and defaults
+
+In real world, json attributes do not always have the same type.
+
+Consider the following json objects of the same type, where "desc" attribute might be `null`.
+
+```
+{
+  "id": "1",
+  "name": "qwewqeqw",
+  "desc": "QWEwqe"
+}
+{
+  "id": "2",
+  "name": "qewewq",
+  "desc": null
+}
+```
+
+Directly mapping this to a C++ struct would be
+
+```
+struct
+{
+    std::string id;
+    std::string name;
+    std::optional<std::string> desc;
+}
+```
+
+But in many cases following stuct with `desc` set to empty string when the json value is null is
+good enough.
+
+```
+struct
+{
+    std::string id;
+    std::string name;
+    std::string desc;
+}
+```
+
+Attributes can be used to control such behavior.
+
+Following is a list of the attributes:
+
+  * on_missing(action) action: "none" (default) | "throw"
+  * on_null(action) action: "throw" (default) | "skip"
+  * json_field_name(name)
+

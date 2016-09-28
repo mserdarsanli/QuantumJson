@@ -1,0 +1,244 @@
+# The MIT License (MIT)
+#
+# Copyright (c) 2016 Mustafa Serdar Sanli
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+# Data files
+filegroup(
+	name = "data",
+	srcs = [
+		"data/reddit_front.json",
+		"data/omdb_frozen.json",
+		"data/stackoverflow_users.json",
+	],
+)
+
+# Library to be loaded with LD_PRELOAD for memory benchmarks
+# which overrides malloc and reports memory usage.
+cc_library(
+	name = "memory_reporter",
+	srcs = [
+		"BenchmarkMemoryReporter.cpp",
+	],
+	linkopts = [
+		"-ldl",
+	],
+)
+
+BENCHMARK_MODES = [
+	{
+		"name": "Speed Benchmark",
+		"suffix": "benchmark_speed",
+		"copts": ["-DBENCHMARK_SPEED"],
+		"runtime_env": "",
+		"tools": [],
+		"repeat": 1000,
+		"ylabel": "Seconds",
+	},
+	{
+		"name": "Memory Benchmark",
+		"suffix": "benchmark_memory",
+		"copts": ["-DBENCHMARK_MEMORY"],
+		# load modified malloc to report memory usage
+		"runtime_env": "LD_PRELOAD=bazel-out/host/bin/benchmark/libmemory_reporter.so",
+		"tools": [
+			":memory_reporter",
+		],
+		"repeat": 1,
+		"ylabel": "Bytes",
+	},
+]
+
+BENCHMARK_SCENARIOS = [
+	{
+		"dir": "scenario1",
+		"name": "Scenario 1 (Reddit)",
+		"input": ":data/reddit_front.json",
+	},
+	{
+		"dir": "scenario2",
+		"name": "Scenario 2 (OMDB)",
+		"input": ":data/omdb_frozen.json",
+	},
+	{
+		"dir": "scenario3",
+		"name": "Scenario 3 (StackOverflow)",
+		"input": ":data/stackoverflow_users.json",
+	},
+]
+
+BENCHMARK_LIBRARIES = [
+	{
+		"id": "nlohmann_json",
+		"url": "https://github.com/nlohmann/json",
+		"bazel_deps": [
+			"//third_party:nlohmann_json",
+		],
+	},
+	{
+		"id": "mserdarsanli_json",
+		"url": "TODO",
+		"bazel_deps": [
+			":mserdarsanli_schemas",
+		],
+	},
+	{
+		"id": "jsoncpp",
+		"url": "https://github.com/open-source-parsers/jsoncpp",
+		"bazel_deps": [
+			"//third_party:jsoncpp",
+		],
+	},
+	{
+		"id": "rapidjson",
+		"url": "https://github.com/miloyip/rapidjson",
+		"bazel_deps": [
+			"//third_party:rapidjson",
+		],
+	},
+]
+
+# Rules specific to mserdarsanli_json
+# TODO use build rule for this
+[
+	genrule(
+		name = "mserdarsanli_schema_" + name,
+		srcs = [
+			"//src:jc",
+			"schema/" + name + ".json.hpp",
+		],
+		outs = [
+			"schema/" + name + ".gen.hpp",
+		],
+		cmd = """
+		      $(location //src:jc) \
+		          --in  $(location :schema/{name}.json.hpp) \
+		          --out "$(@D)/{name}.gen.hpp"
+		      """.format( name = name ),
+	)
+	for name in ["RedditListing", "OMDB", "StackOverflow"]
+]
+
+cc_library(
+	name = "mserdarsanli_schemas",
+	srcs = [
+		"schema/" + name + ".gen.hpp"
+		for name in ["RedditListing", "OMDB", "StackOverflow"]
+	],
+)
+
+[
+	[
+		# Binary to run for the benchmark
+		cc_binary(
+			name = "bin_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"],
+			srcs = [
+				sc["dir"] + "/impl_" + lib["id"] + ".cpp",
+				"Benchmark.hpp",
+				"Executor.cpp",
+			],
+			copts = mode["copts"],
+			deps = lib["bazel_deps"],
+		),
+
+		# Rule to run and save the benchmark
+		genrule(
+			name = "run_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"],
+			tools = mode["tools"] + [
+				":bin_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"],
+			],
+			srcs = [
+				sc["input"],
+			],
+			outs = [
+				"result" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"] + ".txt",
+			],
+			cmd = """ echo -n "data[\\\"{mode}\\\"][\\\"{lib}\\\"][\\\"{scenario}\\\"] = " > {output} && \
+			        {ENV} {bin} {repeat} < {input} >> {output}
+			        """.format(
+			    ENV = mode["runtime_env"],
+			    lib = lib["id"],
+			    mode = mode["name"],
+			    scenario = sc["name"],
+			    bin = "$(location :bin_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"] + ")",
+			    repeat = str(mode["repeat"]),
+			    input = "$(location " + sc["input"] +")",
+			    output = "$(OUTS)",
+			),
+		),
+	]
+	for sc in BENCHMARK_SCENARIOS
+	for lib in BENCHMARK_LIBRARIES
+	for mode in BENCHMARK_MODES
+]
+
+BENCHMARK_DATA_POINTS = [
+	"result" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"] + ".txt"
+	for sc in BENCHMARK_SCENARIOS
+	for lib in BENCHMARK_LIBRARIES
+	for mode in BENCHMARK_MODES
+]
+
+BENCHMARK_DATA_LINES = ''.join([
+	"SCENARIO_COUNT = " + str(len(BENCHMARK_SCENARIOS)) + "\n",
+	"data = dict()\n",
+	"ylabel = dict()\n",
+] + [
+	"data['" + mode["name"] + "'] = dict()\n"
+	for mode in BENCHMARK_MODES
+] + [
+	"ylabel['" + mode["name"] + "'] = '" + mode["ylabel"] + "'\n"
+	for mode in BENCHMARK_MODES
+] + [
+	"data['" + mode["name"] + "']['" + lib["id"] + "'] = dict()\n"
+	for lib in BENCHMARK_LIBRARIES
+	for mode in BENCHMARK_MODES
+])
+
+genrule(
+	name = "collect_benchmark_data",
+	srcs = BENCHMARK_DATA_POINTS,
+	outs = [
+		"benchmark_data.py",
+	],
+	cmd = "echo -n \"" + BENCHMARK_DATA_LINES + "\" > $(OUTS) && cat $(SRCS) >> $(OUTS)",
+)
+
+[
+	genrule(
+		name = "plot" + mode["suffix"],
+		srcs = [
+			"benchmark_data.py",
+			"plot.py",
+		],
+		outs = [
+			mode["suffix"] + ".svg",
+		],
+		cmd = """/usr/bin/env python2 $(location plot.py) \
+		             --benchmark_data_file "{datafile}" \
+		             --plot_benchmark "{plot}" \
+		             --out "$(OUTS)" """.format(
+		    datafile = "$(location benchmark_data.py)",
+		    plot = mode["name"]
+		),
+	)
+	for mode in BENCHMARK_MODES
+]
