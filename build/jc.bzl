@@ -33,7 +33,7 @@ def cc_json_schema_lib( name, srcs ):
 			cmd = """
 			      $(location //src:jc) \
 			          --in  $(location """ + src + """) \
-			          --out "$(@D)/""" + src.replace('.json.hpp', '.gen.hpp') +  """"
+			          --out "$(@D)/""" + src.split('/')[-1].replace('.json.hpp', '.gen.hpp') +  """"
 			      """,
 		)
 		for src in srcs

@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+load("/build/jc", "cc_json_schema_lib")
 
 # Data files
 filegroup(
@@ -116,32 +117,12 @@ BENCHMARK_LIBRARIES = [
 	},
 ]
 
-# Rules specific to mserdarsanli_json
-# TODO use build rule for this
-[
-	genrule(
-		name = "mserdarsanli_schema_" + name,
-		srcs = [
-			"//src:jc",
-			"schema/" + name + ".json.hpp",
-		],
-		outs = [
-			"schema/" + name + ".gen.hpp",
-		],
-		cmd = """
-		      $(location //src:jc) \
-		          --in  $(location :schema/{name}.json.hpp) \
-		          --out "$(@D)/{name}.gen.hpp"
-		      """.format( name = name ),
-	)
-	for name in ["RedditListing", "OMDB", "StackOverflow"]
-]
-
-cc_library(
+cc_json_schema_lib(
 	name = "mserdarsanli_schemas",
 	srcs = [
-		"schema/" + name + ".gen.hpp"
-		for name in ["RedditListing", "OMDB", "StackOverflow"]
+		"schema/RedditListing.json.hpp",
+		"schema/OMDB.json.hpp",
+		"schema/StackOverflow.json.hpp",
 	],
 )
 
