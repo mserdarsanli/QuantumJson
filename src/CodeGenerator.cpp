@@ -79,17 +79,19 @@ char MergeFromJsonDeclarations[] = R"(
 		MergeFromJson(json.begin(), json.end());
 	}
 
-	void MergeFromJson(std::string::const_iterator it, std::string::const_iterator end);
+	template <typename InputIteratorType>
+	void MergeFromJson(InputIteratorType it, InputIteratorType end);
 )";
 
 // For aligning bind struct name to %1%, and bind spaces of the same length to %2%
 format MergeFromJsonDefImpl(R"(
+template <typename InputIteratorType>
 inline
-void %1%::MergeFromJson(std::string::const_iterator it,
-     %2%                std::string::const_iterator end)
+void %1%::MergeFromJson(InputIteratorType it,
+     %2%                InputIteratorType end)
 {
-	using namespace std::placeholders;
-	QuantumJsonImpl__::ParseObject(it, end, *this);
+	QuantumJsonImpl__::Parser<InputIteratorType> parser(it, end);
+	parser.ParseObject(*this);
 }
 )");
 
@@ -105,17 +107,16 @@ char ParserExtensionMethodDeclarations[] = R"(
 	// {"a": "sadsadsa", "b": 123}
 	//  <------------->  <------>
 	// marked regions would map to ParseNextField calls.
-	std::string::const_iterator ParseNextField(std::string::const_iterator it,
-	                                           std::string::const_iterator end);
+	template <typename InputIteratorType>
+	void ParseNextField(QuantumJsonImpl__::Parser<InputIteratorType> &parser);
 
 )";
 
 format ParseNextFieldBegin(R"(
+template <typename InputIteratorType>
 inline
-std::string::const_iterator %1%::ParseNextField(std::string::const_iterator it,
-                            %2%                 std::string::const_iterator end)
+void %1%::ParseNextField(QuantumJsonImpl__::Parser<InputIteratorType> &parser)
 {
-	using namespace QuantumJsonImpl__; // TODO remove
 )");
 
 format ParseNextFieldEnd(R"(
@@ -134,6 +135,9 @@ char IncludeStandardHeaders[] = R"(
 )";
 
 char ParserCommonStuff[] = R"(
+	auto &it = parser.it;
+	auto &end = parser.end;
+
 	goto _Start; // _Start is the entry point for perser
 
 	_UnknownField:
@@ -148,35 +152,35 @@ char ParserCommonStuff[] = R"(
 	// Closing quote
 	++it;
 
-	it = SkipWhitespace(it, end);
-	it = SkipChar(it, end, ':'); // Field Separator
-	it = SkipWhitespace(it, end);
+	parser.SkipWhitespace();
+	parser.SkipChar(':'); // Field Separator
+	parser.SkipWhitespace();
 
-	it = SkipValue(it, end);
+	parser.SkipValue();
 
-	return it; // Fone parsing this field
+	return; // Done parsing this field
 )";
 
 format FieldNameParsed(R"(
 	// Matched field [%1%]
-	it = SkipWhitespace(it, end);
-	it = SkipChar(it, end, ':'); // Field Separator
-	it = SkipWhitespace(it, end);
+	parser.SkipWhitespace();
+	parser.SkipChar(':'); // Field Separator
+	parser.SkipWhitespace();
 
 %2%
 	// Parse the actual value
-	it = ParseValueInto(it, end, this->%1%);
-	return it;
+	parser.ParseValueInto(this->%1%);
+	return;
 )");
 
 char SkipNullValue[] = R"(
 	// Field skip null values for this field.
 	{
 		bool skipped = false;
-		it = MaybeSkipNull(it, end, &skipped);
+		parser.MaybeSkipNull(&skipped);
 		if (skipped)
 		{
-			return it;
+			return;
 		}
 	}
 )";
@@ -192,7 +196,6 @@ struct Labels
 };
 
 void GenerateParserForStructDef(ostream &out, const StructDef &s);
-void GenerateParseValueIntoSpecialization(ostream &out, const StructDef &s);
 
 void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 {
@@ -224,7 +227,6 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 	// Function definitions
 	for (const StructDef &s : file.structs)
 	{
-		GenerateParseValueIntoSpecialization(out, s);
 		GenerateParserForStructDef(out, s);
 
 		out << MergeFromJsonDefImpl % s.name % string(s.name.size(), ' ');
@@ -353,24 +355,9 @@ void GenerateMatchers(ostream &out,
 	}
 }
 
-void GenerateParseValueIntoSpecialization(ostream &out, const StructDef &s)
-{
-	out << R"(
-// TODO shitty format here
-// Specialization for struct type
-inline
-std::string::const_iterator ParseValueInto(std::string::const_iterator it,
-                                           std::string::const_iterator end,
-                                           )" << s.name <<  R"( &obj)
-{
-	return QuantumJsonImpl__::ParseObject(it, end, obj);
-}
-)";
-}
-
 void GenerateParserForStructDef(ostream &out, const StructDef &s)
 {
-	out << ParseNextFieldBegin % s.name % string(s.name.size(), ' ');
+	out << ParseNextFieldBegin % s.name;
 
 	vector<Variable> vars;
 	for (const VariableDef &var : s.variables)

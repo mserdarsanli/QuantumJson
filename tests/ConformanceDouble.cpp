@@ -43,12 +43,13 @@ using namespace std;
 	{ \
 		vector< double > v; \
 		string jsonStr( json ); \
-		QuantumJsonImpl__::ParseValueInto(jsonStr.begin(), jsonStr.end(), v); \
+		QuantumJsonImpl__::Parser< std::string::const_iterator> p(jsonStr.begin(), jsonStr.end()); \
+		p.ParseValueInto(v); \
 		REQUIRE( v.size() == 1 ); \
 		\
 		double actualResult = v[0]; \
 		double expectedResult = expect; \
-		REQUIRE( *reinterpret_cast<int64_t*>(&actualResult) == *reinterpret_cast<int64_t*>(&expectedResult) ); \
+		REQUIRE( 0 == memcmp((void*)&actualResult, (void*)&expectedResult, sizeof(double)) ); \
 	}
 
 #include "ConformanceDoubleData.hpp"

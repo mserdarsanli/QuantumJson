@@ -43,7 +43,8 @@ using namespace std;
 	{ \
 		vector< string > v; \
 		string jsonStr( json ); \
-		QuantumJsonImpl__::ParseValueInto(jsonStr.begin(), jsonStr.end(), v); \
+		QuantumJsonImpl__::Parser< std::string::const_iterator> p(jsonStr.begin(), jsonStr.end()); \
+		p.ParseValueInto(v); \
 		REQUIRE( v.size() == 1 ); \
 		\
 		string actualResult = v[0]; \
