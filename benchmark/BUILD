@@ -123,6 +123,13 @@ BENCHMARK_LIBRARIES = [
 			"//third_party:rapidjson",
 		],
 	},
+	{
+		"id": "staticjson",
+		"url": "https://github.com/netheril96/StaticJSON",
+		"bazel_deps": [
+			"//third_party:staticjson",
+		],
+	},
 ]
 
 cc_json_schema_lib(
