@@ -20,16 +20,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <staticjson/document.hpp>
-#include <staticjson/staticjson.hpp>
+#include "document.hpp"
+#include "staticjson.hpp"
 
-#include <rapidjson/error/en.h>
-#include <rapidjson/error/error.h>
-#include <rapidjson/filereadstream.h>
-#include <rapidjson/filewritestream.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/reader.h>
-#include <rapidjson/writer.h>
+#include "third_party/rapidjson_1_1_0/rapidjson/document.h"
+#include "third_party/rapidjson_1_1_0/rapidjson/error/en.h"
+#include "third_party/rapidjson_1_1_0/rapidjson/error/error.h"
+#include "third_party/rapidjson_1_1_0/rapidjson/filereadstream.h"
+#include "third_party/rapidjson_1_1_0/rapidjson/filewritestream.h"
+#include "third_party/rapidjson_1_1_0/rapidjson/prettywriter.h"
+#include "third_party/rapidjson_1_1_0/rapidjson/reader.h"
+#include "third_party/rapidjson_1_1_0/rapidjson/writer.h"
 
 #include <cstdio>
 #include <exception>

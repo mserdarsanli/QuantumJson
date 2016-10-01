@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 #pragma once
-#include <staticjson/basic.hpp>
+#include "basic.hpp"
 
 #include <limits>
 #include <string>

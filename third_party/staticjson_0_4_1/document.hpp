@@ -21,9 +21,9 @@
 // SOFTWARE.
 
 #pragma once
-#include <staticjson/basic.hpp>
+#include "basic.hpp"
 
-#include <rapidjson/document.h>
+#include "third_party/rapidjson_1_1_0/rapidjson/document.h"
 
 #include <vector>
 

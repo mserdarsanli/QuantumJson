@@ -21,9 +21,9 @@
 // SOFTWARE.
 
 #pragma once
-#include <staticjson/basic.hpp>
-#include <staticjson/document.hpp>
-#include <staticjson/document.hpp>
-#include <staticjson/io.hpp>
-#include <staticjson/primitive_types.hpp>
-#include <staticjson/stl_types.hpp>
+#include "basic.hpp"
+#include "document.hpp"
+#include "document.hpp"
+#include "io.hpp"
+#include "primitive_types.hpp"
+#include "stl_types.hpp"

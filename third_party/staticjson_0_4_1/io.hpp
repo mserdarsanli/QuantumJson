@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include <staticjson/basic.hpp>
+#include "basic.hpp"
 
 #include <cstdio>
 #include <string>

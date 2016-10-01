@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include <rapidjson/document.h>
-#include <staticjson/error.hpp>
+#include "third_party/rapidjson_1_1_0/rapidjson/document.h"
+#include "error.hpp"
 
 #include <cstddef>
 #include <cstdint>
