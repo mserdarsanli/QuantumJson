@@ -95,10 +95,10 @@ BENCHMARK_LIBRARIES = [
 		],
 	},
 	{
-		"id": "mserdarsanli_json",
-		"url": "TODO",
+		"id": "quantumjson",
+		"url": "https://github.com/mserdarsanli/QuantumJson",
 		"bazel_deps": [
-			":mserdarsanli_schemas",
+			":quantumjson_schemas",
 		],
 	},
 	{
@@ -133,7 +133,7 @@ BENCHMARK_LIBRARIES = [
 ]
 
 cc_json_schema_lib(
-	name = "mserdarsanli_schemas",
+	name = "quantumjson_schemas",
 	srcs = [
 		"schema/RedditListing.json.hpp",
 		"schema/OMDB.json.hpp",
