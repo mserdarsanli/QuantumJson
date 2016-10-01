@@ -40,6 +40,7 @@ def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--benchmark_data_file", required=True)
 	parser.add_argument("--benchmark_mode", required=True)
+	parser.add_argument("--benchmark_scenario", required=True)
 	parser.add_argument("--out", required=True)
 	args = parser.parse_args()
 
@@ -47,36 +48,31 @@ def main():
 	benchmark_data = {}
 	execfile( args.benchmark_data_file, benchmark_data )
 
-	data = benchmark_data['data'][ args.benchmark_mode ]
+	data = benchmark_data['data'][ args.benchmark_mode ][ args.benchmark_scenario ]
 
-	ind = np.arange(benchmark_data['SCENARIO_COUNT'])  # the x locations for the groups
-	width = 0.8 / len(data)
+	width = 1
 
 	fig, ax = plt.subplots()
 
 	librects = dict()
 	i = 0
-	xticklabels = None
-	for lib, benchmark in data.iteritems():
-		bm_data = OrderedDict(sorted(benchmark.iteritems()))
 
-		if xticklabels == None:
-			xticklabels = bm_data.keys()
-		else:
-			# Make sure that we plot the bars in correct order
-			assert( xticklabels == bm_data.keys() )
+	libs = data.keys()
 
-		rects = ax.bar(ind + i * width, bm_data.values(), width, color=cycol())
 
-		i = i+1
+	for i, lib in enumerate( libs ):
+		value = data[ lib ]
+
+		rects = ax.bar( left = i * width, height = value, width = width, color=cycol())
+
 		librects[lib] = rects
 
 	# add some text for labels, title and axes ticks
 	ax.set_ylabel( benchmark_data['ylabel'][ args.benchmark_mode ] )
 	ax.set_title(args.benchmark_mode)
 
-	ax.set_xticks(ind + 0.4 ) # half of width constant
-	ax.set_xticklabels(xticklabels)
+	ax.set_xticks( [ width * (i) + 0.5 for i in range(len(libs)) ] )
+	ax.set_xticklabels( libs )
 
 	max_height = max( [ rect.get_height() for rects in librects.values() for rect in rects ] )
 	ax.set_ylim([0, max_height * 1.6])

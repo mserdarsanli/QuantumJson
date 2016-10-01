@@ -167,7 +167,7 @@ cc_json_schema_lib(
 			outs = [
 				"result" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"] + ".txt",
 			],
-			cmd = """ echo -n "data[\\\"{mode}\\\"][\\\"{lib}\\\"][\\\"{scenario}\\\"] = " > {output} && \
+			cmd = """ echo -n "data[\\\"{mode}\\\"][\\\"{scenario}\\\"][\\\"{lib}\\\"] = " > {output} && \
 			        {ENV} {bin} {repeat} < {input} >> {output}
 			        """.format(
 			    ENV = mode["runtime_env"],
@@ -204,8 +204,8 @@ BENCHMARK_DATA_LINES = ''.join([
 	"ylabel['" + mode["name"] + "'] = '" + mode["ylabel"] + "'\n"
 	for mode in BENCHMARK_MODES
 ] + [
-	"data['" + mode["name"] + "']['" + lib["id"] + "'] = dict()\n"
-	for lib in BENCHMARK_LIBRARIES
+	"data['" + mode["name"] + "']['" + sc["name"] + "'] = dict()\n"
+	for sc in BENCHMARK_SCENARIOS
 	for mode in BENCHMARK_MODES
 ])
 
@@ -220,21 +220,24 @@ genrule(
 
 [
 	genrule(
-		name = "plot" + mode["suffix"],
+		name = "plot" + "_" + mode["suffix"] + "_" + sc["dir"],
 		srcs = [
 			"benchmark_data.py",
 			"plot.py",
 		],
 		outs = [
-			mode["suffix"] + ".svg",
+			mode["suffix"] + "_" + sc["dir"] + ".svg",
 		],
 		cmd = """/usr/bin/env python2 $(location plot.py) \
 		             --benchmark_data_file "{datafile}" \
 		             --benchmark_mode "{benchmark_mode}" \
+		             --benchmark_scenario "{benchmark_scenario}" \
 		             --out "$(OUTS)" """.format(
 		    datafile = "$(location benchmark_data.py)",
-		    benchmark_mode = mode["name"]
+		    benchmark_mode = mode["name"],
+		    benchmark_scenario = sc["name"],
 		),
 	)
 	for mode in BENCHMARK_MODES
+	for sc in BENCHMARK_SCENARIOS
 ]
