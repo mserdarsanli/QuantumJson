@@ -39,7 +39,7 @@ cycol = cycle('bgrcmk').next
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--benchmark_data_file", required=True)
-	parser.add_argument("--plot_benchmark", required=True)
+	parser.add_argument("--benchmark_mode", required=True)
 	parser.add_argument("--out", required=True)
 	args = parser.parse_args()
 
@@ -47,7 +47,7 @@ def main():
 	benchmark_data = {}
 	execfile( args.benchmark_data_file, benchmark_data )
 
-	data = benchmark_data['data'][ args.plot_benchmark ]
+	data = benchmark_data['data'][ args.benchmark_mode ]
 
 	ind = np.arange(benchmark_data['SCENARIO_COUNT'])  # the x locations for the groups
 	width = 0.8 / len(data)
@@ -72,8 +72,8 @@ def main():
 		librects[lib] = rects
 
 	# add some text for labels, title and axes ticks
-	ax.set_ylabel( benchmark_data['ylabel'][ args.plot_benchmark ] )
-	ax.set_title(args.plot_benchmark)
+	ax.set_ylabel( benchmark_data['ylabel'][ args.benchmark_mode ] )
+	ax.set_title(args.benchmark_mode)
 
 	ax.set_xticks(ind + 0.4 ) # half of width constant
 	ax.set_xticklabels(xticklabels)

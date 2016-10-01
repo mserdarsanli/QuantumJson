@@ -230,10 +230,10 @@ genrule(
 		],
 		cmd = """/usr/bin/env python2 $(location plot.py) \
 		             --benchmark_data_file "{datafile}" \
-		             --plot_benchmark "{plot}" \
+		             --benchmark_mode "{benchmark_mode}" \
 		             --out "$(OUTS)" """.format(
 		    datafile = "$(location benchmark_data.py)",
-		    plot = mode["name"]
+		    benchmark_mode = mode["name"]
 		),
 	)
 	for mode in BENCHMARK_MODES
