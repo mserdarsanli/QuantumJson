@@ -10,7 +10,6 @@ TODO FIXME `jc` does not give error when --in-source is not found
 TODO Add benchmark images to README
 TODO Add FB API example
 TODO verify -O3 is being used
-TODO benchmark against https://github.com/netheril96/StaticJSON
 TODO benchmark against protobuf/thrift etc. (if they support similar thing)
 
 # Refactor

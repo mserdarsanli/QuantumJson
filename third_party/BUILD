@@ -89,3 +89,21 @@ cc_library(
 		"rapidjson_1_1_0/rapidjson/memorystream.h",
 	],
 )
+
+cc_library(
+	name = "staticjson",
+	srcs = [
+		"staticjson_0_4_1/basic.hpp",
+		"staticjson_0_4_1/document.hpp",
+		"staticjson_0_4_1/error.hpp",
+		"staticjson_0_4_1/forward_declarations.hpp",
+		"staticjson_0_4_1/io.hpp",
+		"staticjson_0_4_1/primitive_types.hpp",
+		"staticjson_0_4_1/staticjson.cpp",
+		"staticjson_0_4_1/staticjson.hpp",
+		"staticjson_0_4_1/stl_types.hpp",
+	],
+	deps = [
+		"//third_party:rapidjson",
+	],
+)
