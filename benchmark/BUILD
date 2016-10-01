@@ -115,6 +115,14 @@ BENCHMARK_LIBRARIES = [
 			"//third_party:rapidjson",
 		],
 	},
+	{
+		# TODO benchmark against a known version
+		"id": "boost_pt",
+		"url": "http://www.boost.org/doc/libs/release/libs/property_tree/",
+		"bazel_deps": [
+			"//third_party:rapidjson",
+		],
+	},
 ]
 
 cc_json_schema_lib(
