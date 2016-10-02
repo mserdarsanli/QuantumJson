@@ -121,7 +121,6 @@ void %1%::ParseNextField(QuantumJsonImpl__::Parser<InputIteratorType> &parser)
 
 format ParseNextFieldEnd(R"(
 	// Should be unreachable
-	throw "wqewewqewq"; // TODO find better type
 }
 )");
 
@@ -147,7 +146,10 @@ char ParserCommonStuff[] = R"(
 	while (it != end && *it != '"')
 		++it;
 	if (it == end)
-		throw std::runtime_error("Unexpected EOF");
+	{
+		parser.errorCode = QuantumJsonImpl__::ErrorCode::UnexpectedEOF;
+		return;
+	}
 
 	// Closing quote
 	++it;

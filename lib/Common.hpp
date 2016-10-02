@@ -33,10 +33,38 @@
 #include <errno.h>
 #include <unistd.h>
 
+// Exceptions seem to have a large (a few percent) performance cost by
+// preventing inlining (though I am not really sure about why).
+// So this simple alternative is used.
+#define QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE \
+	if (errorCode != ErrorCode::NoError) \
+	{ \
+		return; \
+	}
+
+#define QUANTUMJSON_CHECK_EOF_AND_PROPAGATE \
+	if (it == end) \
+	{ \
+		errorCode = ErrorCode::UnexpectedEOF; \
+		return; \
+	}
+
 // TODO add library version checks?
 
 // TODO find a better namespace name
 namespace QuantumJsonImpl__ {
+
+enum class ErrorCode
+{
+	NoError,
+
+	UnexpectedEOF,
+	UnexpectedChar,
+	UnexpectedToken,
+	InvalidEscape,
+	InvalidUtf8Sequence,
+	UnsupportedUnicodeRange,
+};
 
 template <typename InputIteratorType>
 struct Parser
@@ -45,7 +73,6 @@ struct Parser
 	  : it(begin), end(end)
 	{
 	}
-
 
 	void SkipWhitespace()
 	{
@@ -65,10 +92,7 @@ struct Parser
 
 	void SkipHexDigit()
 	{
-		if (it == end)
-		{
-			throw std::runtime_error("Unexpected EOF");
-		}
+		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
 		if ((*it >= '0' && *it <= '9') || (*it >= 'a' && *it <= 'f') || (*it >= 'A' && *it <= 'F'))
 		{
@@ -76,12 +100,12 @@ struct Parser
 			return;
 		}
 
-		throw std::runtime_error(std::string("Unexpected hex char [") + *it + "]");
+		errorCode = ErrorCode::UnexpectedChar;
 	}
 
 	void SkipString()
 	{
-		SkipChar('"');
+		SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 		while (it != end)
 		{
@@ -95,8 +119,7 @@ struct Parser
 			{
 				++it;
 
-				if (it == end)
-					throw std::runtime_error("Unexpected EOF");
+				QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
 				// TODO check escape character
 				if (*it == '"' || *it == '\\' || *it == '/' || *it == 'b' || *it == 'f'
@@ -109,20 +132,21 @@ struct Parser
 				if (*it == 'u')
 				{
 					++it;
-					SkipHexDigit();
-					SkipHexDigit();
-					SkipHexDigit();
-					SkipHexDigit();
+					SkipHexDigit(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+					SkipHexDigit(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+					SkipHexDigit(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+					SkipHexDigit(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 					continue;
 				}
 
-				throw std::runtime_error("Invalid escape");
+				errorCode = ErrorCode::InvalidEscape;
+				return;
 			}
 
 			++it;
 		}
 
-		throw std::runtime_error("Unexpected EOF");
+		errorCode = ErrorCode::UnexpectedEOF;
 	}
 
 	void SkipNumber()
@@ -134,92 +158,79 @@ struct Parser
 
 	void SkipNull()
 	{
-		if (it == end || *it != 'n') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
-		if (it == end || *it != 'u') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
-		if (it == end || *it != 'l') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
-		if (it == end || *it != 'l') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
+		SkipChar('n'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipChar('u'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipChar('l'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipChar('l'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	void SkipTrue()
 	{
-		if (it == end || *it != 't') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
-		if (it == end || *it != 'r') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
-		if (it == end || *it != 'u') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
-		if (it == end || *it != 'e') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
+		SkipChar('t'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipChar('r'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipChar('u'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipChar('e'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	void SkipFalse()
 	{
-		if (it == end || *it != 'f') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
-		if (it == end || *it != 'a') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
-		if (it == end || *it != 'l') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
-		if (it == end || *it != 's') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
-		if (it == end || *it != 'e') throw std::runtime_error("Unexpected token while parsing null");
-		++it;
+		SkipChar('f'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipChar('a'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipChar('l'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipChar('s'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipChar('e'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	void SkipObject()
 	{
-		SkipChar('{');
+		SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		SkipWhitespace();
 
 		if (it != end && *it != '}')
 		{
-			SkipString();
+			SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
-			SkipChar(':');
+			SkipChar(':'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
-			SkipValue();
+			SkipValue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
 		}
 
 		while (it != end && *it != '}')
 		{
-			SkipChar(',');
+			SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
-			SkipString();
+			SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
-			SkipChar(':');
+			SkipChar(':'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
-			SkipValue();
+			SkipValue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
 		}
 
-		SkipChar('}');
+		SkipChar('}'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	void SkipList()
 	{
-		SkipChar('[');
+		SkipChar('['); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		SkipWhitespace();
 
 		if (it != end && *it != ']')
 		{
-			SkipValue();
+			SkipValue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
 		}
 
 		while (it != end && *it != ']')
 		{
-			SkipChar(',');
+			SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
-			SkipValue();
+			SkipValue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
 		}
 
-		SkipChar(']');
+		SkipChar(']'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	// TODO prevent recursion by putting a depth limit?
@@ -228,7 +239,8 @@ struct Parser
 		switch (*it)
 		{
 			case '"':
-				return SkipString();
+				SkipString();
+				return;
 			case '-':
 			case '0':
 			case '1':
@@ -240,38 +252,39 @@ struct Parser
 			case '7':
 			case '8':
 			case '9':
-				return SkipNumber();
+				SkipNumber();
+				return;
 			case 'f':
-				return SkipFalse();
+				SkipFalse();
+				return;
 			case 'n':
-				return SkipNull();
+				SkipNull();
+				return;
 			case 't':
-				return SkipTrue();
+				SkipTrue();
+				return;
 			case '{':
-				return SkipObject();
+				SkipObject();
+				return;
 			case '[':
-				return SkipList();
+				SkipList();
+				return;
 
 			// TODO implement others
 			default:
-				throw std::runtime_error( __FILE__ ":" + std::to_string(__LINE__) +
-				   " Unexpected token: " + std::string(it, (end < it+20 ? end : it+20)));
+				errorCode = ErrorCode::UnexpectedToken;
+				return;
 		}
 	}
 
 	void SkipChar(char c)
 	{
-		if (it == end)
-		{
-			throw std::runtime_error("Unexpected EOF");
-		}
+		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
 		if (*it != c)
 		{
-			std::string errMsg = std::string("Unexpected char [") + *it + "] expected ["
-			                   + c + "]";
-			errMsg += "\nRemaining:\n" + std::string();
-			throw std::runtime_error(errMsg);
+			errorCode = ErrorCode::UnexpectedChar;
+			return;
 		}
 
 		++it;
@@ -281,16 +294,11 @@ struct Parser
 	{
 		*skipped = false;
 
-		if (it != end && *it == 'n')
+		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+		if (*it == 'n')
 		{
-			++it;
-			if (it == end || *it != 'u') throw "Unexpected";
-			++it;
-			if (it == end || *it != 'l') throw "Unexpected";
-			++it;
-			if (it == end || *it != 'l') throw "Unexpected";
-			++it;
-
+			SkipNull(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			*skipped = true;
 		}
 	}
@@ -301,7 +309,8 @@ struct Parser
 		if (c >= '0' && c <= '9') return c - '0';
 		if (c >= 'a' && c <= 'f') return c - 'a' + 10;
 		if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-		throw std::runtime_error("Not a hexadecimal character");
+		errorCode = ErrorCode::UnexpectedChar;
+		return -1;
 	}
 
 	inline
@@ -336,50 +345,34 @@ struct Parser
 		else
 		{
 			// TODO this check should be moved to surrogate pair parsing place
-			throw std::runtime_error("Unsupported unicode range");
+			errorCode = ErrorCode::UnsupportedUnicodeRange;
+			return;
 		}
 	}
 
 	void ParseValueInto(bool &obj)
 	{
-		if (it == end)
-			goto fail;
+		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
 		if (*it == 't')
 		{
-			++it;
-			if (it == end || *it != 'r') goto fail;
-			++it;
-			if (it == end || *it != 'u') goto fail;
-			++it;
-			if (it == end || *it != 'e') goto fail;
-			++it;
+			SkipTrue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			obj = true;
 			return;
 		}
 		else if (*it == 'f')
 		{
-			++it;
-			if (it == end || *it != 'a') goto fail;
-			++it;
-			if (it == end || *it != 'l') goto fail;
-			++it;
-			if (it == end || *it != 's') goto fail;
-			++it;
-			if (it == end || *it != 'e') goto fail;
-			++it;
+			SkipFalse(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			obj = false;
 			return;
 		}
 
-		fail:
-		throw std::runtime_error("boolp " + std::to_string(__LINE__) + " : "
-		    "Unexpected token: " + std::string(it, (end < it+20 ? end : it+20)));
+		errorCode = ErrorCode::UnexpectedToken;
 	}
 
 	void ParseValueInto(std::string &obj)
 	{
-		SkipChar('"');
+		SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 		// Parse string characters
 		while (it != end && *it != '"')
@@ -388,10 +381,7 @@ struct Parser
 			{
 				++it;
 
-				if (it == end)
-				{
-					throw std::runtime_error("Unexpected EOF");
-				}
+				QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
 				switch (*(it++))
 				{
@@ -408,6 +398,7 @@ struct Parser
 						int cp = 0;
 						// Code-point consists of 4 hexadecimal numbers
 
+						// TODO EOF checks neede here
 						cp |= fromHex(*(it++)) << 12;
 						cp |= fromHex(*(it++)) << 8;
 						cp |= fromHex(*(it++)) << 4;
@@ -416,8 +407,8 @@ struct Parser
 						// Check if value is UTF-16 surrogate pair
 						if (cp >= 0xD800 && cp <= 0xDFFF)
 						{
-							SkipChar('\\');
-							SkipChar('u');
+							SkipChar('\\'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+							SkipChar('u'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 							int cp2 = 0;
 							// TODO eof check
@@ -437,15 +428,19 @@ struct Parser
 						break;
 					}
 
-					// TODO this outputs after it is increased, so error is not visible
-					default: throw std::runtime_error("Unknown escape: " + std::string());
+					default:
+						errorCode = ErrorCode::InvalidEscape;
+						return;
 				}
 			}
 			else if ((*it & 0b11000000) == 0b11000000)
 			{
 	#define SKIP_CONTINUATION_BYTE \
 		if (it == end || ((*it & 0b11000000) != 0b10000000)) \
-			throw std::runtime_error("Unexpected continuation character"); \
+		{ \
+			errorCode = ErrorCode::InvalidUtf8Sequence; \
+			return; \
+		} \
 		obj.push_back(*it); \
 		++it;
 				// Unicode start byte
@@ -499,7 +494,8 @@ struct Parser
 			else if ((*it & 0b11000000) == 0b10000000)
 			{
 				// Unexpected continuation character
-				throw std::runtime_error("Unexpected continuation character");
+				errorCode = ErrorCode::InvalidUtf8Sequence;
+				return;
 			}
 			else
 			{
@@ -508,7 +504,7 @@ struct Parser
 			}
 		}
 
-		SkipChar('"');
+		SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	// TODO FIXME it == end checks are not done here
@@ -516,8 +512,8 @@ struct Parser
 	{
 		if (*it != '-' && (*it < '0' || *it > '9'))
 		{
-			throw std::runtime_error("doublep " + std::to_string(__LINE__) + " : "
-			                                + std::string(it, (end < it + 20 ? end : it+20)));
+			errorCode = ErrorCode::UnexpectedToken;
+			return;
 		}
 
 		InputIteratorType begin = it;
@@ -541,8 +537,8 @@ struct Parser
 		}
 		else
 		{
-			throw std::runtime_error("doublep " + std::to_string(__LINE__) + " : "
-			                                + std::string(it, (end < it + 20 ? end : it+20)));
+			errorCode = ErrorCode::UnexpectedToken;
+			return;
 		}
 
 		skip_decimal_fractions:
@@ -553,8 +549,8 @@ struct Parser
 			if (*it < '0' || *it > '9')
 			{
 				// There must be a number after separator
-				throw std::runtime_error("doublep " + std::to_string(__LINE__) + " : "
-				                                + std::string(it, (end < it + 20 ? end : it+20)));
+				errorCode = ErrorCode::UnexpectedToken;
+				return;
 			}
 			++it;
 
@@ -603,8 +599,10 @@ struct Parser
 
 
 		if (num.size() == 0)
-			throw std::runtime_error("intp " + std::to_string(__LINE__) + " : "
-			                                + std::string(it, (end < it + 20 ? end : it+20)));
+		{
+			errorCode = ErrorCode::UnexpectedToken;
+			return;
+		}
 
 		obj = stoi(num);
 	}
@@ -613,7 +611,7 @@ struct Parser
 	void ParseValueInto(std::vector<ArrayElemType> &obj)
 	{
 		obj.clear();
-		SkipChar('[');
+		SkipChar('['); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		SkipWhitespace();
 
 		while (it != end)
@@ -626,7 +624,7 @@ struct Parser
 
 			if (obj.size() > 0)
 			{
-				SkipChar(',');
+				SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 				SkipWhitespace();
 			}
 
@@ -637,7 +635,7 @@ struct Parser
 			SkipWhitespace();
 		}
 
-		throw std::runtime_error("Whoa dudeee: " + std::string(it , (end < it+20 ? end : it+20)));
+		errorCode = ErrorCode::UnexpectedEOF;
 	}
 
 
@@ -646,7 +644,7 @@ struct Parser
 	{
 		SkipWhitespace();
 
-		SkipChar('{');
+		SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		SkipWhitespace();
 
 		if (it != end && *it != '}')
@@ -657,14 +655,14 @@ struct Parser
 
 		while (it != end && *it != '}')
 		{
-			SkipChar(',');
+			SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
 
 			obj.ParseNextField(*this);
 			SkipWhitespace();
 		}
 
-		SkipChar('}');
+		SkipChar('}'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	template <typename ObjectType>
@@ -674,6 +672,7 @@ struct Parser
 	}
 
 
+	ErrorCode errorCode = ErrorCode::NoError;
 	InputIteratorType it;
 	InputIteratorType end;
 };
@@ -681,5 +680,8 @@ struct Parser
 
 
 }  // namespace JsonDef
+
+#undef QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE
+#undef QUANTUMJSON_CHECK_EOF_AND_PROPAGATE
 
 #endif  // QUANTUMJSON_LIB_IMPL_
