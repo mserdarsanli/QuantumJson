@@ -92,6 +92,12 @@ void %1%::MergeFromJson(InputIteratorType it,
 {
 	QuantumJsonImpl__::Parser<InputIteratorType> parser(it, end);
 	parser.ParseObject(*this);
+
+	// Throw when parsing fails
+	if (parser.errorCode != QuantumJsonImpl__::ErrorCode::NoError)
+	{
+		throw parser.errorCode;
+	}
 }
 )");
 
