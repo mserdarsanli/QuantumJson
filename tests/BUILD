@@ -42,6 +42,17 @@ cc_test(
 )
 
 cc_test(
+	name = "lib_tests",
+	srcs = [
+		"LibTests.cpp",
+	],
+	deps = [
+		"//lib:lib_impl",
+		"//third_party:catch",
+	],
+)
+
+cc_test(
 	name = "conformance_double",
 	srcs = [
 		"ConformanceDouble.cpp",

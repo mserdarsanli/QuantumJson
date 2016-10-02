@@ -28,13 +28,13 @@
 #include "third_party/catch.hpp"
 
 using namespace std;
-using QuantumJsonImpl__::ParseValueInto;
 
 TEST_CASE("Simple string", "[extract,string]")
 {
 	string in = "\"asd\"";
 	string out;
-	ParseValueInto(in.begin(), in.end(), out);
+	QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+	p.ParseValueInto(out);
 	REQUIRE(out == "asd");
 }
 
@@ -42,7 +42,9 @@ TEST_CASE("Unterminated string", "[extract,string]")
 {
 	string in = "\"asd";
 	string out;
-	REQUIRE_THROWS_WITH(ParseValueInto(in.begin(), in.end(), out), Catch::StartsWith("Unexpected") );
+	QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+	p.ParseValueInto(out);
+	REQUIRE( p.errorCode == QuantumJsonImpl__::ErrorCode::UnexpectedEOF );
 }
 
 TEST_CASE("Escape Characters", "[extract,string]")
@@ -50,7 +52,8 @@ TEST_CASE("Escape Characters", "[extract,string]")
 	string in = R"("\\\/\b\f\n\r\t")";
 	string expectedOut = "\\/\b\f\n\r\t";
 	string out;
-	ParseValueInto(in.begin(), in.end(), out);
+	QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+	p.ParseValueInto(out);
 	REQUIRE(out == expectedOut);
 }
 
@@ -58,21 +61,26 @@ TEST_CASE("Invalid Escape", "[extract,string]")
 {
 	string in = R"("\q")";
 	string out;
-	REQUIRE_THROWS_WITH(ParseValueInto(in.begin(), in.end(), out), Catch::StartsWith("Unknown escape"));
+	QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+	p.ParseValueInto(out);
+	REQUIRE( p.errorCode == QuantumJsonImpl__::ErrorCode::InvalidEscape );
 }
 
 TEST_CASE("Unterminated Escape", "[extract,string]")
 {
 	string in = R"("qweewqew\)";
 	string out;
-	REQUIRE_THROWS_WITH(ParseValueInto(in.begin(), in.end(), out), Catch::StartsWith("Unexpected EOF"));
+	QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+	p.ParseValueInto(out);
+	REQUIRE( p.errorCode == QuantumJsonImpl__::ErrorCode::UnexpectedEOF );
 }
 
 TEST_CASE("Unicode", "[extract,string]")
 {
 	string in = u8"\"ğüşiöçÖÇŞİĞÜIı\"";
 	string out;
-	ParseValueInto(in.begin(), in.end(), out);
+	QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+	p.ParseValueInto(out);
 	REQUIRE(out == u8"ğüşiöçÖÇŞİĞÜIı");
 }
 
@@ -83,8 +91,9 @@ TEST_CASE("Invalid Unicode Sequence", "[extract,string]")
 	uint8_t invalid_utf8[] = { '"', 196, '"', 0 };
 	string in(reinterpret_cast<const char*>(invalid_utf8));
 	string out;
-	REQUIRE_THROWS_WITH(ParseValueInto(in.begin(), in.end(), out),
-	    Catch::StartsWith("Unexpected continuation"));
+	QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+	p.ParseValueInto(out);
+	REQUIRE( p.errorCode == QuantumJsonImpl__::ErrorCode::InvalidUtf8Sequence );
 }
 
 TEST_CASE("Unicode Escape", "[extract,string]")
@@ -102,7 +111,8 @@ TEST_CASE("Parse List", "[extract,list]")
 {
 	string in = R"(["val1", "val2"])";
 	vector<string> out;
-	ParseValueInto(in.begin(), in.end(), out);
+	QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+	p.ParseValueInto(out);
 	REQUIRE(out.size() == 2);
 	REQUIRE(out[0] == "val1");
 	REQUIRE(out[1] == "val2");

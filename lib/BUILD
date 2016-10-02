@@ -50,14 +50,3 @@ cc_inc_library(
 		"Common.hpp",
 	],
 )
-
-cc_test(
-	name = "lib_tests",
-	srcs = [
-		"LibTests.cpp",
-	],
-	deps = [
-		":lib_impl",
-		"//third_party:catch",
-	],
-)
