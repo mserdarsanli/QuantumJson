@@ -70,7 +70,8 @@ int main(int argc, char *argv[])
 		bool json_correct;
 		try
 		{
-			QuantumJsonImpl__::SkipValue(jsonStr.begin(), jsonStr.end());
+			QuantumJsonImpl__::Parser< decltype(jsonStr.begin()) > p(jsonStr.begin(), jsonStr.end());
+			p.SkipValue();
 			json_correct = true;
 		}
 		catch (...)
