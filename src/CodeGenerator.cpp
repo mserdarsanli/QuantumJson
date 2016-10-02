@@ -101,6 +101,17 @@ void %1%::MergeFromJson(InputIteratorType it,
 }
 )");
 
+format StructDefBegin(R"(
+struct %1%
+{
+	%1%() = default;
+	%1%(const %1% &) = default;
+	%1%(%1% &&) = default;
+
+	%1%& operator=(const %1% &) = default;
+
+)");
+
 // Methods that are used by parser
 // These are strictly implementation detail, so header output does not have them.
 // TODO verify adding functions in struct only in source file does not affect
@@ -217,8 +228,7 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 	// Header declerations
 	for (const StructDef &s : file.structs)
 	{
-		out << "struct " << s.name << "\n"
-		    << "{\n";
+		out << StructDefBegin % s.name;
 
 		for (const VariableDef &var : s.variables)
 		{

@@ -630,7 +630,7 @@ struct Parser
 
 			ArrayElemType elem;
 			ParseValueInto(elem);
-			obj.push_back(elem); // TODO use move here? that wil also require creating move constructors.
+			obj.push_back( std::move(elem) );
 
 			SkipWhitespace();
 		}
