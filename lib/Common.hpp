@@ -529,6 +529,7 @@ struct Parser
 		// Reserve just enough space
 		auto begin = it;
 		SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		// TODO FIXME this size logic does not account for escapes in the string
 		size_t strSize = it - begin - 2;
 		it = begin;
 		obj.reserve( strSize );
