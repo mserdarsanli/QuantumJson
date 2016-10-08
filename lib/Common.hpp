@@ -446,7 +446,7 @@ struct Parser
 		obj.push_back(*it); \
 		++it;
 				// Unicode start byte
-				if (*it >= 0b11111100)
+				if ((*it & 0b11111100) == 0b11111100)
 				{
 					obj.push_back(*it);
 					++it;
@@ -457,7 +457,7 @@ struct Parser
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 				}
-				else if (*it >= 0b11111000)
+				else if ((*it & 0b11111000) == 0b11111000)
 				{
 					obj.push_back(*it);
 					++it;
@@ -467,7 +467,7 @@ struct Parser
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 				}
-				else if (*it >= 0b11110000)
+				else if ((*it & 0b11110000) == 0b11110000)
 				{
 					obj.push_back(*it);
 					++it;
@@ -476,7 +476,7 @@ struct Parser
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 				}
-				else if (*it >= 0b11100000)
+				else if ((*it & 0b11100000) == 0b11100000)
 				{
 					obj.push_back(*it);
 					++it;
@@ -484,7 +484,7 @@ struct Parser
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 				}
-				else // if (*it >= 0b11000000)
+				else // if ((*it & 0b11000000) == 0b11000000)
 				{
 					obj.push_back(*it);
 					++it;

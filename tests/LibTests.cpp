@@ -84,7 +84,6 @@ TEST_CASE("Unicode", "[extract,string]")
 	REQUIRE(out == u8"ğüşiöçÖÇŞİĞÜIı");
 }
 
-// TODO add tests from http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt
 TEST_CASE("Invalid Unicode Sequence", "[extract,string]")
 {
 	// String ends with no continuation character
