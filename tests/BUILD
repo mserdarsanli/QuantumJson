@@ -77,6 +77,17 @@ cc_test(
 )
 
 cc_test(
+	name = "string_allocations",
+	srcs = [
+		"StringAllocations.cpp",
+	],
+	deps = [
+		"//lib:lib_impl",
+		"//third_party:catch",
+	],
+)
+
+cc_test(
 	name = "multiple_schemas",
 	srcs = [
 		"MultipleSchemas.cpp",

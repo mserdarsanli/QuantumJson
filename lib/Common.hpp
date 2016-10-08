@@ -26,8 +26,10 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
+#include <iterator>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include <errno.h>
@@ -370,7 +372,7 @@ struct Parser
 		errorCode = ErrorCode::UnexpectedToken;
 	}
 
-	void ParseValueInto(std::string &obj)
+	void ParseValueIntoStringImpl(std::string &obj)
 	{
 		SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
@@ -505,6 +507,52 @@ struct Parser
 		}
 
 		SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+	}
+
+	// Following two functions use SFINAE to provide two different string
+	// parsers, allowing random access iterators one to measure and reserve
+	// size before, to prevent unnecessary allocations.
+	// InputIterator alternative is using default std::string growth.
+
+	// Faster parser that works for random access iterator
+	template <typename IteratorType>
+	void ParseValueIntoHelper(std::string &obj,
+	    typename std::enable_if<
+	        std::is_base_of<
+	            std::random_access_iterator_tag,
+	            typename std::iterator_traits<IteratorType>::iterator_category
+	        >::value
+	    >::type * = 0)
+	{
+		obj.clear();
+
+		// Reserve just enough space
+		auto begin = it;
+		SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		size_t strSize = it - begin - 2;
+		it = begin;
+		obj.reserve( strSize );
+
+		ParseValueIntoStringImpl(obj); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+	}
+
+	// Slower parser that works for any iterator
+	template <typename IteratorType>
+	void ParseValueIntoHelper(std::string &obj,
+	    typename std::enable_if<
+	        ! std::is_base_of<
+	            std::random_access_iterator_tag,
+	            typename std::iterator_traits<IteratorType>::iterator_category
+	        >::value
+	    >::type * = 0)
+	{
+		obj.clear();
+		ParseValueIntoStringImpl(obj); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+	}
+
+	void ParseValueInto(std::string &obj)
+	{
+		ParseValueIntoHelper< InputIteratorType >(obj); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	// TODO FIXME it == end checks are not done here
