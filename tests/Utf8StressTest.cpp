@@ -63,13 +63,66 @@ TEST_CASE("Case 1", "[utf8,decoder]")
 	REQUIRE( out == u8"κόσμε" );
 }
 
-// TODO Add case 2.1
-// TODO Add case 2.1.1
-// TODO Add case 2.1.2
-// TODO Add case 2.1.3
-// TODO Add case 2.1.4
-// TODO Add case 2.1.5
-// TODO Add case 2.1.6
+TEST_CASE("Case 2.1.1", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0x00,
+	'"', };
+
+	// ErrorCode::ControlCharacterInString;
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 2.1.2", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xc2, 0x80,
+	'"', };
+
+	string out = PARSE(input);
+	REQUIRE( out == "\u0080" );
+}
+
+TEST_CASE("Case 2.1.3", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xe0, 0xa0, 0x80,
+	'"', };
+
+	string out = PARSE(input);
+	REQUIRE( out == "\u0800" );
+}
+
+TEST_CASE("Case 2.1.4", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xf0, 0x90, 0x80, 0x80,
+	'"', };
+
+	string out = PARSE(input);
+	REQUIRE( out == "\U00010000" );
+}
+
+TEST_CASE("Case 2.1.5", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xf8, 0x88, 0x80, 0x80, 0x80,
+	'"', };
+
+	string out = PARSE(input);
+	REQUIRE( out == "\U00200000" );
+}
+
+TEST_CASE("Case 2.1.6", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xfc, 0x84, 0x80, 0x80, 0x80, 0x80,
+	'"', };
+
+	string out = PARSE(input);
+	REQUIRE( out == "\U04000000" );
+}
+
 // TODO Add case 2.2.1
 // TODO Add case 2.2.2
 // TODO Add case 2.2.3

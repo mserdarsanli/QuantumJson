@@ -66,6 +66,7 @@ enum class ErrorCode
 	InvalidEscape,
 	InvalidUtf8Sequence,
 	UnsupportedUnicodeRange,
+	ControlCharacterInString,
 };
 
 template <typename InputIteratorType>
@@ -111,6 +112,12 @@ struct Parser
 
 		while (it != end)
 		{
+			if ((*it & 0b11100000) == 0)
+			{
+				errorCode = ErrorCode::ControlCharacterInString;
+				return;
+			}
+
 			if (*it == '"')
 			{
 				++it;
@@ -379,6 +386,12 @@ struct Parser
 		// Parse string characters
 		while (it != end && *it != '"')
 		{
+			if ((*it & 0b11100000) == 0)
+			{
+				errorCode = ErrorCode::ControlCharacterInString;
+				return;
+			}
+
 			if (*it == '\\')
 			{
 				++it;
