@@ -183,11 +183,56 @@ TEST_CASE("Case 2.2.6", "[utf8,decoder]")
 	REQUIRE( out == "\U7fffffff" );
 }
 
-// TODO Add case 2.3.1
-// TODO Add case 2.3.2
-// TODO Add case 2.3.3
-// TODO Add case 2.3.4
-// TODO Add case 2.3.5
+TEST_CASE("Case 2.3.1", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xed, 0x9f, 0xbf,
+	'"', };
+
+	string out = PARSE(input);
+	REQUIRE( out == "\ud7ff" );
+}
+
+TEST_CASE("Case 2.3.2", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xee, 0x80, 0x80,
+	'"', };
+
+	string out = PARSE(input);
+	REQUIRE( out == "\ue000" );
+}
+
+TEST_CASE("Case 2.3.3", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xef, 0xbf, 0xbd,
+	'"', };
+
+	string out = PARSE(input);
+	REQUIRE( out == "\ufffd" );
+}
+
+TEST_CASE("Case 2.3.4", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xf4, 0x8f, 0xbf, 0xbf,
+	'"', };
+
+	string out = PARSE(input);
+	REQUIRE( out == "\U0010FFFF" );
+}
+
+TEST_CASE("Case 2.3.5", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xf4, 0x90, 0x80, 0x80,
+	'"', };
+
+	string out = PARSE(input);
+	REQUIRE( out == "\U00110000" );
+}
+
 // TODO Add case 3.1.1
 // TODO Add case 3.1.2
 // TODO Add case 3.1.3
