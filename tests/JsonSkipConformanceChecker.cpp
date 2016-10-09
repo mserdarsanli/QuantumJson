@@ -68,16 +68,10 @@ int main(int argc, char *argv[])
 
 		// Expect exception on incorrect values
 		bool json_correct;
-		try
-		{
-			QuantumJsonImpl__::Parser< decltype(jsonStr.begin()) > p(jsonStr.begin(), jsonStr.end());
-			p.SkipValue();
-			json_correct = true;
-		}
-		catch (...)
-		{
-			json_correct = false;
-		}
+
+		QuantumJsonImpl__::Parser< decltype(jsonStr.begin()) > p(jsonStr.begin(), jsonStr.end());
+		p.SkipValue();
+		json_correct = (p.errorCode == QuantumJsonImpl__::ErrorCode::NoError);
 
 		if (expect_pass == json_correct)
 		{
