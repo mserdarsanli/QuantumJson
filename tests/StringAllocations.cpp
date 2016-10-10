@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <iostream>
 #include <iterator>
@@ -86,13 +87,38 @@ TEST_CASE("Minimal allocations check", "[performance,string]")
 	}
 
 
-	SECTION("Allocations with random access input are minimal")
+	SECTION("Allocations with random access input are minimal - 1")
 	{
 		string in(largeJsonString);
 		string out;
 
 		resetAllocationStats();
 		QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+		p.ParseValueInto(out);
+
+		int allocationCount = statsAllocationCount;
+		int lastAllocationSize = statsLastAllocationSize;
+
+		REQUIRE(out == largeJsonStringValue);
+
+		// Following checks are dependent on standard library implementation,
+		// though expected to hold on all of them.
+		REQUIRE(allocationCount == 1);
+		REQUIRE(lastAllocationSize == minimalAllocationSize);
+	}
+
+	// Pointer types should have random access iterator tag [1]. Here is a
+	// test to make sure `const char *` inputs would execute the fast code
+	// path for string parsing.
+	// [1]: http://en.cppreference.com/w/cpp/iterator/iterator_traits
+	SECTION("Allocations with random access input are minimal - 2")
+	{
+		string out;
+
+		resetAllocationStats();
+		const char *begin = largeJsonString;
+		const char *end = largeJsonString + strlen(largeJsonString);
+		QuantumJsonImpl__::Parser<const char*> p(begin, end);
 		p.ParseValueInto(out);
 
 		int allocationCount = statsAllocationCount;
