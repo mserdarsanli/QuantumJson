@@ -34,3 +34,14 @@ struct SkipNullTester
 	string attr_accepting_null [[ on_null("skip") ]];
 	string attr_regular;
 };
+
+// =================
+// This is a comment
+// -----------------
+struct AAAAAA
+{
+	/**
+	 * This is another comment
+	 */
+	vector< string /* vector of strings */ > field; // is equivalent to list of strings
+};
