@@ -39,6 +39,38 @@ vector<Token> Tokenize(const string &in)
 			continue;
 		}
 
+		// Skip Comments
+		if (in[i] == '/' && in[i+1] == '/')
+		{
+			while (in[i] && in[i] != '\n')
+				++i;
+			continue;
+		}
+
+		if (in[i] == '/' && in[i+1] == '*')
+		{
+			i += 2;
+
+			while (1)
+			{
+				if (!in[i] || !in[i+1])
+				{
+					cerr << "Unexpected EOF in multi line comment\n";
+					std::exit(1);
+				}
+				if (in[i] == '*' && in[i+1] == '/')
+				{
+					++i;
+					goto end_comment;
+				}
+				++i;
+			}
+
+			end_comment:
+			continue;
+		}
+
+
 		// A typename or a keyword
 		if (isalpha(in[i]))
 		{
@@ -68,7 +100,6 @@ vector<Token> Tokenize(const string &in)
 		CHAR_TOKEN(';', Token::Type::Semicolon);
 		CHAR_TOKEN(',', Token::Type::Comma);
 		#undef CHAR_TOKEN
-
 
 		if (in[i] == '[' && in[i+1] == '[')
 		{
