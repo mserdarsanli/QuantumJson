@@ -233,15 +233,94 @@ TEST_CASE("Case 2.3.5", "[utf8,decoder]")
 	REQUIRE( out == "\U00110000" );
 }
 
-// TODO Add case 3.1.1
-// TODO Add case 3.1.2
-// TODO Add case 3.1.3
-// TODO Add case 3.1.4
-// TODO Add case 3.1.5
-// TODO Add case 3.1.6
-// TODO Add case 3.1.7
-// TODO Add case 3.1.8
-// TODO Add case 3.1.9
+TEST_CASE("Case 3.1.1", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0x80,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.1.2", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xbf,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.1.3", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0x80, 0xbf,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.1.4", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0x80, 0xbf, 0x80,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.1.5", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0x80, 0xbf, 0x80, 0xbf,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.1.6", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0x80, 0xbf, 0x80, 0xbf, 0x80,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.1.7", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0x80, 0xbf, 0x80, 0xbf, 0x80, 0xbf,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.1.8", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0x80, 0xbf, 0x80, 0xbf, 0x80, 0xbf, 0x80,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.1.9", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
+	    0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f,
+	    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
+	    0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
+	    0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7,
+	    0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf,
+	    0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7,
+	    0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
 // TODO Add case 3.2.1
 // TODO Add case 3.2.2
 // TODO Add case 3.2.3
