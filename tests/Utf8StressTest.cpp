@@ -321,11 +321,61 @@ TEST_CASE("Case 3.1.9", "[utf8,decoder]")
 	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
 }
 
-// TODO Add case 3.2.1
-// TODO Add case 3.2.2
-// TODO Add case 3.2.3
-// TODO Add case 3.2.4
-// TODO Add case 3.2.5
+TEST_CASE("Case 3.2.1", "[utf8,decoder]")
+{
+	for (int i = 0xc0; i <= 0xdf; ++i)
+	{
+		unsigned char input[] = { '"',
+		    static_cast<unsigned char>(i), 0x20,
+		'"', };
+		REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	}
+}
+
+TEST_CASE("Case 3.2.2", "[utf8,decoder]")
+{
+	for (int i = 0xe0; i <= 0xef; ++i)
+	{
+		unsigned char input[] = { '"',
+		    static_cast<unsigned char>(i), 0x20,
+		'"', };
+		REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	}
+}
+
+TEST_CASE("Case 3.2.3", "[utf8,decoder]")
+{
+	for (int i = 0xf0; i <= 0xf7; ++i)
+	{
+		unsigned char input[] = { '"',
+		    static_cast<unsigned char>(i), 0x20,
+		'"', };
+		REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	}
+}
+
+TEST_CASE("Case 3.2.4", "[utf8,decoder]")
+{
+	for (int i = 0xf8; i <= 0xfb; ++i)
+	{
+		unsigned char input[] = { '"',
+		    static_cast<unsigned char>(i), 0x20,
+		'"', };
+		REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	}
+}
+
+TEST_CASE("Case 3.2.5", "[utf8,decoder]")
+{
+	for (int i = 0xfc; i <= 0xfd; ++i)
+	{
+		unsigned char input[] = { '"',
+		    static_cast<unsigned char>(i), 0x20,
+		'"', };
+		REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	}
+}
+
 // TODO Add case 3.3.1
 // TODO Add case 3.3.2
 // TODO Add case 3.3.3
