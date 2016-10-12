@@ -376,16 +376,96 @@ TEST_CASE("Case 3.2.5", "[utf8,decoder]")
 	}
 }
 
-// TODO Add case 3.3.1
-// TODO Add case 3.3.2
-// TODO Add case 3.3.3
-// TODO Add case 3.3.4
-// TODO Add case 3.3.5
-// TODO Add case 3.3.6
-// TODO Add case 3.3.7
-// TODO Add case 3.3.8
-// TODO Add case 3.3.9
-// TODO Add case 3.3.10
+TEST_CASE("Case 3.3.1", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xc0,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.3.2", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xe0, 0x80,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.3.3", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xf0, 0x80, 0x80,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.3.4", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xf8, 0x80, 0x80, 0x80,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.3.5", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xfc, 0x80, 0x80, 0x80, 0x80,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.3.6", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xdf,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.3.7", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xef, 0xbf,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.3.8", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xf7, 0xbf, 0xbf,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.3.9", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xfb, 0xbf, 0xbf, 0xbf,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.3.10", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xfd, 0xbf, 0xbf, 0xbf, 0xbf,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
 // TODO Add case 3.4
 // TODO Add case 3.5.1
 // TODO Add case 3.5.2
