@@ -467,9 +467,34 @@ TEST_CASE("Case 3.3.10", "[utf8,decoder]")
 }
 
 // TODO Add case 3.4
-// TODO Add case 3.5.1
-// TODO Add case 3.5.2
-// TODO Add case 3.5.3
+
+TEST_CASE("Case 3.5.1", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xfe,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.5.2", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xff,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
+TEST_CASE("Case 3.5.3", "[utf8,decoder]")
+{
+	unsigned char input[] = { '"',
+	    0xfe, 0xfe, 0xff, 0xff,
+	'"', };
+
+	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+}
+
 // TODO Add case 4.1.1
 // TODO Add case 4.1.2
 // TODO Add case 4.1.3
