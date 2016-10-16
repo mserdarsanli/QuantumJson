@@ -41,7 +41,16 @@ genrule(
 	outs = [
 		"LibCommonDef.hpp",
 	],
-	cmd = "xxd -i $(SRCS) > $(OUTS)",
+	cmd = """
+	    (   echo -n -e \"#include <array>\\n\\n\"             \
+	    &&  echo -n -e \"std::array<unsigned char,\\n\"       \
+	    &&  echo -n -e \"           \"                        \
+	    &&  stat -c \"%s\" $(SRCS)                            \
+	    &&  echo -n -e \"           > libCommonData = {\\n\"  \
+	    &&  xxd -i < $(SRCS)                                  \
+	    &&  echo -n -e \"};\\n\"                              \
+	    ) > $(OUTS)
+	"""
 )
 
 cc_inc_library(
