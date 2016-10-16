@@ -28,5 +28,5 @@
 void GenerateCommonParserDefinitions(std::ostream &out)
 {
 	// TODO include guards
-	out.write(reinterpret_cast<const char *>(lib_Common_hpp), lib_Common_hpp_len);
+	out.write(reinterpret_cast<const char *>(&libCommonData[0]), libCommonData.size());
 }

@@ -20,43 +20,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cc_binary(
-	name = "jc",
-	srcs = [
-		"Attributes.cpp",
-		"CodeGenerator.cpp",
-		"JsonParserLibrary.cpp",
-		"Main.cpp",
-		"Parser.cpp",
-		"Tokenizer.cpp",
 
-		"Attributes.hpp",
-		"CodeGenerator.hpp",
-		"JsonParserLibrary.hpp",
-		"Parser.hpp",
-		"Tokenizer.hpp",
-
-		"CommandLineFlags.cpp",
-		"CommandLineFlags.hpp",
-	],
-	deps = [
-		"//lib",
-	],
-	visibility = [
-		"//visibility:public",
-	],
-)
-
-genrule(
-	name = "flags",
-	srcs = [
-		"CommandLineFlags.ggo",
-	],
-	outs = [
-		"CommandLineFlags.cpp",
-		"CommandLineFlags.hpp",
-	],
-	cmd = """gengetopt --input="$(<)" \
-	    --c-extension=cpp --header-extension=hpp \
-	    --file-name="CommandLineFlags"  --output-dir="$(@D)" """,
-)
+# Empty build file to make project importable by other bazel repositories.
