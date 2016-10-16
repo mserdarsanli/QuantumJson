@@ -56,7 +56,7 @@ genrule(
 		"CommandLineFlags.cpp",
 		"CommandLineFlags.hpp",
 	],
-	cmd = """gengetopt --input="src/CommandLineFlags.ggo" \
+	cmd = """gengetopt --input="$(<)" \
 	    --c-extension=cpp --header-extension=hpp \
 	    --file-name="CommandLineFlags"  --output-dir="$(@D)" """,
 )
