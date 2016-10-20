@@ -69,8 +69,7 @@ TEST_CASE("Case 2.1.1", "[utf8,decoder]")
 	    0x00,
 	'"', };
 
-	// ErrorCode::ControlCharacterInString;
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Control Character In String" );
 }
 
 TEST_CASE("Case 2.1.2", "[utf8,decoder]")
@@ -239,7 +238,7 @@ TEST_CASE("Case 3.1.1", "[utf8,decoder]")
 	    0x80,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.1.2", "[utf8,decoder]")
@@ -248,7 +247,7 @@ TEST_CASE("Case 3.1.2", "[utf8,decoder]")
 	    0xbf,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.1.3", "[utf8,decoder]")
@@ -257,7 +256,7 @@ TEST_CASE("Case 3.1.3", "[utf8,decoder]")
 	    0x80, 0xbf,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.1.4", "[utf8,decoder]")
@@ -266,7 +265,7 @@ TEST_CASE("Case 3.1.4", "[utf8,decoder]")
 	    0x80, 0xbf, 0x80,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.1.5", "[utf8,decoder]")
@@ -275,7 +274,7 @@ TEST_CASE("Case 3.1.5", "[utf8,decoder]")
 	    0x80, 0xbf, 0x80, 0xbf,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.1.6", "[utf8,decoder]")
@@ -284,7 +283,7 @@ TEST_CASE("Case 3.1.6", "[utf8,decoder]")
 	    0x80, 0xbf, 0x80, 0xbf, 0x80,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.1.7", "[utf8,decoder]")
@@ -293,7 +292,7 @@ TEST_CASE("Case 3.1.7", "[utf8,decoder]")
 	    0x80, 0xbf, 0x80, 0xbf, 0x80, 0xbf,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.1.8", "[utf8,decoder]")
@@ -302,7 +301,7 @@ TEST_CASE("Case 3.1.8", "[utf8,decoder]")
 	    0x80, 0xbf, 0x80, 0xbf, 0x80, 0xbf, 0x80,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.1.9", "[utf8,decoder]")
@@ -318,7 +317,7 @@ TEST_CASE("Case 3.1.9", "[utf8,decoder]")
 	    0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.2.1", "[utf8,decoder]")
@@ -328,7 +327,7 @@ TEST_CASE("Case 3.2.1", "[utf8,decoder]")
 		unsigned char input[] = { '"',
 		    static_cast<unsigned char>(i), 0x20,
 		'"', };
-		REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+		REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 	}
 }
 
@@ -339,7 +338,7 @@ TEST_CASE("Case 3.2.2", "[utf8,decoder]")
 		unsigned char input[] = { '"',
 		    static_cast<unsigned char>(i), 0x20,
 		'"', };
-		REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+		REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 	}
 }
 
@@ -350,7 +349,7 @@ TEST_CASE("Case 3.2.3", "[utf8,decoder]")
 		unsigned char input[] = { '"',
 		    static_cast<unsigned char>(i), 0x20,
 		'"', };
-		REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+		REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 	}
 }
 
@@ -361,7 +360,7 @@ TEST_CASE("Case 3.2.4", "[utf8,decoder]")
 		unsigned char input[] = { '"',
 		    static_cast<unsigned char>(i), 0x20,
 		'"', };
-		REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+		REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 	}
 }
 
@@ -372,7 +371,7 @@ TEST_CASE("Case 3.2.5", "[utf8,decoder]")
 		unsigned char input[] = { '"',
 		    static_cast<unsigned char>(i), 0x20,
 		'"', };
-		REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+		REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 	}
 }
 
@@ -382,7 +381,7 @@ TEST_CASE("Case 3.3.1", "[utf8,decoder]")
 	    0xc0,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.3.2", "[utf8,decoder]")
@@ -391,7 +390,7 @@ TEST_CASE("Case 3.3.2", "[utf8,decoder]")
 	    0xe0, 0x80,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.3.3", "[utf8,decoder]")
@@ -400,7 +399,7 @@ TEST_CASE("Case 3.3.3", "[utf8,decoder]")
 	    0xf0, 0x80, 0x80,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.3.4", "[utf8,decoder]")
@@ -409,7 +408,7 @@ TEST_CASE("Case 3.3.4", "[utf8,decoder]")
 	    0xf8, 0x80, 0x80, 0x80,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.3.5", "[utf8,decoder]")
@@ -418,7 +417,7 @@ TEST_CASE("Case 3.3.5", "[utf8,decoder]")
 	    0xfc, 0x80, 0x80, 0x80, 0x80,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.3.6", "[utf8,decoder]")
@@ -427,7 +426,7 @@ TEST_CASE("Case 3.3.6", "[utf8,decoder]")
 	    0xdf,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.3.7", "[utf8,decoder]")
@@ -436,7 +435,7 @@ TEST_CASE("Case 3.3.7", "[utf8,decoder]")
 	    0xef, 0xbf,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.3.8", "[utf8,decoder]")
@@ -445,7 +444,7 @@ TEST_CASE("Case 3.3.8", "[utf8,decoder]")
 	    0xf7, 0xbf, 0xbf,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.3.9", "[utf8,decoder]")
@@ -454,7 +453,7 @@ TEST_CASE("Case 3.3.9", "[utf8,decoder]")
 	    0xfb, 0xbf, 0xbf, 0xbf,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.3.10", "[utf8,decoder]")
@@ -463,7 +462,7 @@ TEST_CASE("Case 3.3.10", "[utf8,decoder]")
 	    0xfd, 0xbf, 0xbf, 0xbf, 0xbf,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 // TODO Add case 3.4
@@ -474,7 +473,7 @@ TEST_CASE("Case 3.5.1", "[utf8,decoder]")
 	    0xfe,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.5.2", "[utf8,decoder]")
@@ -483,7 +482,7 @@ TEST_CASE("Case 3.5.2", "[utf8,decoder]")
 	    0xff,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 TEST_CASE("Case 3.5.3", "[utf8,decoder]")
@@ -492,7 +491,7 @@ TEST_CASE("Case 3.5.3", "[utf8,decoder]")
 	    0xfe, 0xfe, 0xff, 0xff,
 	'"', };
 
-	REQUIRE_THROWS_AS( PARSE(input), QuantumJsonImpl__::ErrorCode );
+	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
 // TODO Add case 4.1.1
