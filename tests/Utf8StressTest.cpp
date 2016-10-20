@@ -48,7 +48,7 @@ string ParseJsonString(const char *beg, const char *end)
 	p.ParseValueInto(out);
 	if (p.errorCode != QuantumJsonImpl__::ErrorCode::NoError)
 	{
-		throw p.errorCode;
+		throw QuantumJsonImpl__::JsonError(p.errorCode);
 	}
 	return out;
 }
