@@ -99,7 +99,7 @@ TEST_CASE( "Nullable fields", "[attributes]" )
 			  "attr_regular": null
 			}
 		)";
-		REQUIRE_THROWS_AS( o.MergeFromJson(json), QuantumJsonImpl__::ErrorCode );
+		REQUIRE_THROWS_WITH( o.MergeFromJson(json), "Unexpected Char" );
 	}
 }
 

@@ -96,7 +96,7 @@ void %1%::MergeFromJson(InputIteratorType it,
 	// Throw when parsing fails
 	if (parser.errorCode != QuantumJsonImpl__::ErrorCode::NoError)
 	{
-		throw parser.errorCode;
+		throw QuantumJsonImpl__::JsonError(parser.errorCode);
 	}
 }
 )");

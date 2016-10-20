@@ -69,6 +69,44 @@ enum class ErrorCode
 	ControlCharacterInString,
 };
 
+// Make an exception class for better error reporting when uncaught
+class JsonError : public std::exception
+{
+public:
+	explicit JsonError(ErrorCode code)
+	    : errorCode(code)
+	{
+	}
+
+	// TODO provide more error details?
+	const char* what() const noexcept override
+	{
+		switch (errorCode)
+		{
+		case ErrorCode::UnexpectedEOF:
+			return "Unexpected EOF";
+		case ErrorCode::UnexpectedChar:
+			return "Unexpected Char";
+		case ErrorCode::UnexpectedToken:
+			return "Unexpected Token";
+		case ErrorCode::InvalidEscape:
+			return "Invalid Escape";
+		case ErrorCode::InvalidUtf8Sequence:
+			return "Invalid UTF-8 Sequence";
+		case ErrorCode::UnsupportedUnicodeRange:
+			return "Unsupported Unicode Range";
+		case ErrorCode::ControlCharacterInString:
+			return "Control Character In String";
+		default:
+			// Should not happen
+			return "";
+		}
+	}
+
+private:
+	ErrorCode errorCode;
+};
+
 template <typename InputIteratorType>
 struct Parser
 {
