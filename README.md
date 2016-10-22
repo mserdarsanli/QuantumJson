@@ -5,6 +5,8 @@ QuantumJson is an attempt to create the fastest JSON parser for C++.
 It is a parser generator, using a `schema` file. The result is type-safe
 and fast json parser for data of known schemas.
 
+View [Installation](#installation) section for instructions.
+
 ## Rationale
 
 When talking to a JSON API, the JSON values are often in a well defined format.
@@ -132,15 +134,6 @@ m.MergeFromJson(input);
 ...
 ```
 
-
-## Requirements
-
-Currently g++-6 needs to be installed for benchmarks (required by nlohmann/json).
-
-Bazel is used as build system.
-
-TODO extend this section.
-
 ## Native Types
 
 Native types that are already defined are:
@@ -150,6 +143,37 @@ Native types that are already defined are:
  * int
  * string
  * vector<Smth> ( JSON list )
+
+## Installation
+
+Easiest way to install is to checkout a release commit and use provided Makefile.
+
+```
+make
+sudo make install
+```
+
+### Usage
+
+To generate parser for the schema file, use following command.
+Generated parser is header-only.
+
+```
+jc --in Foo.json.hpp --out Foo.gen.hpp
+```
+
+### Requirements
+
+* A GNU/Linux environment (or similar)
+* `g++` or `clang++` (any version supporting --std=c++1y flag)
+* `gengetopt`
+* `xxd`
+
+For development of QuantumJson only:
+
+* `bazel` is used as the build system.
+* `g++-6` needs to be installed for benchmarks (required by nlohmann/json).
+
 
 # License
 
