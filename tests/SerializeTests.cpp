@@ -49,3 +49,41 @@ TEST_CASE("Serialize bool", "[serialize,bool]")
 		REQUIRE(out == "false");
 	}
 }
+
+TEST_CASE("Serialize int64", "[serialize,int]")
+{
+	string out;
+	Serializer s(std::back_inserter(out));
+
+	SECTION("1")
+	{
+		int64_t v = 1;
+		s.SerializeValue(v);
+		REQUIRE(out == "1");
+	}
+	SECTION("0")
+	{
+		int64_t v = 0;
+		s.SerializeValue(v);
+		REQUIRE(out == "0");
+	}
+	SECTION("-1")
+	{
+		int64_t v = -1;
+		s.SerializeValue(v);
+		REQUIRE(out == "-1");
+	}
+	SECTION("min")
+	{
+		int64_t v = -9223372036854775807L;
+		s.SerializeValue(v);
+		REQUIRE(out == "-9223372036854775807");
+	}
+	SECTION("max")
+	{
+		int64_t v = 9223372036854775807L;
+		s.SerializeValue(v);
+		REQUIRE(out == "9223372036854775807");
+	}
+
+}

@@ -23,6 +23,7 @@
 #ifndef QUANTUMJSON_LIB_IMPL_
 #define QUANTUMJSON_LIB_IMPL_
 
+#include <cinttypes>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
@@ -801,6 +802,18 @@ struct Serializer
 			*(out++) = 'l';
 			*(out++) = 's';
 			*(out++) = 'e';
+		}
+	}
+
+	void SerializeValue(int64_t a)
+	{
+		// Enought to hold -9223372036854775807 (int64 min)
+		char buf[21];
+		sprintf(buf, "%" PRId64, a);
+
+		for (const char *it = buf; *it; ++it)
+		{
+			*(out++) = *it;
 		}
 	}
 
