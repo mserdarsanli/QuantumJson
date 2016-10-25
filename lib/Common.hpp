@@ -777,6 +777,35 @@ struct Parser
 	InputIteratorType end;
 };
 
+template <typename OutputIteratorType>
+struct Serializer
+{
+	Serializer(OutputIteratorType out)
+	  : out(out)
+	{
+	}
+
+	void SerializeValue(bool b)
+	{
+		if (b)
+		{
+			*(out++) = 't';
+			*(out++) = 'r';
+			*(out++) = 'u';
+			*(out++) = 'e';
+		}
+		else
+		{
+			*(out++) = 'f';
+			*(out++) = 'a';
+			*(out++) = 'l';
+			*(out++) = 's';
+			*(out++) = 'e';
+		}
+	}
+
+	OutputIteratorType out;
+};
 
 
 }  // namespace JsonDef
