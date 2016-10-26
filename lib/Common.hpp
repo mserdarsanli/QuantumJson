@@ -24,6 +24,7 @@
 #define QUANTUMJSON_LIB_IMPL_
 
 #include <cinttypes>
+#include <cmath>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
@@ -810,6 +811,26 @@ struct Serializer
 		// Enought to hold -9223372036854775807 (int64 min)
 		char buf[21];
 		sprintf(buf, "%" PRId64, a);
+
+		for (const char *it = buf; *it; ++it)
+		{
+			*(out++) = *it;
+		}
+	}
+
+	void SerializeValue(double num)
+	{
+		if (isnan(num) || isinf(num))
+		{
+			*(out++) = 'n';
+			*(out++) = 'u';
+			*(out++) = 'l';
+			*(out++) = 'l';
+			return;
+		}
+		// 10 decimal significant digits are used
+		char buf[30];
+		sprintf(buf, "%.10g", num);
 
 		for (const char *it = buf; *it; ++it)
 		{

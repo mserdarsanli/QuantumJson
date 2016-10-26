@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <cmath>
 #include <iostream>
 #include <iterator>
 #include <string>
@@ -85,5 +86,138 @@ TEST_CASE("Serialize int64", "[serialize,int]")
 		s.SerializeValue(v);
 		REQUIRE(out == "9223372036854775807");
 	}
+}
 
+TEST_CASE("Serialize double", "[serialize]")
+{
+	// Some of the values in this test are platform dependent
+	// But since the significant digits are not maximal,
+	// they should be same for most? of the platforms.
+	string out;
+	Serializer s(std::back_inserter(out));
+
+	SECTION("0")
+	{
+		double v = 0.0;
+		s.SerializeValue(v);
+		REQUIRE(out == "0");
+	}
+	SECTION("1")
+	{
+		double v = 1.0;
+		s.SerializeValue(v);
+		REQUIRE(out == "1");
+	}
+	SECTION("-1")
+	{
+		double v = -1.0;
+		s.SerializeValue(v);
+		REQUIRE(out == "-1");
+	}
+	SECTION("100")
+	{
+		double v = 100.0;
+		s.SerializeValue(v);
+		REQUIRE(out == "100");
+	}
+	SECTION("-100")
+	{
+		double v = -100.0;
+		s.SerializeValue(v);
+		REQUIRE(out == "-100");
+	}
+	SECTION("0.01")
+	{
+		double v = 0.01;
+		s.SerializeValue(v);
+		REQUIRE(out == "0.01");
+	}
+	SECTION("-0.01")
+	{
+		double v = -0.01;
+		s.SerializeValue(v);
+		REQUIRE(out == "-0.01");
+	}
+	SECTION("0.3")
+	{
+		double v = 0.3;
+		s.SerializeValue(v);
+		REQUIRE(out == "0.3");
+	}
+	SECTION("0.4")
+	{
+		double v = 0.4;
+		s.SerializeValue(v);
+		REQUIRE(out == "0.4");
+	}
+
+	// Invalid numbers, represented as null
+	SECTION("NaN")
+	{
+		double v = nan("");
+		s.SerializeValue(v);
+		REQUIRE(out == "null");
+	}
+	SECTION("+inf")
+	{
+		double v = numeric_limits<double>::infinity();
+		s.SerializeValue(v);
+		REQUIRE(out == "null");
+	}
+	SECTION("-inf")
+	{
+		double v = -numeric_limits<double>::infinity();
+		s.SerializeValue(v);
+		REQUIRE(out == "null");
+	}
+
+	// Min-Max numbers
+	SECTION("min")
+	{
+		double v = numeric_limits<double>::min();
+		s.SerializeValue(v);
+		REQUIRE(out == "2.225073859e-308");
+	}
+	SECTION("-min")
+	{
+		double v = -numeric_limits<double>::min();
+		s.SerializeValue(v);
+		REQUIRE(out == "-2.225073859e-308");
+	}
+	SECTION("max")
+	{
+		double v = numeric_limits<double>::max();
+		s.SerializeValue(v);
+		REQUIRE(out == "1.797693135e+308");
+	}
+	SECTION("-max")
+	{
+		double v = -numeric_limits<double>::max();
+		s.SerializeValue(v);
+		REQUIRE(out == "-1.797693135e+308");
+	}
+	SECTION("epsilon")
+	{
+		double v = numeric_limits<double>::epsilon();
+		s.SerializeValue(v);
+		REQUIRE(out == "2.220446049e-16");
+	}
+	SECTION("-epsilon")
+	{
+		double v = -numeric_limits<double>::epsilon();
+		s.SerializeValue(v);
+		REQUIRE(out == "-2.220446049e-16");
+	}
+	SECTION("denorm_min")
+	{
+		double v = numeric_limits<double>::denorm_min();
+		s.SerializeValue(v);
+		REQUIRE(out == "4.940656458e-324");
+	}
+	SECTION("-denorm_min")
+	{
+		double v = -numeric_limits<double>::denorm_min();
+		s.SerializeValue(v);
+		REQUIRE(out == "-4.940656458e-324");
+	}
 }
