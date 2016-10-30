@@ -892,6 +892,12 @@ struct Serializer
 		*(out++) = '"';
 	}
 
+	template <typename ObjectType>
+	void SerializeValue(const ObjectType &obj)
+	{
+		obj.SerializeTo(*this);
+	}
+
 	OutputIteratorType out;
 };
 

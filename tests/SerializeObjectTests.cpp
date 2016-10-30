@@ -20,10 +20,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <cmath>
+#include <iostream>
+#include <iterator>
 #include <string>
 
-#include "Attributes.hpp"
+#include "tests/Schema1.gen.hpp"
 
-const std::string VarAttributes::JsonFieldName = "json_field_name";
-const std::string VarAttributes::OnNull = "on_null";
-// TODO error on unknown attributes
+#define CATCH_CONFIG_MAIN
+#include "third_party/catch.hpp"
+
+TEST_CASE("Serialize object simple", "[serialize,object]")
+{
+	std::string out;
+
+	Item obj;
+	obj.name = "qwe";
+
+	obj.SerializeTo(std::back_inserter(out));
+
+	REQUIRE(out == "{\"name\":\"qwe\"}");
+}
+
+TEST_CASE("Serialize object nested", "[serialize,object]")
+{
+	std::string out;
+
+	Items obj;
+	obj.i1.name = "name1";
+	obj.i2.name = "name2";
+
+	obj.SerializeTo(std::back_inserter(out));
+
+	REQUIRE(out == "{\"i1\":{\"name\":\"name1\"},\"i2\":{\"name\":\"name2\"}}");
+}
+
+TEST_CASE("Serialize object attr", "[serialize,object]")
+{
+	std::string out;
+
+	AttributeTester obj;
+	obj.attr1 = "a1";
+	obj.attr2 = "a2";
+
+	obj.SerializeTo(std::back_inserter(out));
+
+	REQUIRE(out == "{\"attr1\":\"a1\",\"attr-2\":\"a2\"}");
+}
