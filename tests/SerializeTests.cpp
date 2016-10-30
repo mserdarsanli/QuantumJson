@@ -221,3 +221,46 @@ TEST_CASE("Serialize double", "[serialize]")
 		REQUIRE(out == "-4.940656458e-324");
 	}
 }
+
+TEST_CASE("Serialize string", "[serialize]")
+{
+	string out;
+	Serializer s(std::back_inserter(out));
+
+	SECTION("empty")
+	{
+		std::string v = "";
+		s.SerializeValue(v);
+		REQUIRE(out == "\"\"");
+	}
+	SECTION("simple string")
+	{
+		std::string v = "qweqwqeweq";
+		s.SerializeValue(v);
+		REQUIRE(out == "\"qweqwqeweq\"");
+	}
+	SECTION("newline and tab")
+	{
+		std::string v = "r1c1\tr1c2\nr2c1\tr2c2\n";
+		s.SerializeValue(v);
+		REQUIRE(out == "\"r1c1\\tr1c2\\nr2c1\\tr2c2\\n\"");
+	}
+	SECTION("zero")
+	{
+		std::string v("asd\0qwe", 7);
+		s.SerializeValue(v);
+		REQUIRE(out == "\"asd\\u0000qwe\"");
+	}
+	SECTION("quote and backslash")
+	{
+		std::string v = "Quote: [\"] Backslash: [\\]";
+		s.SerializeValue(v);
+		REQUIRE(out == "\"Quote: [\\\"] Backslash: [\\\\]\"");
+	}
+	SECTION("other control chars")
+	{
+		std::string v = "\b\f\r";
+		s.SerializeValue(v);
+		REQUIRE(out == "\"\\b\\f\\r\"");
+	}
+}

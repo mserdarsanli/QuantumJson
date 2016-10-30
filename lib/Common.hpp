@@ -838,6 +838,60 @@ struct Serializer
 		}
 	}
 
+	// Input should be a valit UTF-8 string
+	void SerializeValue(const std::string &s)
+	{
+		*(out++) = '"';
+
+		for (char c : s)
+		{
+			switch (c)
+			{
+			case 0:
+				*(out++) = '\\';
+				*(out++) = 'u';
+				*(out++) = '0';
+				*(out++) = '0';
+				*(out++) = '0';
+				*(out++) = '0';
+				break;
+			case '"':
+				*(out++) = '\\';
+				*(out++) = '"';
+				break;
+			case '\\':
+				*(out++) = '\\';
+				*(out++) = '\\';
+				break;
+			case '\b':
+				*(out++) = '\\';
+				*(out++) = 'b';
+				break;
+			case '\f':
+				*(out++) = '\\';
+				*(out++) = 'f';
+				break;
+			case '\n':
+				*(out++) = '\\';
+				*(out++) = 'n';
+				break;
+			case '\r':
+				*(out++) = '\\';
+				*(out++) = 'r';
+				break;
+			case '\t':
+				*(out++) = '\\';
+				*(out++) = 't';
+				break;
+			default:
+				*(out++) = c;
+				break;
+			}
+		}
+
+		*(out++) = '"';
+	}
+
 	OutputIteratorType out;
 };
 
