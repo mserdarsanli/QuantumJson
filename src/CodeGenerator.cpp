@@ -72,7 +72,6 @@ void RenderVariableType(ostream &out, const VariableTypeDef &vt)
 
 }
 
-// TODO make another function accepting const char *
 char MergeFromJsonDeclarations[] = R"(
 	void MergeFromJson(const std::string &json)
 	{
