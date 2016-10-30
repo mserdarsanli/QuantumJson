@@ -23,6 +23,8 @@
 #ifndef QUANTUMJSON_LIB_IMPL_
 #define QUANTUMJSON_LIB_IMPL_
 
+#include <cinttypes>
+#include <cmath>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
@@ -777,6 +779,145 @@ struct Parser
 	InputIteratorType end;
 };
 
+template <typename OutputIteratorType>
+struct Serializer
+{
+	Serializer(OutputIteratorType out)
+	  : out(out)
+	{
+	}
+
+	void SerializeValue(bool b)
+	{
+		if (b)
+		{
+			*(out++) = 't';
+			*(out++) = 'r';
+			*(out++) = 'u';
+			*(out++) = 'e';
+		}
+		else
+		{
+			*(out++) = 'f';
+			*(out++) = 'a';
+			*(out++) = 'l';
+			*(out++) = 's';
+			*(out++) = 'e';
+		}
+	}
+
+	void SerializeValue(int64_t a)
+	{
+		// Enought to hold -9223372036854775807 (int64 min)
+		char buf[21];
+		sprintf(buf, "%" PRId64, a);
+
+		for (const char *it = buf; *it; ++it)
+		{
+			*(out++) = *it;
+		}
+	}
+
+	void SerializeValue(double num)
+	{
+		if (isnan(num) || isinf(num))
+		{
+			*(out++) = 'n';
+			*(out++) = 'u';
+			*(out++) = 'l';
+			*(out++) = 'l';
+			return;
+		}
+		// 10 decimal significant digits are used
+		char buf[30];
+		sprintf(buf, "%.10g", num);
+
+		for (const char *it = buf; *it; ++it)
+		{
+			*(out++) = *it;
+		}
+	}
+
+	// Input should be a valit UTF-8 string
+	void SerializeValue(const std::string &s)
+	{
+		*(out++) = '"';
+
+		for (char c : s)
+		{
+			switch (c)
+			{
+			case 0:
+				*(out++) = '\\';
+				*(out++) = 'u';
+				*(out++) = '0';
+				*(out++) = '0';
+				*(out++) = '0';
+				*(out++) = '0';
+				break;
+			case '"':
+				*(out++) = '\\';
+				*(out++) = '"';
+				break;
+			case '\\':
+				*(out++) = '\\';
+				*(out++) = '\\';
+				break;
+			case '\b':
+				*(out++) = '\\';
+				*(out++) = 'b';
+				break;
+			case '\f':
+				*(out++) = '\\';
+				*(out++) = 'f';
+				break;
+			case '\n':
+				*(out++) = '\\';
+				*(out++) = 'n';
+				break;
+			case '\r':
+				*(out++) = '\\';
+				*(out++) = 'r';
+				break;
+			case '\t':
+				*(out++) = '\\';
+				*(out++) = 't';
+				break;
+			default:
+				*(out++) = c;
+				break;
+			}
+		}
+
+		*(out++) = '"';
+	}
+
+	template <typename ObjectType>
+	void SerializeValue(const ObjectType &obj)
+	{
+		obj.SerializeTo(*this);
+	}
+
+	template <typename ArrayElemType>
+	void SerializeValue(const std::vector<ArrayElemType> &obj)
+	{
+		*(out++) = '[';
+
+		for (size_t i = 0; i < obj.size(); ++i)
+		{
+			if (i > 0)
+			{
+				*(out++) = ',';
+			}
+
+			this->SerializeValue(obj[i]);
+		}
+
+		*(out++) = ']';
+	}
+
+	OutputIteratorType out;
+};
 
 
 }  // namespace JsonDef

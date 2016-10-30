@@ -53,6 +53,28 @@ cc_test(
 )
 
 cc_test(
+	name = "serialize_tests",
+	srcs = [
+		"SerializeTests.cpp",
+	],
+	deps = [
+		"//lib:lib_impl",
+		"//third_party:catch",
+	],
+)
+
+cc_test(
+	name = "serialize_object_tests",
+	srcs = [
+		"SerializeObjectTests.cpp",
+	],
+	deps = [
+		":schema_lib",
+		"//third_party:catch",
+	],
+)
+
+cc_test(
 	name = "conformance_double",
 	srcs = [
 		"ConformanceDouble.cpp",

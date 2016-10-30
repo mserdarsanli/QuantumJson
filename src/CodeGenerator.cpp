@@ -35,9 +35,25 @@ using boost::format;
 
 struct Variable
 {
-	string jsonName;
 	string cppName;
+	string jsonName;
 	bool skipNull = false;
+
+	explicit Variable(const VariableDef &var)
+	  : cppName(var.name)
+	  , jsonName("\"" + var.name + "\"")
+	{
+		if (var.attributes.find(VarAttributes::JsonFieldName) != var.attributes.end())
+		{
+			this->jsonName = "\"" + var.attributes.at(VarAttributes::JsonFieldName) + "\"";
+		}
+
+		if (var.attributes.find(VarAttributes::OnNull) != var.attributes.end() &&
+		    var.attributes.at(VarAttributes::OnNull) == "skip")
+		{
+			this->skipNull = true;
+		}
+	}
 
 	bool operator<(const Variable &o) const
 	{
@@ -69,10 +85,32 @@ void RenderVariableType(ostream &out, const VariableTypeDef &vt)
 
 		out << " >";
 	}
-
 }
 
-// TODO make another function accepting const char *
+char SerializeToJsonDeclarations[] = R"(
+	template <typename OutputIteratorType>
+	void SerializeTo(OutputIteratorType out) const
+	{
+		QuantumJsonImpl__::Serializer<OutputIteratorType> s(out);
+		this->SerializeTo(s);
+	}
+
+	template <typename OutputIteratorType>
+	void SerializeTo(QuantumJsonImpl__::Serializer<OutputIteratorType> &s) const;
+)";
+
+format SerializeToJsonDefinitionBegin(R"(
+template <typename OutputIteratorType>
+void %1%::SerializeTo(QuantumJsonImpl__::Serializer<OutputIteratorType> &s) const
+{
+	*(s.out++) = '{';
+)");
+
+char SerializeToJsonDefinitionEnd[] = R"(
+	*(s.out++) = '}';
+}
+)";
+
 char MergeFromJsonDeclarations[] = R"(
 	void MergeFromJson(const std::string &json)
 	{
@@ -239,6 +277,7 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 
 		out << ParserExtensionMethodDeclarations;
 		out << MergeFromJsonDeclarations;
+		out << SerializeToJsonDeclarations;
 		out << "};\n";
 	}
 
@@ -248,6 +287,32 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 		GenerateParserForStructDef(out, s);
 
 		out << MergeFromJsonDefImpl % s.name % string(s.name.size(), ' ');
+
+		out << SerializeToJsonDefinitionBegin % s.name;
+
+		bool putSeparator = false;
+		for (const VariableDef &var : s.variables)
+		{
+			Variable v(var);
+
+			out << "\n";
+			out << "\t// Render field " << v.cppName << "\n";
+
+			if (putSeparator)
+			{
+				out << "\t*(++s.out) = ',';\n";
+			}
+			putSeparator = true;
+
+			for (char c : v.jsonName)
+			{
+				out << "\t*(++s.out) = '" << c << "';\n";
+			}
+			out << "\t*(++s.out) = ':';\n";
+			out << "\ts.SerializeValue(this->" << var.name << ");\n";
+		}
+
+		out << SerializeToJsonDefinitionEnd;
 	}
 }
 
@@ -380,22 +445,7 @@ void GenerateParserForStructDef(ostream &out, const StructDef &s)
 	vector<Variable> vars;
 	for (const VariableDef &var : s.variables)
 	{
-		Variable v;
-		v.cppName = var.name;
-		v.jsonName = "\"" + var.name + "\"";
-
-		if (var.attributes.find(VarAttributes::JsonFieldName) != var.attributes.end())
-		{
-			v.jsonName = "\"" + var.attributes.at(VarAttributes::JsonFieldName) + "\"";
-		}
-
-		if (var.attributes.find(VarAttributes::OnNull) != var.attributes.end() &&
-		    var.attributes.at(VarAttributes::OnNull) == "skip")
-		{
-			v.skipNull = true;
-		}
-
-		vars.push_back(v);
+		vars.push_back(Variable(var));
 	}
 	sort(vars.begin(), vars.end());
 

@@ -26,3 +26,4 @@
 
 const std::string VarAttributes::JsonFieldName = "json_field_name";
 const std::string VarAttributes::OnNull = "on_null";
+// TODO error on unknown attributes

@@ -3,6 +3,17 @@ struct Item
 	string name;
 };
 
+struct Items
+{
+	Item i1;
+	Item i2;
+};
+
+struct ItemList
+{
+	vector<Item> items;
+};
+
 struct Listing
 {
 	string kind;
@@ -12,7 +23,7 @@ struct Listing
 	string before;
 	string after;
 
-	vector<string> arrayField [[jsonFieldName("array-field")]];
+	vector<string> arrayField [[ json_field_name("array-field") ]];
 };
 
 struct FieldNameFSMTester
