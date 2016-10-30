@@ -9,6 +9,11 @@ struct Items
 	Item i2;
 };
 
+struct ItemList
+{
+	vector<Item> items;
+};
+
 struct Listing
 {
 	string kind;

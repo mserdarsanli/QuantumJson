@@ -898,6 +898,24 @@ struct Serializer
 		obj.SerializeTo(*this);
 	}
 
+	template <typename ArrayElemType>
+	void SerializeValue(const std::vector<ArrayElemType> &obj)
+	{
+		*(out++) = '[';
+
+		for (size_t i = 0; i < obj.size(); ++i)
+		{
+			if (i > 0)
+			{
+				*(out++) = ',';
+			}
+
+			this->SerializeValue(obj[i]);
+		}
+
+		*(out++) = ']';
+	}
+
 	OutputIteratorType out;
 };
 

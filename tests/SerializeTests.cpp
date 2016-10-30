@@ -264,3 +264,37 @@ TEST_CASE("Serialize string", "[serialize]")
 		REQUIRE(out == "\"\\b\\f\\r\"");
 	}
 }
+
+TEST_CASE("Serialize list", "[serialize]")
+{
+	string out;
+	Serializer s(std::back_inserter(out));
+
+	SECTION("empty")
+	{
+		vector<string> v;
+		s.SerializeValue(v);
+		REQUIRE(out == "[]");
+	}
+	SECTION("1 elem")
+	{
+		vector<string> v = { "qwe" };
+		s.SerializeValue(v);
+		REQUIRE(out == "[\"qwe\"]");
+	}
+	SECTION("2 elems")
+	{
+		vector<string> v = { "qwe", "asd" };
+		s.SerializeValue(v);
+		REQUIRE(out == "[\"qwe\",\"asd\"]");
+	}
+	SECTION("nested")
+	{
+		vector<vector<vector<string>>> v( 3, vector<vector<string>>( 2, vector<string>() ));
+		v[1][0].push_back("a");
+		v[2][1].push_back("b");
+		v[2][1].push_back("c");
+		s.SerializeValue(v);
+		REQUIRE(out == "[[[],[]],[[\"a\"],[]],[[],[\"b\",\"c\"]]]");
+	}
+}

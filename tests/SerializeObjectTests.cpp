@@ -67,3 +67,24 @@ TEST_CASE("Serialize object attr", "[serialize,object]")
 
 	REQUIRE(out == "{\"attr1\":\"a1\",\"attr-2\":\"a2\"}");
 }
+
+TEST_CASE("Serialize object in list", "[serialize,object]")
+{
+	std::string out;
+
+	ItemList obj;
+	{
+		Item i;
+		i.name = "i1";
+		obj.items.push_back(i);
+	}
+	{
+		Item i;
+		i.name = "i2";
+		obj.items.push_back(i);
+	}
+
+	obj.SerializeTo(std::back_inserter(out));
+
+	REQUIRE(out == "{\"items\":[{\"name\":\"i1\"},{\"name\":\"i2\"}]}");
+}
