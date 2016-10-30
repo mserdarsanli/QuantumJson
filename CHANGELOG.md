@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## [0.2.0] - 2016-10-30
 
 ### Added
 
@@ -18,3 +18,4 @@ Initial Varsion
 
 
 [0.1.0]: https://github.com/mserdarsanli/QuantumJson/releases/tag/v0.1.0
+[0.2.0]: https://github.com/mserdarsanli/QuantumJson/releases/tag/v0.2.0
