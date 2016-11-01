@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv='content-type' value='text/html;charset=utf8'>
+  <meta name='generator' value='Ronn/v0.7.3 (http://github.com/rtomayko/ronn/tree/0.7.3)'>
+  <title>jc(1) - compile json schema to C++ json parser/serializer</title>
+  <style type='text/css' media='all'>
+  /* style: man */
+  body#manpage {margin:0}
+  .mp {max-width:100ex;padding:0 9ex 1ex 4ex}
+  .mp p,.mp pre,.mp ul,.mp ol,.mp dl {margin:0 0 20px 0}
+  .mp h2 {margin:10px 0 0 0}
+  .mp > p,.mp > pre,.mp > ul,.mp > ol,.mp > dl {margin-left:8ex}
+  .mp h3 {margin:0 0 0 4ex}
+  .mp dt {margin:0;clear:left}
+  .mp dt.flush {float:left;width:8ex}
+  .mp dd {margin:0 0 0 9ex}
+  .mp h1,.mp h2,.mp h3,.mp h4 {clear:left}
+  .mp pre {margin-bottom:20px}
+  .mp pre+h2,.mp pre+h3 {margin-top:22px}
+  .mp h2+pre,.mp h3+pre {margin-top:5px}
+  .mp img {display:block;margin:auto}
+  .mp h1.man-title {display:none}
+  .mp,.mp code,.mp pre,.mp tt,.mp kbd,.mp samp,.mp h3,.mp h4 {font-family:monospace;font-size:14px;line-height:1.42857142857143}
+  .mp h2 {font-size:16px;line-height:1.25}
+  .mp h1 {font-size:20px;line-height:2}
+  .mp {text-align:justify;background:#fff}
+  .mp,.mp code,.mp pre,.mp pre code,.mp tt,.mp kbd,.mp samp {color:#131211}
+  .mp h1,.mp h2,.mp h3,.mp h4 {color:#030201}
+  .mp u {text-decoration:underline}
+  .mp code,.mp strong,.mp b {font-weight:bold;color:#131211}
+  .mp em,.mp var {font-style:italic;color:#232221;text-decoration:none}
+  .mp a,.mp a:link,.mp a:hover,.mp a code,.mp a pre,.mp a tt,.mp a kbd,.mp a samp {color:#0000ff}
+  .mp b.man-ref {font-weight:normal;color:#434241}
+  .mp pre {padding:0 4ex}
+  .mp pre code {font-weight:normal;color:#434241}
+  .mp h2+pre,h3+pre {padding-left:0}
+  ol.man-decor,ol.man-decor li {margin:3px 0 10px 0;padding:0;float:left;width:33%;list-style-type:none;text-transform:uppercase;color:#999;letter-spacing:1px}
+  ol.man-decor {width:100%}
+  ol.man-decor li.tl {text-align:left}
+  ol.man-decor li.tc {text-align:center;letter-spacing:4px}
+  ol.man-decor li.tr {text-align:right;float:right}
+  </style>
+</head>
+<!--
+  The following styles are deprecated and will be removed at some point:
+  div#man, div#man ol.man, div#man ol.head, div#man ol.man.
+
+  The .man-page, .man-decor, .man-head, .man-foot, .man-title, and
+  .man-navigation should be used instead.
+-->
+<body id='manpage'>
+  <div class='mp' id='man'>
+
+  <div class='man-navigation' style='display:none'>
+    <a href="#NAME">NAME</a>
+    <a href="#SYNOPSIS">SYNOPSIS</a>
+    <a href="#DESCRIPTION">DESCRIPTION</a>
+    <a href="#OPTIONS">OPTIONS</a>
+    <a href="#SCHEMA-LANGUAGE">SCHEMA LANGUAGE</a>
+    <a href="#API">API</a>
+    <a href="#AUTHOR">AUTHOR</a>
+    <a href="#REPORTING-BUGS">REPORTING BUGS</a>
+    <a href="#BUGS">BUGS</a>
+    <a href="#COPYRIGHT">COPYRIGHT</a>
+    <a href="#LICENSE">LICENSE</a>
+  </div>
+
+  <ol class='man-decor man-head man head'>
+    <li class='tl'>jc(1)</li>
+    <li class='tc'></li>
+    <li class='tr'>jc(1)</li>
+  </ol>
+
+  <h2 id="NAME">NAME</h2>
+<p class="man-name">
+  <code>jc</code> - <span class="man-whatis">compile json schema to C++ json parser/serializer</span>
+</p>
+
+<h2 id="SYNOPSIS">SYNOPSIS</h2>
+
+<p><code>jc</code> <code>--in</code> <var>file</var> <code>--out</code> <var>file</var></p>
+
+<h2 id="DESCRIPTION">DESCRIPTION</h2>
+
+<p><code>QuantumJson</code> compiles JSON schema definition into C++ header only library.
+The generated file has parsing/serialization logic for structures defined
+in the schema file.</p>
+
+<p>More details are given in <a href="#SCHEMA-LANGUAGE" title="SCHEMA LANGUAGE" data-bare-link="true">SCHEMA LANGUAGE</a> and <a href="#API" title="API" data-bare-link="true">API</a> sections below.</p>
+
+<h2 id="OPTIONS">OPTIONS</h2>
+
+<dl>
+<dt class="flush"><code>--in</code></dt><dd><p>Input file name.</p></dd>
+<dt class="flush"><code>--out</code></dt><dd><p>Output file name.</p></dd>
+</dl>
+
+
+<h2 id="SCHEMA-LANGUAGE">SCHEMA LANGUAGE</h2>
+
+<p>Schema language uses <code>C++</code> like syntax, which is useful for syntax highlighting
+etc.</p>
+
+<p>Following is a valid QuantumJson schema file:</p>
+
+<pre><code>// JSON object of type Vector3
+struct Point3
+{
+    // has 3 attributes named x,y,z of JSON number type
+    double x;
+    double y;
+    double z;
+};
+
+// JSON object of type Geometry
+struct Geometry
+{
+    // has string attribute named obj_name
+    string obj_name;
+
+    // has attribute named points which should be a JSON list of Point3
+    // objects
+    vector&lt; Point3 > points;
+}
+</code></pre>
+
+<p>Since this is not a C++ code, but rather a schema definition,
+<code>#include</code> or <code>using namespace std;</code> statements are not used.</p>
+
+<p>When compiled, output will contain struct <code>Point3</code> and <code>Geometry</code> definitions,
+along with their parsing/serialization logic. Only the generated header file
+is needed to be included.</p>
+
+<p>Following is an example usage:</p>
+
+<pre><code>std::string input = "&lt;some valid json>";
+Geometry g;
+g.MergeFromJson(input);
+
+std::cout &lt;&lt; g.name &lt;&lt; "\n";
+std::cout &lt;&lt; g.points[0].x &lt;&lt; "\n";
+</code></pre>
+
+<p>The call will throw an exception if the input JSON is invalid or its structure
+is conflicting with the schema definition. Although unknown fields in input
+is not considered a conflict and are silently ignored for backwards compatibility.</p>
+
+<p>As an example, the code will be able to parse following JSON:</p>
+
+<pre><code>{
+    "obj_name": "Name1",
+    "points": [
+        {
+            "x": 1.2,
+            "y": 2.3,
+            "z": 3.4
+        },
+        {
+            "x": 3e10,
+            "y": -123.123e77,
+            "z": -0
+        }
+    ]
+}
+</code></pre>
+
+<h2 id="API">API</h2>
+
+<p>Following is a synopsis of the generated API. Note that API might change.</p>
+
+<h3 id="MEMBER-FUNCTIONS">MEMBER FUNCTIONS</h3>
+
+<pre><code>void MergeFromJson(const std::string &amp;in);
+
+template &lt;typename InputIteratorType>
+void MergeFromJson(InputIteratorType begin, InputIteratorType end);
+
+template &lt;typename OutputIteratorType>
+void MergeFromJson(OutputIteratorType out);
+</code></pre>
+
+<h2 id="AUTHOR">AUTHOR</h2>
+
+<p>Written by Mustafa Serdar Sanli.</p>
+
+<h2 id="REPORTING-BUGS">REPORTING BUGS</h2>
+
+<p>Issue tracker in Github can be used to report bugs:
+<a href="https://github.com/mserdarsanli/QuantumJson" data-bare-link="true">https://github.com/mserdarsanli/QuantumJson</a></p>
+
+<h2 id="BUGS">BUGS</h2>
+
+<p>QuantumJson is still in experimental state, bugs might be common. You should
+not use it on production systems.</p>
+
+<h2 id="COPYRIGHT">COPYRIGHT</h2>
+
+<p>QuantumJson is Copyright (C) 2016 Mustafa Serdar Sanli
+&lt;mserdarsanli@gmail.com&gt;</p>
+
+<h2 id="LICENSE">LICENSE</h2>
+
+<p>The MIT License.</p>
+
+
+  <ol class='man-decor man-foot man foot'>
+    <li class='tl'></li>
+    <li class='tc'>November 2016</li>
+    <li class='tr'>jc(1)</li>
+  </ol>
+
+  </div>
+</body>
+</html>
