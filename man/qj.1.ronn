@@ -1,0 +1,125 @@
+jc(1) -- compile json schema to C++ json parser/serializer
+==========================================================
+
+## SYNOPSIS
+
+`jc` `--in` <file> `--out` <file>
+
+## DESCRIPTION
+
+`QuantumJson` compiles JSON schema definition into C++ header only library.
+The generated file has parsing/serialization logic for structures defined
+in the schema file.
+
+More details are given in [SCHEMA LANGUAGE][] and [API][] sections below.
+
+## OPTIONS
+
+  * `--in`:
+    Input file name.
+
+  * `--out`:
+    Output file name.
+
+## SCHEMA LANGUAGE
+
+Schema language uses `C++` like syntax, which is useful for syntax highlighting
+etc.
+
+
+Following is a valid QuantumJson schema file:
+
+    // JSON object of type Vector3
+    struct Point3
+    {
+        // has 3 attributes named x,y,z of JSON number type
+        double x;
+        double y;
+        double z;
+    };
+
+    // JSON object of type Geometry
+    struct Geometry
+    {
+        // has string attribute named obj_name
+        string obj_name;
+
+        // has attribute named points which should be a JSON list of Point3
+        // objects
+        vector< Point3 > points;
+    }
+
+Since this is not a C++ code, but rather a schema definition,
+`#include` or `using namespace std;` statements are not used.
+
+When compiled, output will contain struct `Point3` and `Geometry` definitions,
+along with their parsing/serialization logic. Only the generated header file
+is needed to be included.
+
+Following is an example usage:
+
+    std::string input = "<some valid json>";
+    Geometry g;
+    g.MergeFromJson(input);
+
+    std::cout << g.name << "\n";
+    std::cout << g.points[0].x << "\n";
+
+The call will throw an exception if the input JSON is invalid or its structure
+is conflicting with the schema definition. Although unknown fields in input
+is not considered a conflict and are silently ignored for backwards compatibility.
+
+As an example, the code will be able to parse following JSON:
+
+    {
+        "obj_name": "Name1",
+        "points": [
+            {
+                "x": 1.2,
+                "y": 2.3,
+                "z": 3.4
+            },
+            {
+                "x": 3e10,
+                "y": -123.123e77,
+                "z": -0
+            }
+        ]
+    }
+
+## API
+
+Following is a synopsis of the generated API. Note that API might change.
+
+### MEMBER FUNCTIONS
+
+    void MergeFromJson(const std::string &in);
+
+    template <typename InputIteratorType>
+    void MergeFromJson(InputIteratorType begin, InputIteratorType end);
+
+    template <typename OutputIteratorType>
+    void MergeFromJson(OutputIteratorType out);
+
+## AUTHOR
+
+Written by Mustafa Serdar Sanli.
+
+## REPORTING BUGS
+
+Issue tracker in Github can be used to report bugs:
+<https://github.com/mserdarsanli/QuantumJson>
+
+## BUGS
+
+QuantumJson is still in experimental state, bugs might be common. You should
+not use it on production systems.
+
+## COPYRIGHT
+
+QuantumJson is Copyright (C) 2016 Mustafa Serdar Sanli
+&lt;mserdarsanli@gmail.com&gt;
+
+## LICENSE
+
+The MIT License.
