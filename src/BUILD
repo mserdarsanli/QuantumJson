@@ -20,13 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cc_binary(
-	name = "jc",
+cc_library(
+	name = "src_lib",
 	srcs = [
 		"Attributes.cpp",
 		"CodeGenerator.cpp",
 		"JsonParserLibrary.cpp",
-		"Main.cpp",
 		"Parser.cpp",
 		"Tokenizer.cpp",
 
@@ -35,12 +34,21 @@ cc_binary(
 		"JsonParserLibrary.hpp",
 		"Parser.hpp",
 		"Tokenizer.hpp",
+	],
+	deps = [
+		"//lib",
+	],
+)
 
+cc_binary(
+	name = "jc",
+	srcs = [
+		"Main.cpp",
 		"CommandLineFlags.cpp",
 		"CommandLineFlags.hpp",
 	],
 	deps = [
-		"//lib",
+		":src_lib",
 	],
 	visibility = [
 		"//visibility:public",
