@@ -9,6 +9,8 @@
 ### Fixed
 
 - Some unhandled I/O errors on code generator
+- Improved error messages on parser
+- Improved attribute support
 
 ## [0.2.0] - 2016-10-30
 
