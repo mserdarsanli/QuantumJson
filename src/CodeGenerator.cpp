@@ -150,12 +150,7 @@ struct %1%
 
 )");
 
-// Methods that are used by parser
-// These are strictly implementation detail, so header output does not have them.
-// TODO verify adding functions in struct only in source file does not affect
-// ABI compatibility.
-// String being parsed should be null terminated, this prevents extra checks for
-// it == end, since when it == end, nothing will be matched. TODO improve this.
+// Methods that are called by parser
 char ParserExtensionMethodDeclarations[] = R"(
 	// Function that parses one field only
 	// If the object is as follows:
