@@ -24,6 +24,34 @@
 
 #include "Attributes.hpp"
 
-const std::string VarAttributes::JsonFieldName = "json_field_name";
-const std::string VarAttributes::OnNull = "on_null";
-// TODO error on unknown attributes
+const AttributeInfo VarAttributes::JsonFieldName = {
+    "json_field_name",
+    1,
+};
+const AttributeInfo VarAttributes::OnNull = {
+    "on_null",
+    1,
+};
+const AttributeInfo VarAttributes::Deprecated = {
+    "deprecated",
+    0,
+};
+
+const AttributeInfo* GetKnownAttribute(const std::string &attr_name)
+{
+	if (attr_name == "json_field_name") return &VarAttributes::JsonFieldName;
+	if (attr_name == "on_null")         return &VarAttributes::OnNull;
+	if (attr_name == "deprecated")      return &VarAttributes::Deprecated;
+
+	// For testing multi arg attributes only
+	if (attr_name == "three_arg_attr")
+	{
+		static AttributeInfo ThreeArgAttr = {
+		    "three_arg_attr",
+		    3,
+		};
+		return &ThreeArgAttr;
+	}
+
+	return nullptr;
+}

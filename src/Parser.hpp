@@ -46,12 +46,18 @@ struct VariableTypeDef
 	}
 };
 
+struct AttributeDef
+{
+	std::string name;
+	std::vector<std::string> args;
+};
+
 struct VariableDef
 {
 	VariableTypeDef type;
 	std::string name;
 
-	std::map< std::string, std::string > attributes;
+	std::map< std::string, AttributeDef > attributes;
 };
 
 struct StructDef

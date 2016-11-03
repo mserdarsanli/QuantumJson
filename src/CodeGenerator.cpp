@@ -43,13 +43,13 @@ struct Variable
 	  : cppName(var.name)
 	  , jsonName("\"" + var.name + "\"")
 	{
-		if (var.attributes.find(VarAttributes::JsonFieldName) != var.attributes.end())
+		if (var.attributes.find(VarAttributes::JsonFieldName.name) != var.attributes.end())
 		{
-			this->jsonName = "\"" + var.attributes.at(VarAttributes::JsonFieldName) + "\"";
+			this->jsonName = "\"" + var.attributes.at(VarAttributes::JsonFieldName.name).args[0] + "\"";
 		}
 
-		if (var.attributes.find(VarAttributes::OnNull) != var.attributes.end() &&
-		    var.attributes.at(VarAttributes::OnNull) == "skip")
+		if (var.attributes.find(VarAttributes::OnNull.name) != var.attributes.end() &&
+		    var.attributes.at(VarAttributes::OnNull.name).args[0] == "skip")
 		{
 			this->skipNull = true;
 		}

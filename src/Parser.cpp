@@ -22,6 +22,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <stdexcept>
 
 #include "Attributes.hpp"
 #include "Parser.hpp"
@@ -89,7 +90,7 @@ TokenIt ParseVariableType(TokenIt it, TokenIt end, VariableTypeDef* vtOut)
 
 
 // [[ attr1("val1"), attr2("val2") ]]
-TokenIt ParseAttributes(TokenIt it, TokenIt end, map< string, string > *attributes)
+TokenIt ParseAttributes(TokenIt it, TokenIt end, map< string, AttributeDef > *attributes)
 {
 	attributes->clear();
 	AssertToken(it, Token::Type::AttributeOpen);
@@ -109,25 +110,51 @@ TokenIt ParseAttributes(TokenIt it, TokenIt end, map< string, string > *attribut
 			++it;
 		}
 
-		string attrName, attrVal;
+		AttributeDef attr;
 		AssertToken(it, Token::Type::Name);
-		attrName = it->strValue;
+		attr.name = it->strValue;
 		++it;
 
-		// All attributes have values
-		// TODO are unvalued attributes needed?
-		AssertToken(it, Token::Type::ParenthesesOpen);
-		++it;
+		// Check if the attribute is known
+		const AttributeInfo *knownAttribute = GetKnownAttribute(attr.name);
+		if (!knownAttribute)
+		{
+			throw runtime_error("Unknown attribute: [" + attr.name + "]");
+		}
+		if (attributes->find(attr.name) != attributes->end())
+		{
+			throw runtime_error("Duplicate attribute: [" + attr.name + "]");
+		}
 
-		AssertToken(it, Token::Type::String);
-		attrVal = it->strValue;
-		++it;
+		if (it->type == Token::Type::ParenthesesOpen)
+		{
+			++it;
 
-		// TODO check key collisions?
-		(*attributes)[attrName] = attrVal;
+			AssertToken(it, Token::Type::String);
+			string arg = it->strValue;
+			++it;
+			attr.args.push_back(arg);
 
-		AssertToken(it, Token::Type::ParenthesesClose);
-		++it;
+			while (it->type == Token::Type::Comma)
+			{
+				++it;
+
+				AssertToken(it, Token::Type::String);
+				string arg = it->strValue;
+				++it;
+				attr.args.push_back(arg);
+			}
+
+			AssertToken(it, Token::Type::ParenthesesClose);
+			++it;
+		}
+
+		if (attr.args.size() != knownAttribute->arg_count)
+		{
+			throw runtime_error("Unexpected number of args for attribute: [" + attr.name + "]");
+		}
+
+		(*attributes)[attr.name] = attr;
 	}
 
 	AssertToken(it, Token::Type::AttributeClose);
