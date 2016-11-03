@@ -45,11 +45,11 @@ struct Variable
 	{
 		if (var.attributes.find(VarAttributes::JsonFieldName.name) != var.attributes.end())
 		{
-			this->jsonName = "\"" + var.attributes.at(VarAttributes::JsonFieldName.name) + "\"";
+			this->jsonName = "\"" + var.attributes.at(VarAttributes::JsonFieldName.name).args[0] + "\"";
 		}
 
 		if (var.attributes.find(VarAttributes::OnNull.name) != var.attributes.end() &&
-		    var.attributes.at(VarAttributes::OnNull.name) == "skip")
+		    var.attributes.at(VarAttributes::OnNull.name).args[0] == "skip")
 		{
 			this->skipNull = true;
 		}

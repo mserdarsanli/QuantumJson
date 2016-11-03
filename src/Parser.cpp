@@ -90,7 +90,7 @@ TokenIt ParseVariableType(TokenIt it, TokenIt end, VariableTypeDef* vtOut)
 
 
 // [[ attr1("val1"), attr2("val2") ]]
-TokenIt ParseAttributes(TokenIt it, TokenIt end, map< string, string > *attributes)
+TokenIt ParseAttributes(TokenIt it, TokenIt end, map< string, AttributeDef > *attributes)
 {
 	attributes->clear();
 	AssertToken(it, Token::Type::AttributeOpen);
@@ -110,35 +110,42 @@ TokenIt ParseAttributes(TokenIt it, TokenIt end, map< string, string > *attribut
 			++it;
 		}
 
-		string attrName, attrVal;
+		AttributeDef attr;
 		AssertToken(it, Token::Type::Name);
-		attrName = it->strValue;
+		attr.name = it->strValue;
 		++it;
 
 		// Check if the attribute is known
-		if (!GetKnownAttribute(attrName))
+		const AttributeInfo *knownAttribute = GetKnownAttribute(attr.name);
+		if (!knownAttribute)
 		{
-			throw runtime_error("Unknown attribute: [" + attrName + "]");
+			throw runtime_error("Unknown attribute: [" + attr.name + "]");
+		}
+		if (attributes->find(attr.name) != attributes->end())
+		{
+			throw runtime_error("Duplicate attribute: [" + attr.name + "]");
 		}
 
-		// All attributes have values
-		// TODO are unvalued attributes needed?
-		AssertToken(it, Token::Type::ParenthesesOpen);
-		++it;
-
-		AssertToken(it, Token::Type::String);
-		attrVal = it->strValue;
-		++it;
-
-		if (attributes->find(attrName) != attributes->end())
+		if (it->type == Token::Type::ParenthesesOpen)
 		{
-			throw runtime_error("Duplicate attribute: [" + attrName + "]");
+			++it;
+
+			AssertToken(it, Token::Type::String);
+			string arg = it->strValue;
+			++it;
+
+			attr.args.push_back(arg);
+
+			AssertToken(it, Token::Type::ParenthesesClose);
+			++it;
 		}
 
-		(*attributes)[attrName] = attrVal;
+		if (attr.args.size() != knownAttribute->arg_count)
+		{
+			throw runtime_error("Unexpected number of args for attribute: [" + attr.name + "]");
+		}
 
-		AssertToken(it, Token::Type::ParenthesesClose);
-		++it;
+		(*attributes)[attr.name] = attr;
 	}
 
 	AssertToken(it, Token::Type::AttributeClose);

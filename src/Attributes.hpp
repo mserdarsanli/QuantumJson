@@ -28,7 +28,7 @@
 struct AttributeInfo
 {
 	std::string name;
-	int parameter_count;
+	size_t arg_count;
 	// Parameter types are not supported now
 };
 
@@ -37,6 +37,7 @@ class VarAttributes
 public:
 	static const AttributeInfo JsonFieldName;
 	static const AttributeInfo OnNull;
+	static const AttributeInfo Deprecated;
 };
 
 const AttributeInfo* GetKnownAttribute(const std::string &attr_name);

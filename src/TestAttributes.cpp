@@ -52,6 +52,39 @@ TEST_CASE( "Duplicate attribute should be an error" )
 	REQUIRE_THROWS_WITH( Parse(Tokenize(input)), "Duplicate attribute: [on_null]" );
 }
 
-// TODO add test for attribute with no value
+TEST_CASE( "Attribute with no args gets parsed correctly" )
+{
+	string input = R"(
+	    struct Test
+	    {
+	        int x [[ deprecated, on_null("qwe") ]];
+	    };
+	)";
+
+	ParsedFile f = Parse(Tokenize(input));
+
+	const auto &varX = f.structs[0].variables[0];
+	REQUIRE(varX.type.typeName == "int");
+	REQUIRE(varX.name == "x");
+
+	REQUIRE(varX.attributes.find("deprecated") != varX.attributes.end());
+	REQUIRE(varX.attributes.at("deprecated").args.size() == 0);
+
+	REQUIRE(varX.attributes.find("on_null") != varX.attributes.end());
+	REQUIRE(varX.attributes.at("on_null").args.size() == 1);
+}
+
+TEST_CASE( "Attribute with incorect number of args should be an error" )
+{
+	string input = R"(
+	    struct Test
+	    {
+	        int x [[ on_null ]];
+	    };
+	)";
+
+	REQUIRE_THROWS_WITH( Parse(Tokenize(input)), "Unexpected number of args for attribute: [on_null]" );
+}
+
 // TODO add test for attribute with multiple values
 // TODO add test for class attribute

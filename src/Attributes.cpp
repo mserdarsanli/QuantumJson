@@ -32,10 +32,15 @@ const AttributeInfo VarAttributes::OnNull = {
     "on_null",
     1,
 };
+const AttributeInfo VarAttributes::Deprecated = {
+    "deprecated",
+    0,
+};
 
 const AttributeInfo* GetKnownAttribute(const std::string &attr_name)
 {
 	if (attr_name == "json_field_name") return &VarAttributes::JsonFieldName;
 	if (attr_name == "on_null")         return &VarAttributes::OnNull;
+	if (attr_name == "deprecated")      return &VarAttributes::Deprecated;
 	return nullptr;
 }
