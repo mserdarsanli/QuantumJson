@@ -68,3 +68,14 @@ genrule(
 	    --c-extension=cpp --header-extension=hpp \
 	    --file-name="CommandLineFlags"  --output-dir="$(@D)" """,
 )
+
+cc_test(
+	name = "test_attributes",
+	srcs = [
+		"TestAttributes.cpp",
+	],
+	deps = [
+		":src_lib",
+		"//third_party:catch",
+	],
+)
