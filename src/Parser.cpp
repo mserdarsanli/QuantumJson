@@ -133,8 +133,17 @@ TokenIt ParseAttributes(TokenIt it, TokenIt end, map< string, AttributeDef > *at
 			AssertToken(it, Token::Type::String);
 			string arg = it->strValue;
 			++it;
-
 			attr.args.push_back(arg);
+
+			while (it->type == Token::Type::Comma)
+			{
+				++it;
+
+				AssertToken(it, Token::Type::String);
+				string arg = it->strValue;
+				++it;
+				attr.args.push_back(arg);
+			}
 
 			AssertToken(it, Token::Type::ParenthesesClose);
 			++it;

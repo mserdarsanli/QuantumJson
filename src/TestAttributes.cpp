@@ -72,6 +72,29 @@ TEST_CASE( "Attribute with no args gets parsed correctly" )
 
 	REQUIRE(varX.attributes.find("on_null") != varX.attributes.end());
 	REQUIRE(varX.attributes.at("on_null").args.size() == 1);
+	REQUIRE(varX.attributes.at("on_null").args[0] == "qwe");
+}
+
+TEST_CASE( "Attribute with multiple args gets parsed correctly" )
+{
+	string input = R"(
+	    struct Test
+	    {
+	        int x [[ three_arg_attr("a1", "b2", "c3") ]];
+	    };
+	)";
+
+	ParsedFile f = Parse(Tokenize(input));
+
+	const auto &varX = f.structs[0].variables[0];
+	REQUIRE(varX.type.typeName == "int");
+	REQUIRE(varX.name == "x");
+
+	REQUIRE(varX.attributes.find("three_arg_attr") != varX.attributes.end());
+	REQUIRE(varX.attributes.at("three_arg_attr").args.size() == 3);
+	REQUIRE(varX.attributes.at("three_arg_attr").args[0] == "a1");
+	REQUIRE(varX.attributes.at("three_arg_attr").args[1] == "b2");
+	REQUIRE(varX.attributes.at("three_arg_attr").args[2] == "c3");
 }
 
 TEST_CASE( "Attribute with incorect number of args should be an error" )
@@ -86,5 +109,4 @@ TEST_CASE( "Attribute with incorect number of args should be an error" )
 	REQUIRE_THROWS_WITH( Parse(Tokenize(input)), "Unexpected number of args for attribute: [on_null]" );
 }
 
-// TODO add test for attribute with multiple values
 // TODO add test for class attribute

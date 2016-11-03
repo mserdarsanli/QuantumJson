@@ -42,5 +42,16 @@ const AttributeInfo* GetKnownAttribute(const std::string &attr_name)
 	if (attr_name == "json_field_name") return &VarAttributes::JsonFieldName;
 	if (attr_name == "on_null")         return &VarAttributes::OnNull;
 	if (attr_name == "deprecated")      return &VarAttributes::Deprecated;
+
+	// For testing multi arg attributes only
+	if (attr_name == "three_arg_attr")
+	{
+		static AttributeInfo ThreeArgAttr = {
+		    "three_arg_attr",
+		    3,
+		};
+		return &ThreeArgAttr;
+	}
+
 	return nullptr;
 }
