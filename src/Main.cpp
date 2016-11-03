@@ -46,18 +46,34 @@ int main(int argc, char* argv[])
 	ifstream iSource(args.in_arg);
 	if (!iSource.is_open())
 	{
-		// TODO untested
-		cerr << "Unable to open file " << args.in_arg << "\n";
+		cerr << "Unable to open input file " << args.in_arg << "\n";
 		return 1;
 	}
 	string input{istreambuf_iterator<char>(iSource),
 	             istreambuf_iterator<char>()};
+	if (iSource.bad())
+	{
+		cerr << "Read error on file " << args.in_arg << "\n";
+		return 1;
+	}
 
 	ParsedFile f = Parse(Tokenize(input));
 
 	ofstream oHeader(args.out_arg);
+	if (!oHeader.is_open())
+	{
+		cerr << "Unable to open output file " << args.out_arg << "\n";
+		return 1;
+	}
 
 	GenerateHeaderForFile(oHeader, f);
+
+	oHeader.flush();
+	if (oHeader.bad())
+	{
+		cerr << "Write error on file " << args.out_arg << "\n";
+		return 1;
+	}
 
 	return 0;
 }
