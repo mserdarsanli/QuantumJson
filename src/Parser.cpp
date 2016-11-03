@@ -117,7 +117,9 @@ TokenIt ParseAttributes(TokenIt it, TokenIt end, map< string, string > *attribut
 
 		// Check if the attribute is known
 		if (!GetKnownAttribute(attrName))
+		{
 			throw runtime_error("Unknown attribute: [" + attrName + "]");
+		}
 
 		// All attributes have values
 		// TODO are unvalued attributes needed?
@@ -128,7 +130,11 @@ TokenIt ParseAttributes(TokenIt it, TokenIt end, map< string, string > *attribut
 		attrVal = it->strValue;
 		++it;
 
-		// TODO check key collisions?
+		if (attributes->find(attrName) != attributes->end())
+		{
+			throw runtime_error("Duplicate attribute: [" + attrName + "]");
+		}
+
 		(*attributes)[attrName] = attrVal;
 
 		AssertToken(it, Token::Type::ParenthesesClose);

@@ -41,7 +41,17 @@ TEST_CASE( "Unknown attribute should be an error" )
 	REQUIRE_THROWS_WITH( Parse(Tokenize(input)), "Unknown attribute: [attr_qwe]" );
 }
 
-// TODO add test for conflicting attributes
+TEST_CASE( "Duplicate attribute should be an error" )
+{
+	string input = R"(
+	    struct Test
+	    {
+	        int x [[ on_null("smth"), json_field_name("q"), on_null("smth_else")]];
+	    };
+	)";
+	REQUIRE_THROWS_WITH( Parse(Tokenize(input)), "Duplicate attribute: [on_null]" );
+}
+
 // TODO add test for attribute with no value
 // TODO add test for attribute with multiple values
 // TODO add test for class attribute
