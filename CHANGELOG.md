@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Added
+
+- Manual page for documentation
+
 ## [0.2.0] - 2016-10-30
 
 ### Added
