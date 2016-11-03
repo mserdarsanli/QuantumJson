@@ -6,6 +6,10 @@
 
 - Manual page for documentation
 
+### Fixed
+
+- Some unhandled I/O errors on code generator
+
 ## [0.2.0] - 2016-10-30
 
 ### Added
