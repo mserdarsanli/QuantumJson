@@ -35,10 +35,10 @@ TEST_CASE( "Unknown attribute should be an error" )
 	string input = R"(
 	    struct Test
 	    {
-	        int x [[ unknown_field_attribute("smth") ]];
+	        int x [[ attr_qwe("smth") ]];
 	    };
 	)";
-	REQUIRE_THROWS_WITH( Parse(Tokenize(input)), "Unknown attribute" );
+	REQUIRE_THROWS_WITH( Parse(Tokenize(input)), "Unknown attribute: [attr_qwe]" );
 }
 
 // TODO add test for conflicting attributes

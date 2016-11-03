@@ -22,6 +22,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <stdexcept>
 
 #include "Attributes.hpp"
 #include "Parser.hpp"
@@ -113,6 +114,10 @@ TokenIt ParseAttributes(TokenIt it, TokenIt end, map< string, string > *attribut
 		AssertToken(it, Token::Type::Name);
 		attrName = it->strValue;
 		++it;
+
+		// Check if the attribute is known
+		if (!GetKnownAttribute(attrName))
+			throw runtime_error("Unknown attribute: [" + attrName + "]");
 
 		// All attributes have values
 		// TODO are unvalued attributes needed?

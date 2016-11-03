@@ -22,11 +22,21 @@
 
 #pragma once
 
+#include <map>
 #include <string>
+
+struct AttributeInfo
+{
+	std::string name;
+	int parameter_count;
+	// Parameter types are not supported now
+};
 
 class VarAttributes
 {
 public:
-	static const std::string JsonFieldName;
-	static const std::string OnNull;
+	static const AttributeInfo JsonFieldName;
+	static const AttributeInfo OnNull;
 };
+
+const AttributeInfo* GetKnownAttribute(const std::string &attr_name);
