@@ -298,3 +298,40 @@ TEST_CASE("Serialize list", "[serialize]")
 		REQUIRE(out == "[[[],[]],[[\"a\"],[]],[[],[\"b\",\"c\"]]]");
 	}
 }
+
+TEST_CASE("Serialize map")
+{
+	string out;
+	Serializer s(std::back_inserter(out));
+
+	SECTION("empty")
+	{
+		map<string,string> v;
+		s.SerializeValue(v);
+		REQUIRE(out == "{}");
+	}
+	SECTION("1 elem")
+	{
+		map<string, string> v = { { "k", "v" } };
+		s.SerializeValue(v);
+		REQUIRE(out == "{\"k\":\"v\"}");
+	}
+	SECTION("2 elems")
+	{
+		map<string, string> v = { { "k1", "v1" }, { "k2", "v2" } };
+		s.SerializeValue(v);
+		REQUIRE(out == "{\"k1\":\"v1\",\"k2\":\"v2\"}");
+	}
+	SECTION("map of lists")
+	{
+		map<string, vector<string>> v = { { "k1", {} }, { "k2", {"v1", "v2"} } };
+		s.SerializeValue(v);
+		REQUIRE(out == "{\"k1\":[],\"k2\":[\"v1\",\"v2\"]}");
+	}
+	SECTION("nested")
+	{
+		map<string, map<string, string>> v = { { "k1", {} }, { "k2", { {"k3", "v3"} } } };
+		s.SerializeValue(v);
+		REQUIRE(out == "{\"k1\":{},\"k2\":{\"k3\":\"v3\"}}");
+	}
+}

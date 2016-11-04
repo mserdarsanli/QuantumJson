@@ -954,6 +954,28 @@ struct Serializer
 		*(out++) = ']';
 	}
 
+	template <typename MapElemType>
+	void SerializeValue(const std::map<std::string, MapElemType> &obj)
+	{
+		*(out++) = '{';
+
+		bool firstEntry = true;
+		for (auto it : obj)
+		{
+			if (!firstEntry)
+			{
+				*(out++) = ',';
+			}
+			firstEntry = false;
+
+			this->SerializeValue(it.first);
+			*(out++) = ':';
+			this->SerializeValue(it.second);
+		}
+
+		*(out++) = '}';
+	}
+
 	OutputIteratorType out;
 };
 
