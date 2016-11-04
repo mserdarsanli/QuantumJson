@@ -64,6 +64,11 @@ static void MakeStandardType(VariableTypeDef* type)
 		type->typeName = "std::vector";
 		return;
 	}
+	if (type->typeName == "map" && type->of.size() > 0)
+	{
+		type->typeName = "std::map";
+		return;
+	}
 }
 
 TokenIt ParseVariableType(TokenIt it, TokenIt end, VariableTypeDef* vtOut)
@@ -75,10 +80,15 @@ TokenIt ParseVariableType(TokenIt it, TokenIt end, VariableTypeDef* vtOut)
 	if (it->type == Token::Type::TemplateOpen)
 	{
 		++it;
-		vtOut->of.resize(vtOut->of.size() + 1);
-		it = ParseVariableType(it, end, &vtOut->of[vtOut->of.size() - 1]);
+		vtOut->of.emplace_back();
+		it = ParseVariableType(it, end, &vtOut->of.back());
 
-		// Check for comma separated values TODO
+		while (it->type == Token::Type::Comma)
+		{
+			++it;
+			vtOut->of.emplace_back();
+			it = ParseVariableType(it, end, &vtOut->of.back());
+		}
 
 		AssertToken(it++, Token::Type::TemplateClose);
 	}

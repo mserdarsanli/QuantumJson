@@ -116,3 +116,36 @@ TEST_CASE("Parse List", "[extract,list]")
 	REQUIRE(out[0] == "val1");
 	REQUIRE(out[1] == "val2");
 }
+
+TEST_CASE("Parse string map")
+{
+	string in = R"({
+	    "key1": "val1",
+	    "key2": "val2"
+	})";
+	map<string, string> out;
+	QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+	p.ParseValueInto(out);
+	REQUIRE(out.size() == 2);
+	REQUIRE(out.at("key1") == "val1");
+	REQUIRE(out.at("key2") == "val2");
+}
+
+TEST_CASE("Parse list map")
+{
+	string in = R"({
+	    "key1": ["val1", "val2"],
+	    "key2": ["val6", "val7", "val8"]
+	})";
+	map<string, vector<string>> out;
+	QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+	p.ParseValueInto(out);
+	REQUIRE(out.size() == 2);
+	REQUIRE(out.at("key1").size() == 2);
+	REQUIRE(out.at("key1")[0] == "val1");
+	REQUIRE(out.at("key1")[1] == "val2");
+	REQUIRE(out.at("key2").size() == 3);
+	REQUIRE(out.at("key2")[0] == "val6");
+	REQUIRE(out.at("key2")[1] == "val7");
+	REQUIRE(out.at("key2")[2] == "val8");
+}
