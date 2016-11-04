@@ -29,6 +29,7 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -731,7 +732,7 @@ struct Parser
 			}
 
 			ArrayElemType elem;
-			ParseValueInto(elem);
+			ParseValueInto(elem); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			obj.push_back( std::move(elem) );
 
 			SkipWhitespace();
@@ -740,6 +741,43 @@ struct Parser
 		errorCode = ErrorCode::UnexpectedEOF;
 	}
 
+	template <typename MapElemType>
+	void ParseValueInto(std::map<std::string, MapElemType> &obj)
+	{
+		obj.clear();
+		SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SkipWhitespace();
+
+		while (it != end)
+		{
+			if (*it == '}')
+			{
+				++it;
+				return;
+			}
+
+			if (obj.size() > 0)
+			{
+				SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+				SkipWhitespace();
+			}
+
+			std::string key;
+			ParseValueInto(key); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			SkipWhitespace();
+
+			SkipChar(':'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			SkipWhitespace();
+
+			MapElemType value;
+			ParseValueInto(value); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			SkipWhitespace();
+
+			obj.insert( std::pair<std::string,MapElemType>(std::move(key), std::move(value)) );
+		}
+
+		errorCode = ErrorCode::UnexpectedEOF;
+	}
 
 	template <typename ObjectType>
 	void ParseObject(ObjectType &obj)
