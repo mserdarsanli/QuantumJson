@@ -79,3 +79,14 @@ cc_test(
 		"//third_party:catch",
 	],
 )
+
+cc_test(
+	name = "test_template_args",
+	srcs = [
+		"TestTemplateArgs.cpp",
+	],
+	deps = [
+		":src_lib",
+		"//third_party:catch",
+	],
+)
