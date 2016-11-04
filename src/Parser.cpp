@@ -75,8 +75,8 @@ TokenIt ParseVariableType(TokenIt it, TokenIt end, VariableTypeDef* vtOut)
 	if (it->type == Token::Type::TemplateOpen)
 	{
 		++it;
-		vtOut->of.resize(vtOut->of.size() + 1);
-		it = ParseVariableType(it, end, &vtOut->of[vtOut->of.size() - 1]);
+		vtOut->of.emplace_back();
+		it = ParseVariableType(it, end, &vtOut->of.back());
 
 		// Check for comma separated values TODO
 
