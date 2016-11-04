@@ -39,7 +39,7 @@ using namespace std;
 
 
 #define TEST_STRING(json, expect) \
-	TEST_CASE("String conformance test " S__LINE__, "[parser,string]") \
+	TEST_CASE("String conformance test " S__LINE__) \
 	{ \
 		vector< string > v; \
 		string jsonStr( json ); \

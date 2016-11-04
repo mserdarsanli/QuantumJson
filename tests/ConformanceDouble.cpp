@@ -39,7 +39,7 @@ using namespace std;
 
 
 #define TEST_DOUBLE(json, expect) \
-	TEST_CASE("Double conformance test " S__LINE__, "[parser,double]") \
+	TEST_CASE("Double conformance test " S__LINE__) \
 	{ \
 		vector< double > v; \
 		string jsonStr( json ); \

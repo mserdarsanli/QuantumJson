@@ -30,7 +30,7 @@
 #define CATCH_CONFIG_MAIN
 #include "third_party/catch.hpp"
 
-TEST_CASE("Serialize object simple", "[serialize,object]")
+TEST_CASE("Serialize object simple")
 {
 	std::string out;
 
@@ -42,7 +42,7 @@ TEST_CASE("Serialize object simple", "[serialize,object]")
 	REQUIRE(out == "{\"name\":\"qwe\"}");
 }
 
-TEST_CASE("Serialize object nested", "[serialize,object]")
+TEST_CASE("Serialize object nested")
 {
 	std::string out;
 
@@ -55,7 +55,7 @@ TEST_CASE("Serialize object nested", "[serialize,object]")
 	REQUIRE(out == "{\"i1\":{\"name\":\"name1\"},\"i2\":{\"name\":\"name2\"}}");
 }
 
-TEST_CASE("Serialize object attr", "[serialize,object]")
+TEST_CASE("Serialize object attr")
 {
 	std::string out;
 
@@ -68,7 +68,7 @@ TEST_CASE("Serialize object attr", "[serialize,object]")
 	REQUIRE(out == "{\"attr1\":\"a1\",\"attr-2\":\"a2\"}");
 }
 
-TEST_CASE("Serialize object in list", "[serialize,object]")
+TEST_CASE("Serialize object in list")
 {
 	std::string out;
 

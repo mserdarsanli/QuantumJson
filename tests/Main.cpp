@@ -29,7 +29,7 @@
 
 using namespace std;
 
-TEST_CASE( "Simple Parser", "[parser]" )
+TEST_CASE("Simple Parser")
 {
 	Listing l;
 	l.MergeFromJson("{\"kind\":\"sadsda\"}");
@@ -37,7 +37,7 @@ TEST_CASE( "Simple Parser", "[parser]" )
 	REQUIRE( l.kind == "sadsda" );
 }
 
-TEST_CASE( "String escape sequences", "[parser]" )
+TEST_CASE("String escape sequences")
 {
 	Listing l;
 	l.MergeFromJson(R"({"kind":"\"\\\/\b\f\n\r\t"})");
@@ -45,14 +45,14 @@ TEST_CASE( "String escape sequences", "[parser]" )
 	REQUIRE( l.kind == "\"\\/\b\f\n\r\t" );
 }
 
-TEST_CASE( "Unicode escapes", "[parser]" )
+TEST_CASE("Unicode escapes")
 {
 	Listing l;
 	l.MergeFromJson(R"({"kind":"\u002f"})");
 	REQUIRE( l.kind == "/" );
 }
 
-TEST_CASE( "Unicode surrogate pairs", "[parser]" )
+TEST_CASE("Unicode surrogate pairs")
 {
 	// Test this arbitrary chinese character
 	Listing l;
@@ -60,7 +60,7 @@ TEST_CASE( "Unicode surrogate pairs", "[parser]" )
 	REQUIRE( l.kind == "扝" );
 }
 
-TEST_CASE( "Attributes", "[attributes]" )
+TEST_CASE("Attributes")
 {
 	AttributeTester o;
 	o.MergeFromJson(R"(
@@ -74,7 +74,7 @@ TEST_CASE( "Attributes", "[attributes]" )
 	REQUIRE( o.attr2 == "val2" );
 }
 
-TEST_CASE( "Nullable fields", "[attributes]" )
+TEST_CASE("Nullable fields")
 {
 	SkipNullTester o;
 
@@ -103,7 +103,7 @@ TEST_CASE( "Nullable fields", "[attributes]" )
 	}
 }
 
-TEST_CASE( "Unknown Attributes", "[attributes]" )
+TEST_CASE("Unknown Attributes")
 {
 	AttributeTester o;
 

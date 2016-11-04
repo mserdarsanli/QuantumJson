@@ -27,6 +27,6 @@
 
 // This test should not compile if there are linker errors
 // while linking both compilation units.
-TEST_CASE( "Test Multiple Schema Conflicts 2", "[parser]" )
+TEST_CASE("Test Multiple Schema Conflicts 2")
 {
 }

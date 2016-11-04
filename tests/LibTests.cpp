@@ -29,7 +29,7 @@
 
 using namespace std;
 
-TEST_CASE("Simple string", "[extract,string]")
+TEST_CASE("Simple string")
 {
 	string in = "\"asd\"";
 	string out;
@@ -38,7 +38,7 @@ TEST_CASE("Simple string", "[extract,string]")
 	REQUIRE(out == "asd");
 }
 
-TEST_CASE("Unterminated string", "[extract,string]")
+TEST_CASE("Unterminated string")
 {
 	string in = "\"asd";
 	string out;
@@ -47,7 +47,7 @@ TEST_CASE("Unterminated string", "[extract,string]")
 	REQUIRE( p.errorCode == QuantumJsonImpl__::ErrorCode::UnexpectedEOF );
 }
 
-TEST_CASE("Escape Characters", "[extract,string]")
+TEST_CASE("Escape Characters")
 {
 	string in = R"("\\\/\b\f\n\r\t")";
 	string expectedOut = "\\/\b\f\n\r\t";
@@ -57,7 +57,7 @@ TEST_CASE("Escape Characters", "[extract,string]")
 	REQUIRE(out == expectedOut);
 }
 
-TEST_CASE("Invalid Escape", "[extract,string]")
+TEST_CASE("Invalid Escape")
 {
 	string in = R"("\q")";
 	string out;
@@ -66,7 +66,7 @@ TEST_CASE("Invalid Escape", "[extract,string]")
 	REQUIRE( p.errorCode == QuantumJsonImpl__::ErrorCode::InvalidEscape );
 }
 
-TEST_CASE("Unterminated Escape", "[extract,string]")
+TEST_CASE("Unterminated Escape")
 {
 	string in = R"("qweewqew\)";
 	string out;
@@ -75,7 +75,7 @@ TEST_CASE("Unterminated Escape", "[extract,string]")
 	REQUIRE( p.errorCode == QuantumJsonImpl__::ErrorCode::UnexpectedEOF );
 }
 
-TEST_CASE("Unicode", "[extract,string]")
+TEST_CASE("Unicode")
 {
 	string in = u8"\"ğüşiöçÖÇŞİĞÜIı\"";
 	string out;
@@ -84,7 +84,7 @@ TEST_CASE("Unicode", "[extract,string]")
 	REQUIRE(out == u8"ğüşiöçÖÇŞİĞÜIı");
 }
 
-TEST_CASE("Invalid Unicode Sequence", "[extract,string]")
+TEST_CASE("Invalid Unicode Sequence")
 {
 	// String ends with no continuation character
 	uint8_t invalid_utf8[] = { '"', 196, '"', 0 };
@@ -95,18 +95,18 @@ TEST_CASE("Invalid Unicode Sequence", "[extract,string]")
 	REQUIRE( p.errorCode == QuantumJsonImpl__::ErrorCode::InvalidUtf8Sequence );
 }
 
-TEST_CASE("Unicode Escape", "[extract,string]")
+TEST_CASE("Unicode Escape")
 {
 	// TODO implement \uxxxx and \uxxxx\uxxxx characters
 }
 
-TEST_CASE("Invalid Unicode Escape", "[extract,string]")
+TEST_CASE("Invalid Unicode Escape")
 {
 	// TODO test forbidden \uxxxx\uxxxx surrogate pairs
 	// TODO test invalid escapes
 }
 
-TEST_CASE("Parse List", "[extract,list]")
+TEST_CASE("Parse List")
 {
 	string in = R"(["val1", "val2"])";
 	vector<string> out;

@@ -28,6 +28,6 @@
 
 // This test should not compile if there are conflicting definitions
 // in both generated files.
-TEST_CASE( "Test Multiple Schema Conflicts", "[parser]" )
+TEST_CASE("Test Multiple Schema Conflicts")
 {
 }

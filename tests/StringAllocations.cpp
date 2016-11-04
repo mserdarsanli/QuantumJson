@@ -69,7 +69,7 @@ const char largeJsonStringValue[] = "asewqeeqwiewqeqwyuiwqywiuyeiuyeiqwyueyweq"
     "weyieuqwyeiyeqwuiyeiqyewiqeyquwiyewiqyewiyeiyewiqyeuirwyuiwrywqiuyruiyrqu"
     "wiweqefaegywruiyrwqiuyrwquiqwqwewqrqwqwrwqrwqrwqrqwrerrewrwqrrqeqewqewd";
 
-TEST_CASE("Minimal allocations check", "[performance,string]")
+TEST_CASE("Minimal allocations check")
 {
 	size_t minimalAllocationSize = -1;
 

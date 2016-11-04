@@ -53,7 +53,7 @@ string ParseJsonString(const char *beg, const char *end)
 	return out;
 }
 
-TEST_CASE("Case 1", "[utf8,decoder]")
+TEST_CASE("Case 1")
 {
 	unsigned char input[] = { '"',
 	    0xce, 0xba, 0xe1, 0xbd, 0xb9, 0xcf, 0x83, 0xce, 0xbc, 0xce, 0xb5,
@@ -63,7 +63,7 @@ TEST_CASE("Case 1", "[utf8,decoder]")
 	REQUIRE( out == u8"κόσμε" );
 }
 
-TEST_CASE("Case 2.1.1", "[utf8,decoder]")
+TEST_CASE("Case 2.1.1")
 {
 	unsigned char input[] = { '"',
 	    0x00,
@@ -72,7 +72,7 @@ TEST_CASE("Case 2.1.1", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Control Character In String" );
 }
 
-TEST_CASE("Case 2.1.2", "[utf8,decoder]")
+TEST_CASE("Case 2.1.2")
 {
 	unsigned char input[] = { '"',
 	    0xc2, 0x80,
@@ -82,7 +82,7 @@ TEST_CASE("Case 2.1.2", "[utf8,decoder]")
 	REQUIRE( out == "\u0080" );
 }
 
-TEST_CASE("Case 2.1.3", "[utf8,decoder]")
+TEST_CASE("Case 2.1.3")
 {
 	unsigned char input[] = { '"',
 	    0xe0, 0xa0, 0x80,
@@ -92,7 +92,7 @@ TEST_CASE("Case 2.1.3", "[utf8,decoder]")
 	REQUIRE( out == "\u0800" );
 }
 
-TEST_CASE("Case 2.1.4", "[utf8,decoder]")
+TEST_CASE("Case 2.1.4")
 {
 	unsigned char input[] = { '"',
 	    0xf0, 0x90, 0x80, 0x80,
@@ -102,7 +102,7 @@ TEST_CASE("Case 2.1.4", "[utf8,decoder]")
 	REQUIRE( out == "\U00010000" );
 }
 
-TEST_CASE("Case 2.1.5", "[utf8,decoder]")
+TEST_CASE("Case 2.1.5")
 {
 	unsigned char input[] = { '"',
 	    0xf8, 0x88, 0x80, 0x80, 0x80,
@@ -112,7 +112,7 @@ TEST_CASE("Case 2.1.5", "[utf8,decoder]")
 	REQUIRE( out == "\U00200000" );
 }
 
-TEST_CASE("Case 2.1.6", "[utf8,decoder]")
+TEST_CASE("Case 2.1.6")
 {
 	unsigned char input[] = { '"',
 	    0xfc, 0x84, 0x80, 0x80, 0x80, 0x80,
@@ -122,7 +122,7 @@ TEST_CASE("Case 2.1.6", "[utf8,decoder]")
 	REQUIRE( out == "\U04000000" );
 }
 
-TEST_CASE("Case 2.2.1", "[utf8,decoder]")
+TEST_CASE("Case 2.2.1")
 {
 	unsigned char input[] = { '"',
 	    0x7f,
@@ -132,7 +132,7 @@ TEST_CASE("Case 2.2.1", "[utf8,decoder]")
 	REQUIRE( out == "\u007f" );
 }
 
-TEST_CASE("Case 2.2.2", "[utf8,decoder]")
+TEST_CASE("Case 2.2.2")
 {
 	unsigned char input[] = { '"',
 	    0xdf, 0xbf,
@@ -142,7 +142,7 @@ TEST_CASE("Case 2.2.2", "[utf8,decoder]")
 	REQUIRE( out == "\u07ff" );
 }
 
-TEST_CASE("Case 2.2.3", "[utf8,decoder]")
+TEST_CASE("Case 2.2.3")
 {
 	unsigned char input[] = { '"',
 	    0xef, 0xbf, 0xbf,
@@ -152,7 +152,7 @@ TEST_CASE("Case 2.2.3", "[utf8,decoder]")
 	REQUIRE( out == "\uffff" );
 }
 
-TEST_CASE("Case 2.2.4", "[utf8,decoder]")
+TEST_CASE("Case 2.2.4")
 {
 	unsigned char input[] = { '"',
 	    0xf7, 0xbf, 0xbf, 0xbf,
@@ -162,7 +162,7 @@ TEST_CASE("Case 2.2.4", "[utf8,decoder]")
 	REQUIRE( out == "\U001fffff" );
 }
 
-TEST_CASE("Case 2.2.5", "[utf8,decoder]")
+TEST_CASE("Case 2.2.5")
 {
 	unsigned char input[] = { '"',
 	    0xfb, 0xbf, 0xbf, 0xbf, 0xbf,
@@ -172,7 +172,7 @@ TEST_CASE("Case 2.2.5", "[utf8,decoder]")
 	REQUIRE( out == "\U03ffffff" );
 }
 
-TEST_CASE("Case 2.2.6", "[utf8,decoder]")
+TEST_CASE("Case 2.2.6")
 {
 	unsigned char input[] = { '"',
 	    0xfd, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf,
@@ -182,7 +182,7 @@ TEST_CASE("Case 2.2.6", "[utf8,decoder]")
 	REQUIRE( out == "\U7fffffff" );
 }
 
-TEST_CASE("Case 2.3.1", "[utf8,decoder]")
+TEST_CASE("Case 2.3.1")
 {
 	unsigned char input[] = { '"',
 	    0xed, 0x9f, 0xbf,
@@ -192,7 +192,7 @@ TEST_CASE("Case 2.3.1", "[utf8,decoder]")
 	REQUIRE( out == "\ud7ff" );
 }
 
-TEST_CASE("Case 2.3.2", "[utf8,decoder]")
+TEST_CASE("Case 2.3.2")
 {
 	unsigned char input[] = { '"',
 	    0xee, 0x80, 0x80,
@@ -202,7 +202,7 @@ TEST_CASE("Case 2.3.2", "[utf8,decoder]")
 	REQUIRE( out == "\ue000" );
 }
 
-TEST_CASE("Case 2.3.3", "[utf8,decoder]")
+TEST_CASE("Case 2.3.3")
 {
 	unsigned char input[] = { '"',
 	    0xef, 0xbf, 0xbd,
@@ -212,7 +212,7 @@ TEST_CASE("Case 2.3.3", "[utf8,decoder]")
 	REQUIRE( out == "\ufffd" );
 }
 
-TEST_CASE("Case 2.3.4", "[utf8,decoder]")
+TEST_CASE("Case 2.3.4")
 {
 	unsigned char input[] = { '"',
 	    0xf4, 0x8f, 0xbf, 0xbf,
@@ -222,7 +222,7 @@ TEST_CASE("Case 2.3.4", "[utf8,decoder]")
 	REQUIRE( out == "\U0010FFFF" );
 }
 
-TEST_CASE("Case 2.3.5", "[utf8,decoder]")
+TEST_CASE("Case 2.3.5")
 {
 	unsigned char input[] = { '"',
 	    0xf4, 0x90, 0x80, 0x80,
@@ -232,7 +232,7 @@ TEST_CASE("Case 2.3.5", "[utf8,decoder]")
 	REQUIRE( out == "\U00110000" );
 }
 
-TEST_CASE("Case 3.1.1", "[utf8,decoder]")
+TEST_CASE("Case 3.1.1")
 {
 	unsigned char input[] = { '"',
 	    0x80,
@@ -241,7 +241,7 @@ TEST_CASE("Case 3.1.1", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.1.2", "[utf8,decoder]")
+TEST_CASE("Case 3.1.2")
 {
 	unsigned char input[] = { '"',
 	    0xbf,
@@ -250,7 +250,7 @@ TEST_CASE("Case 3.1.2", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.1.3", "[utf8,decoder]")
+TEST_CASE("Case 3.1.3")
 {
 	unsigned char input[] = { '"',
 	    0x80, 0xbf,
@@ -259,7 +259,7 @@ TEST_CASE("Case 3.1.3", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.1.4", "[utf8,decoder]")
+TEST_CASE("Case 3.1.4")
 {
 	unsigned char input[] = { '"',
 	    0x80, 0xbf, 0x80,
@@ -268,7 +268,7 @@ TEST_CASE("Case 3.1.4", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.1.5", "[utf8,decoder]")
+TEST_CASE("Case 3.1.5")
 {
 	unsigned char input[] = { '"',
 	    0x80, 0xbf, 0x80, 0xbf,
@@ -277,7 +277,7 @@ TEST_CASE("Case 3.1.5", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.1.6", "[utf8,decoder]")
+TEST_CASE("Case 3.1.6")
 {
 	unsigned char input[] = { '"',
 	    0x80, 0xbf, 0x80, 0xbf, 0x80,
@@ -286,7 +286,7 @@ TEST_CASE("Case 3.1.6", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.1.7", "[utf8,decoder]")
+TEST_CASE("Case 3.1.7")
 {
 	unsigned char input[] = { '"',
 	    0x80, 0xbf, 0x80, 0xbf, 0x80, 0xbf,
@@ -295,7 +295,7 @@ TEST_CASE("Case 3.1.7", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.1.8", "[utf8,decoder]")
+TEST_CASE("Case 3.1.8")
 {
 	unsigned char input[] = { '"',
 	    0x80, 0xbf, 0x80, 0xbf, 0x80, 0xbf, 0x80,
@@ -304,7 +304,7 @@ TEST_CASE("Case 3.1.8", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.1.9", "[utf8,decoder]")
+TEST_CASE("Case 3.1.9")
 {
 	unsigned char input[] = { '"',
 	    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
@@ -320,7 +320,7 @@ TEST_CASE("Case 3.1.9", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.2.1", "[utf8,decoder]")
+TEST_CASE("Case 3.2.1")
 {
 	for (int i = 0xc0; i <= 0xdf; ++i)
 	{
@@ -331,7 +331,7 @@ TEST_CASE("Case 3.2.1", "[utf8,decoder]")
 	}
 }
 
-TEST_CASE("Case 3.2.2", "[utf8,decoder]")
+TEST_CASE("Case 3.2.2")
 {
 	for (int i = 0xe0; i <= 0xef; ++i)
 	{
@@ -342,7 +342,7 @@ TEST_CASE("Case 3.2.2", "[utf8,decoder]")
 	}
 }
 
-TEST_CASE("Case 3.2.3", "[utf8,decoder]")
+TEST_CASE("Case 3.2.3")
 {
 	for (int i = 0xf0; i <= 0xf7; ++i)
 	{
@@ -353,7 +353,7 @@ TEST_CASE("Case 3.2.3", "[utf8,decoder]")
 	}
 }
 
-TEST_CASE("Case 3.2.4", "[utf8,decoder]")
+TEST_CASE("Case 3.2.4")
 {
 	for (int i = 0xf8; i <= 0xfb; ++i)
 	{
@@ -364,7 +364,7 @@ TEST_CASE("Case 3.2.4", "[utf8,decoder]")
 	}
 }
 
-TEST_CASE("Case 3.2.5", "[utf8,decoder]")
+TEST_CASE("Case 3.2.5")
 {
 	for (int i = 0xfc; i <= 0xfd; ++i)
 	{
@@ -375,7 +375,7 @@ TEST_CASE("Case 3.2.5", "[utf8,decoder]")
 	}
 }
 
-TEST_CASE("Case 3.3.1", "[utf8,decoder]")
+TEST_CASE("Case 3.3.1")
 {
 	unsigned char input[] = { '"',
 	    0xc0,
@@ -384,7 +384,7 @@ TEST_CASE("Case 3.3.1", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.3.2", "[utf8,decoder]")
+TEST_CASE("Case 3.3.2")
 {
 	unsigned char input[] = { '"',
 	    0xe0, 0x80,
@@ -393,7 +393,7 @@ TEST_CASE("Case 3.3.2", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.3.3", "[utf8,decoder]")
+TEST_CASE("Case 3.3.3")
 {
 	unsigned char input[] = { '"',
 	    0xf0, 0x80, 0x80,
@@ -402,7 +402,7 @@ TEST_CASE("Case 3.3.3", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.3.4", "[utf8,decoder]")
+TEST_CASE("Case 3.3.4")
 {
 	unsigned char input[] = { '"',
 	    0xf8, 0x80, 0x80, 0x80,
@@ -411,7 +411,7 @@ TEST_CASE("Case 3.3.4", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.3.5", "[utf8,decoder]")
+TEST_CASE("Case 3.3.5")
 {
 	unsigned char input[] = { '"',
 	    0xfc, 0x80, 0x80, 0x80, 0x80,
@@ -420,7 +420,7 @@ TEST_CASE("Case 3.3.5", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.3.6", "[utf8,decoder]")
+TEST_CASE("Case 3.3.6")
 {
 	unsigned char input[] = { '"',
 	    0xdf,
@@ -429,7 +429,7 @@ TEST_CASE("Case 3.3.6", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.3.7", "[utf8,decoder]")
+TEST_CASE("Case 3.3.7")
 {
 	unsigned char input[] = { '"',
 	    0xef, 0xbf,
@@ -438,7 +438,7 @@ TEST_CASE("Case 3.3.7", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.3.8", "[utf8,decoder]")
+TEST_CASE("Case 3.3.8")
 {
 	unsigned char input[] = { '"',
 	    0xf7, 0xbf, 0xbf,
@@ -447,7 +447,7 @@ TEST_CASE("Case 3.3.8", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.3.9", "[utf8,decoder]")
+TEST_CASE("Case 3.3.9")
 {
 	unsigned char input[] = { '"',
 	    0xfb, 0xbf, 0xbf, 0xbf,
@@ -456,7 +456,7 @@ TEST_CASE("Case 3.3.9", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.3.10", "[utf8,decoder]")
+TEST_CASE("Case 3.3.10")
 {
 	unsigned char input[] = { '"',
 	    0xfd, 0xbf, 0xbf, 0xbf, 0xbf,
@@ -467,7 +467,7 @@ TEST_CASE("Case 3.3.10", "[utf8,decoder]")
 
 // TODO Add case 3.4
 
-TEST_CASE("Case 3.5.1", "[utf8,decoder]")
+TEST_CASE("Case 3.5.1")
 {
 	unsigned char input[] = { '"',
 	    0xfe,
@@ -476,7 +476,7 @@ TEST_CASE("Case 3.5.1", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.5.2", "[utf8,decoder]")
+TEST_CASE("Case 3.5.2")
 {
 	unsigned char input[] = { '"',
 	    0xff,
@@ -485,7 +485,7 @@ TEST_CASE("Case 3.5.2", "[utf8,decoder]")
 	REQUIRE_THROWS_WITH( PARSE(input), "Invalid UTF-8 Sequence" );
 }
 
-TEST_CASE("Case 3.5.3", "[utf8,decoder]")
+TEST_CASE("Case 3.5.3")
 {
 	unsigned char input[] = { '"',
 	    0xfe, 0xfe, 0xff, 0xff,

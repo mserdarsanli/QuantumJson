@@ -33,7 +33,7 @@
 using namespace std;
 using Serializer = QuantumJsonImpl__::Serializer<std::back_insert_iterator<std::string>>;
 
-TEST_CASE("Serialize bool", "[serialize,bool]")
+TEST_CASE("Serialize bool")
 {
 	string out;
 	Serializer s(std::back_inserter(out));
@@ -51,7 +51,7 @@ TEST_CASE("Serialize bool", "[serialize,bool]")
 	}
 }
 
-TEST_CASE("Serialize int64", "[serialize,int]")
+TEST_CASE("Serialize int64")
 {
 	string out;
 	Serializer s(std::back_inserter(out));
@@ -88,7 +88,7 @@ TEST_CASE("Serialize int64", "[serialize,int]")
 	}
 }
 
-TEST_CASE("Serialize double", "[serialize]")
+TEST_CASE("Serialize double")
 {
 	// Some of the values in this test are platform dependent
 	// But since the significant digits are not maximal,
@@ -222,7 +222,7 @@ TEST_CASE("Serialize double", "[serialize]")
 	}
 }
 
-TEST_CASE("Serialize string", "[serialize]")
+TEST_CASE("Serialize string")
 {
 	string out;
 	Serializer s(std::back_inserter(out));
@@ -265,7 +265,7 @@ TEST_CASE("Serialize string", "[serialize]")
 	}
 }
 
-TEST_CASE("Serialize list", "[serialize]")
+TEST_CASE("Serialize list")
 {
 	string out;
 	Serializer s(std::back_inserter(out));
