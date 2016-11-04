@@ -5,6 +5,7 @@
 ### Added
 
 - Manual page for documentation
+- map<string, Foo> type for dictionaries
 
 ### Fixed
 
