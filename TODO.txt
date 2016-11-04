@@ -4,21 +4,12 @@
 
 
 TODO Add Value union type and OpaqueValue type to prevent serialization costs
-TODO FIXME `jc` does not give error when --in-source is not found
 
 # Benchmark
 TODO Add benchmark images to README
 TODO Add FB API example
 TODO verify -O3 is being used
 TODO benchmark against protobuf/thrift etc. (if they support similar thing)
-
-# Refactor
-TODO move lib/LibTests.cpp
-TODO improve thrown exceptions
-
-# Parser
-TODO Add support for comments
-
 
 ## Extra
 ## Attributes and defaults
