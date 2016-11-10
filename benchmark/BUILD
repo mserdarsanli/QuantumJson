@@ -146,9 +146,9 @@ cc_json_schema_lib(
 	[
 		# Binary to run for the benchmark
 		cc_binary(
-			name = "bin_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"],
+			name = "bin_%s_%s_%s" % (lib["id"], sc["dir"], mode["suffix"]),
 			srcs = [
-				sc["dir"] + "/impl_" + lib["id"] + ".cpp",
+				"%s/impl_%s.cpp" % (sc["dir"], lib["id"]),
 				"Benchmark.hpp",
 				"Executor.cpp",
 			],
@@ -158,15 +158,15 @@ cc_json_schema_lib(
 
 		# Rule to run and save the benchmark
 		genrule(
-			name = "run_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"],
+			name = "run_%s_%s_%s" % (lib["id"], sc["dir"], mode["suffix"]),
 			tools = mode["tools"] + [
-				":bin_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"],
+				":bin_%s_%s_%s" % (lib["id"], sc["dir"], mode["suffix"]),
 			],
 			srcs = [
 				sc["input"],
 			],
 			outs = [
-				"result" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"] + ".md",
+				":result_%s_%s_%s.md" % (lib["id"], sc["dir"], mode["suffix"]),
 			],
 			cmd = """ echo "| {lib} | $$({ENV} {bin} {repeat} < {input}) |" > {output}
 			        """.format(
@@ -174,9 +174,9 @@ cc_json_schema_lib(
 			    lib = lib["id"],
 			    mode = mode["name"],
 			    scenario = sc["name"],
-			    bin = "$(location :bin_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"] + ")",
+			    bin = "$(location :bin_%s_%s_%s)" % (lib["id"], sc["dir"], mode["suffix"]),
 			    repeat = str(mode["repeat"]),
-			    input = "$(location " + sc["input"] +")",
+			    input = "$(location %s)" % sc["input"],
 			    output = "$(OUTS)",
 			),
 		),
@@ -188,13 +188,13 @@ cc_json_schema_lib(
 
 [
 	genrule(
-		name = "res_" + sc["dir"] + "_" + mode["suffix"],
+		name = "res_%s_%s" % (sc["dir"], mode["suffix"]),
 		srcs = [
-			"result" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"] + ".md"
+			"result_%s_%s_%s.md" % (lib["id"], sc["dir"], mode["suffix"])
 			for lib in BENCHMARK_LIBRARIES
 		],
 		outs = [
-			"res_" + sc["dir"] + "_" + mode["suffix"] + ".md",
+			"res_%s_%s.md" % (sc["dir"], mode["suffix"]),
 		],
 		cmd = "(echo -n \"%s\" && cat $(SRCS)) > $(OUTS)" % (mode["table_header"]),
 	)
