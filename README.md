@@ -7,6 +7,8 @@ and fast json parser for data of known schemas.
 
 View [Installation](#installation) section for instructions.
 
+Benchmarks can be seen on [Benchmark.md](Benchmark.md).
+
 ## Rationale
 
 When talking to a JSON API, the JSON values are often in a well defined format.
