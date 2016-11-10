@@ -201,3 +201,27 @@ cc_json_schema_lib(
 	for mode in BENCHMARK_MODES
 	for sc in BENCHMARK_SCENARIOS
 ]
+
+genrule(
+	name = "benchmark",
+	srcs = [
+		"res_%s_%s.md" % (sc["dir"], mode["suffix"])
+		for mode in BENCHMARK_MODES
+		for sc in BENCHMARK_SCENARIOS
+	],
+	outs = [
+		"Benchmark.md",
+	],
+	# TODO generate the command fully
+	cmd = "(" + "\n".join([
+		( "echo  \"# %s\" \n"
+		+ "cat $(location res_%s_%s.md) \n"
+		+ "echo  \"\" \n"
+		+ "cat $(location res_%s_%s.md) \n"
+		+ "echo  \"\" \n" )
+		% (sc["name"],
+		   sc["dir"], BENCHMARK_MODES[0]["suffix"],
+		   sc["dir"], BENCHMARK_MODES[1]["suffix"])
+		for sc in BENCHMARK_SCENARIOS
+	]) + ") > $(OUTS)",
+)
