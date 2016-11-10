@@ -213,8 +213,9 @@ genrule(
 		"Benchmark.md",
 	],
 	# TODO generate the command fully
-	cmd = "(" + "\n".join([
-		( "echo  \"# %s\" \n"
+	cmd = "( echo  \"# Benchmarks\n\" \n" + "\n".join([
+		( "echo  \"## %s\" \n"
+		+ "echo  \"\" \n"
 		+ "cat $(location res_%s_%s.md) \n"
 		+ "echo  \"\" \n"
 		+ "cat $(location res_%s_%s.md) \n"
