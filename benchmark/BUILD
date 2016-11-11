@@ -93,8 +93,8 @@ BENCHMARK_LIBRARIES = [
 		"id": "nlohmann_json",
 		"url": "https://github.com/nlohmann/json",
 		"bazel_deps": [
-			"//third_party:nlohmann_json",
 		],
+		"linkopts": [],
 	},
 	{
 		"id": "quantumjson",
@@ -102,20 +102,21 @@ BENCHMARK_LIBRARIES = [
 		"bazel_deps": [
 			":quantumjson_schemas",
 		],
+		"linkopts": [],
 	},
 	{
 		"id": "jsoncpp",
 		"url": "https://github.com/open-source-parsers/jsoncpp",
 		"bazel_deps": [
-			"//third_party:jsoncpp",
 		],
+		"linkopts": ["-ljsoncpp"],
 	},
 	{
 		"id": "rapidjson",
 		"url": "https://github.com/miloyip/rapidjson",
 		"bazel_deps": [
-			"//third_party:rapidjson",
 		],
+		"linkopts": [],
 	},
 	{
 		# TODO benchmark against a known version
@@ -123,13 +124,14 @@ BENCHMARK_LIBRARIES = [
 		"url": "http://www.boost.org/doc/libs/release/libs/property_tree/",
 		"bazel_deps": [
 		],
+		"linkopts": [],
 	},
 	{
 		"id": "staticjson",
 		"url": "https://github.com/netheril96/StaticJSON",
 		"bazel_deps": [
-			"//third_party:staticjson",
 		],
+		"linkopts": ["-lstaticjson"],
 	},
 ]
 
@@ -154,6 +156,7 @@ cc_json_schema_lib(
 			],
 			copts = mode["copts"],
 			deps = lib["bazel_deps"],
+			linkopts = lib["linkopts"],
 		),
 
 		# Rule to run and save the benchmark

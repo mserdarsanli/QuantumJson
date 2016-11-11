@@ -173,9 +173,9 @@ jc --in Foo.json.hpp --out Foo.gen.hpp
 
 For development of QuantumJson only:
 
-* `bazel` is used as the build system.
-* `g++-6` needs to be installed for benchmarks (required by nlohmann/json).
+* `docker`
 
+See [Developing page](DEVELOPING.md) for instructions.
 
 # License
 

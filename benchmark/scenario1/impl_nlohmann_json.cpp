@@ -24,7 +24,7 @@
 
 #include <string>
 
-#include "third_party/nlohmann_json_2_0_2.hpp"
+#include <nlohmann_json.hpp>
 
 void Benchmark(int repeat, const std::string &input)
 {

@@ -22,7 +22,7 @@
 
 #include "benchmark/Benchmark.hpp"
 
-#include "third_party/jsoncpp_1_7_3/json/json.h"
+#include <json/json.h>
 
 void Benchmark(int repeat, const std::string &input)
 {

@@ -24,7 +24,7 @@
 #include "tests/Schema2.gen.hpp"
 
 #define CATCH_CONFIG_MAIN
-#include "third_party/catch.hpp"
+#include <catch.hpp>
 
 // This test should not compile if there are conflicting definitions
 // in both generated files.
