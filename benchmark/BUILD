@@ -115,7 +115,6 @@ BENCHMARK_LIBRARIES = [
 		"id": "rapidjson",
 		"url": "https://github.com/miloyip/rapidjson",
 		"bazel_deps": [
-			"//third_party:rapidjson",
 		],
 		"linkopts": [],
 	},
