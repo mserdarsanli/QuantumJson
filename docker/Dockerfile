@@ -56,10 +56,22 @@ RUN apt-get -y install \
 # jsoncpp [v1.7.7]
 RUN bash -c "                                                                        \
     (                                                                                \
-        cd $(mktemp -d)                                                              \
+           cd $(mktemp -d)                                                           \
         && wget https://github.com/open-source-parsers/jsoncpp/archive/1.7.7.zip     \
         && unzip 1.7.7.zip                                                           \
         && cd jsoncpp-1.7.7                                                          \
+        && cmake .                                                                   \
+        && make install                                                              \
+    )                                                                                \
+"
+
+# rapidjson [v1.1.0]
+RUN bash -c "                                                                        \
+    (                                                                                \
+           cd $(mktemp -d)                                                           \
+        && wget https://github.com/miloyip/rapidjson/archive/v1.1.0.zip              \
+        && unzip v1.1.0.zip                                                          \
+        && cd rapidjson-1.1.0                                                        \
         && cmake .                                                                   \
         && make install                                                              \
     )                                                                                \
