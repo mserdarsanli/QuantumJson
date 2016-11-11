@@ -37,7 +37,6 @@ cc_test(
 	],
 	deps = [
 		":schema_lib",
-		"//third_party:catch",
 	],
 )
 
@@ -48,7 +47,6 @@ cc_test(
 	],
 	deps = [
 		"//lib:lib_impl",
-		"//third_party:catch",
 	],
 )
 
@@ -59,7 +57,6 @@ cc_test(
 	],
 	deps = [
 		"//lib:lib_impl",
-		"//third_party:catch",
 	],
 )
 
@@ -70,7 +67,6 @@ cc_test(
 	],
 	deps = [
 		":schema_lib",
-		"//third_party:catch",
 	],
 )
 
@@ -82,7 +78,6 @@ cc_test(
 	],
 	deps = [
 		"//lib:lib_impl",
-		"//third_party:catch",
 	],
 )
 
@@ -94,7 +89,6 @@ cc_test(
 	],
 	deps = [
 		"//lib:lib_impl",
-		"//third_party:catch",
 	],
 )
 
@@ -105,7 +99,6 @@ cc_test(
 	],
 	deps = [
 		"//lib:lib_impl",
-		"//third_party:catch",
 	],
 )
 
@@ -116,7 +109,6 @@ cc_test(
 	],
 	deps = [
 		"//lib:lib_impl",
-		"//third_party:catch",
 	],
 )
 
@@ -128,7 +120,6 @@ cc_test(
 	],
 	deps = [
 		":schema_lib",
-		"//third_party:catch",
 	],
 )
 

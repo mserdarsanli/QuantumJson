@@ -28,7 +28,7 @@
 #include "lib/Common.hpp"
 
 #define CATCH_CONFIG_MAIN
-#include "third_party/catch.hpp"
+#include <catch.hpp>
 
 using namespace std;
 using Serializer = QuantumJsonImpl__::Serializer<std::back_insert_iterator<std::string>>;

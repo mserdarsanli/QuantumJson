@@ -20,3 +20,6 @@ RUN wget -O bazel-installer.sh -q \
   https://github.com/bazelbuild/bazel/releases/download/0.4.0/bazel-0.4.0-installer-linux-x86_64.sh \
   && bash bazel-installer.sh \
   && rm bazel-installer.sh
+
+# Catch Test Framework [v1.5.8]
+RUN wget https://raw.githubusercontent.com/philsquared/Catch/e27c4ee04282f60aefcc9b1062a74f92cf6c1a2b/single_include/catch.hpp -O /usr/local/include/catch.hpp

@@ -25,7 +25,7 @@
 #include "tests/Schema1.gen.hpp"
 
 #define CATCH_CONFIG_MAIN
-#include "third_party/catch.hpp"
+#include <catch.hpp>
 
 using namespace std;
 
