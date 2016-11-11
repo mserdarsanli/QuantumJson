@@ -25,7 +25,7 @@
 
 #include "benchmark/Benchmark.hpp"
 
-#include "third_party/staticjson_0_4_1/staticjson.hpp"
+#include <staticjson/staticjson.hpp>
 
 struct BadgeCounts
 {

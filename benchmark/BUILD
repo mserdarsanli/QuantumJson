@@ -130,9 +130,8 @@ BENCHMARK_LIBRARIES = [
 		"id": "staticjson",
 		"url": "https://github.com/netheril96/StaticJSON",
 		"bazel_deps": [
-			"//third_party:staticjson",
 		],
-		"linkopts": [],
+		"linkopts": ["-lstaticjson"],
 	},
 ]
 
