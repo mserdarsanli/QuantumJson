@@ -52,7 +52,8 @@ BENCHMARK_MODES = [
 		"runtime_env": "",
 		"tools": [],
 		"repeat": 1000,
-		"ylabel": "Seconds",
+		"table_header": "| Library | Speed (secs) |\n"
+		              + "| ------- | ------------ |\n",
 	},
 	{
 		"name": "Memory Benchmark",
@@ -64,7 +65,8 @@ BENCHMARK_MODES = [
 			":memory_reporter",
 		],
 		"repeat": 1,
-		"ylabel": "Bytes",
+		"table_header": "| Library | Memory (bytes) |\n"
+		              + "| ------- | -------------- |\n",
 	},
 ]
 
@@ -144,9 +146,9 @@ cc_json_schema_lib(
 	[
 		# Binary to run for the benchmark
 		cc_binary(
-			name = "bin_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"],
+			name = "bin_%s_%s_%s" % (lib["id"], sc["dir"], mode["suffix"]),
 			srcs = [
-				sc["dir"] + "/impl_" + lib["id"] + ".cpp",
+				"%s/impl_%s.cpp" % (sc["dir"], lib["id"]),
 				"Benchmark.hpp",
 				"Executor.cpp",
 			],
@@ -156,26 +158,25 @@ cc_json_schema_lib(
 
 		# Rule to run and save the benchmark
 		genrule(
-			name = "run_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"],
+			name = "run_%s_%s_%s" % (lib["id"], sc["dir"], mode["suffix"]),
 			tools = mode["tools"] + [
-				":bin_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"],
+				":bin_%s_%s_%s" % (lib["id"], sc["dir"], mode["suffix"]),
 			],
 			srcs = [
 				sc["input"],
 			],
 			outs = [
-				"result" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"] + ".txt",
+				":result_%s_%s_%s.md" % (lib["id"], sc["dir"], mode["suffix"]),
 			],
-			cmd = """ echo -n "data[\\\"{mode}\\\"][\\\"{scenario}\\\"][\\\"{lib}\\\"] = " > {output} && \
-			        {ENV} {bin} {repeat} < {input} >> {output}
+			cmd = """ echo "| {lib} | $$({ENV} {bin} {repeat} < {input}) |" > {output}
 			        """.format(
 			    ENV = mode["runtime_env"],
 			    lib = lib["id"],
 			    mode = mode["name"],
 			    scenario = sc["name"],
-			    bin = "$(location :bin_" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"] + ")",
+			    bin = "$(location :bin_%s_%s_%s)" % (lib["id"], sc["dir"], mode["suffix"]),
 			    repeat = str(mode["repeat"]),
-			    input = "$(location " + sc["input"] +")",
+			    input = "$(location %s)" % sc["input"],
 			    output = "$(OUTS)",
 			),
 		),
@@ -185,58 +186,43 @@ cc_json_schema_lib(
 	for mode in BENCHMARK_MODES
 ]
 
-BENCHMARK_DATA_POINTS = [
-	"result" + lib["id"] + "_" + sc["dir"] + "_" + mode["suffix"] + ".txt"
-	for sc in BENCHMARK_SCENARIOS
-	for lib in BENCHMARK_LIBRARIES
-	for mode in BENCHMARK_MODES
-]
-
-BENCHMARK_DATA_LINES = ''.join([
-	"SCENARIO_COUNT = " + str(len(BENCHMARK_SCENARIOS)) + "\n",
-	"data = dict()\n",
-	"ylabel = dict()\n",
-] + [
-	"data['" + mode["name"] + "'] = dict()\n"
-	for mode in BENCHMARK_MODES
-] + [
-	"ylabel['" + mode["name"] + "'] = '" + mode["ylabel"] + "'\n"
-	for mode in BENCHMARK_MODES
-] + [
-	"data['" + mode["name"] + "']['" + sc["name"] + "'] = dict()\n"
-	for sc in BENCHMARK_SCENARIOS
-	for mode in BENCHMARK_MODES
-])
-
-genrule(
-	name = "collect_benchmark_data",
-	srcs = BENCHMARK_DATA_POINTS,
-	outs = [
-		"benchmark_data.py",
-	],
-	cmd = "echo -n \"" + BENCHMARK_DATA_LINES + "\" > $(OUTS) && cat $(SRCS) >> $(OUTS)",
-)
-
 [
 	genrule(
-		name = "plot" + "_" + mode["suffix"] + "_" + sc["dir"],
+		name = "res_%s_%s" % (sc["dir"], mode["suffix"]),
 		srcs = [
-			"benchmark_data.py",
-			"plot.py",
+			"result_%s_%s_%s.md" % (lib["id"], sc["dir"], mode["suffix"])
+			for lib in BENCHMARK_LIBRARIES
 		],
 		outs = [
-			mode["suffix"] + "_" + sc["dir"] + ".svg",
+			"res_%s_%s.md" % (sc["dir"], mode["suffix"]),
 		],
-		cmd = """/usr/bin/env python2 $(location plot.py) \
-		             --benchmark_data_file "{datafile}" \
-		             --benchmark_mode "{benchmark_mode}" \
-		             --benchmark_scenario "{benchmark_scenario}" \
-		             --out "$(OUTS)" """.format(
-		    datafile = "$(location benchmark_data.py)",
-		    benchmark_mode = mode["name"],
-		    benchmark_scenario = sc["name"],
-		),
+		cmd = "(echo -n \"%s\" && cat $(SRCS)) > $(OUTS)" % (mode["table_header"]),
 	)
 	for mode in BENCHMARK_MODES
 	for sc in BENCHMARK_SCENARIOS
 ]
+
+genrule(
+	name = "benchmark",
+	srcs = [
+		"res_%s_%s.md" % (sc["dir"], mode["suffix"])
+		for mode in BENCHMARK_MODES
+		for sc in BENCHMARK_SCENARIOS
+	],
+	outs = [
+		"Benchmark.md",
+	],
+	# TODO generate the command fully
+	cmd = "( echo  \"# Benchmarks\n\" \n" + "\n".join([
+		( "echo  \"## %s\" \n"
+		+ "echo  \"\" \n"
+		+ "cat $(location res_%s_%s.md) \n"
+		+ "echo  \"\" \n"
+		+ "cat $(location res_%s_%s.md) \n"
+		+ "echo  \"\" \n" )
+		% (sc["name"],
+		   sc["dir"], BENCHMARK_MODES[0]["suffix"],
+		   sc["dir"], BENCHMARK_MODES[1]["suffix"])
+		for sc in BENCHMARK_SCENARIOS
+	]) + ") > $(OUTS)",
+)
