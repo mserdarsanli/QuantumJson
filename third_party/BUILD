@@ -27,13 +27,6 @@ package(
 )
 
 cc_library(
-	name = "catch",
-	hdrs = [
-		"catch.hpp",
-	],
-)
-
-cc_library(
 	name = "nlohmann_json",
 	srcs = [
 		"nlohmann_json_2_0_2.hpp",
