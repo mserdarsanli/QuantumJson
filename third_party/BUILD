@@ -27,15 +27,6 @@ package(
 )
 
 cc_library(
-	name = "jsoncpp",
-	srcs = [
-		"jsoncpp_1_7_3/jsoncpp.cpp",
-		"jsoncpp_1_7_3/json/json.h",
-		"jsoncpp_1_7_3/json/json-forwards.h",
-	],
-)
-
-cc_library(
 	name = "rapidjson",
 	srcs = [
 		"rapidjson_1_1_0/rapidjson/rapidjson.h",
