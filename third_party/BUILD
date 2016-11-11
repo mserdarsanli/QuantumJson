@@ -27,13 +27,6 @@ package(
 )
 
 cc_library(
-	name = "nlohmann_json",
-	srcs = [
-		"nlohmann_json_2_0_2.hpp",
-	],
-)
-
-cc_library(
 	name = "jsoncpp",
 	srcs = [
 		"jsoncpp_1_7_3/jsoncpp.cpp",
