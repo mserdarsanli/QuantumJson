@@ -23,3 +23,6 @@ RUN wget -O bazel-installer.sh -q \
 
 # Catch Test Framework [v1.5.8]
 RUN wget https://raw.githubusercontent.com/philsquared/Catch/e27c4ee04282f60aefcc9b1062a74f92cf6c1a2b/single_include/catch.hpp -O /usr/local/include/catch.hpp
+
+# nlohmann/json [v2.0.7]
+RUN wget https://github.com/nlohmann/json/releases/download/v2.0.7/json.hpp -O /usr/local/include/nlohmann_json.hpp
