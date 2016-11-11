@@ -76,3 +76,17 @@ RUN bash -c "                                                                   
         && make install                                                              \
     )                                                                                \
 "
+
+# staticjson [v0.4.1]
+RUN bash -c "                                                                        \
+    (                                                                                \
+           cd $(mktemp -d)                                                           \
+        && wget https://github.com/netheril96/StaticJSON/archive/0.4.1.zip           \
+        && unzip 0.4.1.zip                                                           \
+        && cd StaticJSON-0.4.1                                                       \
+        && mv include/staticjson /usr/local/include                                  \
+        && g++ -c src/staticjson.cpp                                                 \
+        && ar rvs libstaticjson.a staticjson.o                                       \
+        && mv libstaticjson.a /usr/local/lib                                         \
+    )                                                                                \
+"
