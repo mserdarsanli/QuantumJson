@@ -76,7 +76,6 @@ cc_test(
 	],
 	deps = [
 		":src_lib",
-		"//third_party:catch",
 	],
 )
 
@@ -87,6 +86,5 @@ cc_test(
 	],
 	deps = [
 		":src_lib",
-		"//third_party:catch",
 	],
 )
