@@ -13,6 +13,10 @@
 - Improved error messages on parser
 - Improved attribute support
 
+### Changed
+
+- Docker is used for development environment now
+
 ## [0.2.0] - 2016-10-30
 
 ### Added
