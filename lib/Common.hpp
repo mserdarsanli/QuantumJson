@@ -858,7 +858,7 @@ struct Serializer
 
 	void SerializeValue(double num)
 	{
-		if (isnan(num) || isinf(num))
+		if (std::isnan(num) || std::isinf(num))
 		{
 			*(out++) = 'n';
 			*(out++) = 'u';
