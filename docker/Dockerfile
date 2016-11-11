@@ -26,3 +26,19 @@ RUN wget https://raw.githubusercontent.com/philsquared/Catch/e27c4ee04282f60aefc
 
 # nlohmann/json [v2.0.7]
 RUN wget https://github.com/nlohmann/json/releases/download/v2.0.7/json.hpp -O /usr/local/include/nlohmann_json.hpp
+
+
+RUN apt-get -y install \
+    cmake
+
+# jsoncpp [v1.7.7]
+RUN bash -c "                                                                        \
+    (                                                                                \
+        cd $(mktemp -d)                                                              \
+        && wget https://github.com/open-source-parsers/jsoncpp/archive/1.7.7.zip     \
+        && unzip 1.7.7.zip                                                           \
+        && cd jsoncpp-1.7.7                                                          \
+        && cmake .                                                                   \
+        && make install                                                              \
+    )                                                                                \
+"
