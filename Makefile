@@ -89,11 +89,20 @@ docker-run-tests:
 	        //tests:all //src:all
 
 docker-run-benchmarks:
-	docker run --tty --interactive --volume "$(ROOT_DIR):/QuantumJson" \
-	    --workdir /QuantumJson quantumjson-build-server \
-	    bazel --batch build \
-	        --genrule_strategy=standalone --spawn_strategy=standalone \
-	        //benchmark:all
+	docker run --volume "$(ROOT_DIR):/QuantumJson"                                 \
+	    --workdir /QuantumJson quantumjson-build-server                            \
+	    bash -c "                                                                  \
+	           bazel --batch build                                                 \
+	               --genrule_strategy=standalone --spawn_strategy=standalone       \
+	               //benchmark:all                                                 \
+	        && python3 benchmark/render.py                                         \
+	               --input_tsv bazel-genfiles/benchmark/results.tsv                \
+	               --render_target md > Benchmark.md                               \
+	        && python3 benchmark/render.py                                         \
+	               --input_tsv bazel-genfiles/benchmark/results.tsv                \
+	               --render_target html > docs/Benchmarks.html                     \
+	        "
+	cat Benchmark.md
 
 docker-generate-manpages:
 	docker run --tty --interactive --volume "$(ROOT_DIR):/QuantumJson" \
