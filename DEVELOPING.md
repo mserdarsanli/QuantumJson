@@ -38,3 +38,4 @@ Or use following halper make targets
     make docker-build
     make docker-run-tests
     make docker-run-benchmarks
+    make docker-generate-manpages
