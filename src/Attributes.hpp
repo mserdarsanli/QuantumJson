@@ -38,6 +38,8 @@ public:
 	static const AttributeInfo JsonFieldName;
 	static const AttributeInfo OnNull;
 	static const AttributeInfo Deprecated;
+
+	// TODO implement on_missing(action) action: "none" (default) | "throw"
 };
 
 const AttributeInfo* GetKnownAttribute(const std::string &attr_name);

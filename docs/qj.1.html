@@ -165,6 +165,40 @@ is not considered a conflict and are silently ignored for backwards compatibilit
 }
 </code></pre>
 
+<h3 id="Attributes">Attributes</h3>
+
+<p>Some C++ attributes can be used to control specific QuantumJson behaviors.</p>
+
+<dl>
+<dt><code>json_field_name(name)</code></dt><dd><p>name: <var>string</var></p>
+
+<p>Can be used when attribute name is not a valid C++ variable name.</p>
+
+<pre><code>struct Foo
+{
+    int statusCode [[ json_field_name("status-code") ]];
+};
+
+{"status-code": 404}  // statusCode == 404
+{"statusCode": 404}   // throws
+</code></pre></dd>
+<dt><code>on_null(action)</code></dt><dd><p>action: "throw" (default) | "skip"</p>
+
+<p>Variables having <code>on_null("skip")</code> attribute will skip JSON <code>null</code> values
+instead of failing.</p>
+
+<pre><code>struct Foo
+{
+    string x [[ on_null("skip") ]];
+};
+
+// Following JSON values are accepted.
+{"x": "val"}
+{"x": null}  // x has default initialized value
+</code></pre></dd>
+</dl>
+
+
 <h2 id="API">API</h2>
 
 <p>Following is a synopsis of the generated API. Note that API might change.</p>
