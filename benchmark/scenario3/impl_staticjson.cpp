@@ -72,7 +72,7 @@ struct User
 		h->add_property("is_employee", &is_employee);
 		h->add_property("last_modified_date", &last_modified_date);
 		h->add_property("last_access_date", &last_access_date);
-		h->add_property("age", &age);
+		h->add_property("age", &age, staticjson::Flags::Optional);
 		h->add_property("reputation_change_year", &reputation_change_year);
 		h->add_property("reputation_change_quarter", &reputation_change_quarter);
 		h->add_property("reputation_change_month", &reputation_change_month);
@@ -82,9 +82,9 @@ struct User
 		h->add_property("creation_date", &creation_date);
 		h->add_property("user_type", &user_type);
 		h->add_property("user_id", &user_id);
-		h->add_property("accept_rate", &accept_rate);
-		h->add_property("location", &location);
-		h->add_property("website_url", &website_url);
+		h->add_property("accept_rate", &accept_rate, staticjson::Flags::Optional);
+		h->add_property("location", &location, staticjson::Flags::Optional);
+		h->add_property("website_url", &website_url, staticjson::Flags::Optional);
 		h->add_property("link", &link);
 		h->add_property("profile_image", &profile_image);
 		h->add_property("display_name", &display_name);
@@ -117,6 +117,25 @@ void Benchmark(int repeat, const std::string &input)
 
 		UsersResult r;
 		staticjson::from_json_string(input.c_str(), &r, nullptr);
+
+		#ifdef BENCHMARK_CHECK_CORRECTNESS
+
+		std::string user1_name = r.items[0].display_name;
+		std::string user1_image = r.items[0].profile_image;
+		int user1_bronze = r.items[0].badge_counts.bronze;
+		std::string user30_name = r.items[29].display_name;
+		std::string user30_image = r.items[29].profile_image;
+		int user30_bronze = r.items[29].badge_counts.bronze;
+
+		// Check first and last values
+		CHECK(user1_name == "Jon Skeet");
+		CHECK(user1_image == "https://www.gravatar.com/avatar/6d8ebb117e8d83d74ea95fbdd0f87e13?s=128&d=identicon&r=PG");
+		CHECK(user1_bronze == 7502);
+		CHECK(user30_name == "Gumbo");
+		CHECK(user30_image == "https://www.gravatar.com/avatar/cd501083459cbc21fccae78e2d03bee2?s=128&d=identicon&r=PG");
+		CHECK(user30_bronze == 669);
+
+		#endif
 
 		BENCHMARK_LOOP_END;
 	}
