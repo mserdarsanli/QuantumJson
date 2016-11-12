@@ -76,9 +76,9 @@ def render_md():
 			print('')
 
 BAR_WIDTH_MAX = 300
-def benchmark_bar(ratio):
-	return '<div style="width: {}px; background-color: #CC0000;">&#65279;</div>'.format(
-	    round(BAR_WIDTH_MAX*ratio))
+def benchmark_bar(ratio, color):
+	return '<div style="width: {}px; background-color: {};">&#65279;</div>'.format(
+	    round(BAR_WIDTH_MAX*ratio), color)
 
 def libUrl(lib):
 	return '<a href="{}">{}</a>'.format(lib['url'], lib['id'])
@@ -101,7 +101,7 @@ def render_html():
 			for lib in BENCHMARK_LIBRARIES:
 				res = BENCHMARK_DATA[ (sc['id'], lib['id'], mode['id']) ]
 				print('<tr><td>{}</td><td align="right">{}</td><td>{}</td></tr>'.format(
-				    libUrl(lib), res, benchmark_bar(float(res) / maxRes)
+				    libUrl(lib), res, benchmark_bar(float(res) / maxRes, lib['color'])
 				))
 			print('</table>')
 
@@ -110,6 +110,15 @@ def main():
 	parser.add_argument('--input_tsv', required=True)
 	parser.add_argument('--render_target', choices=['md', 'html'], required=True)
 	args = parser.parse_args()
+
+	# Use uniqe color for each libraries
+	assert BENCHMARK_LIBRARIES[0]['id'] == 'quantumjson'
+	BENCHMARK_LIBRARIES[0]['color'] = '#0000FF'
+
+	for idx, lib in enumerate(BENCHMARK_LIBRARIES[1:]):
+		col = round( 128 + 127 * idx/(len(BENCHMARK_LIBRARIES) - 1))
+		code = hex(col)[2:]
+		lib['color'] = '#{}00{}'.format(code, code)
 
 	with open(args.input_tsv,'r') as inp:
 		tsv_reader = csv.reader(inp, delimiter='\t')
