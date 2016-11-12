@@ -7,7 +7,8 @@ and fast json parser for data of known schemas.
 
 View [Installation](#installation) section for instructions.
 
-Benchmarks can be seen on [Benchmark.md](Benchmark.md).
+Benchmarks can be seen on [Benchmark.md](Benchmark.md) or on
+https://mserdarsanli.github.io/QuantumJson/Benchmarks.html with graphs.
 
 ## Rationale
 
