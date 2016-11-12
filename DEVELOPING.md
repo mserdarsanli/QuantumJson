@@ -1,8 +1,10 @@
 # QuantumJson Development
 
-Development on QuantumJson relies on [Bazel build tool](https://github.com/bazelbuild/bazel),
-[Catch test framework](https://github.com/philsquared/Catch) and installation
-of other C++ Json libraries (for benchmarks).
+Development on QuantumJson relies on
+[Bazel build tool](https://github.com/bazelbuild/bazel),
+[Catch test framework](https://github.com/philsquared/Catch),
+[Ronn](https://github.com/rtomayko/ronn) and installation of other C++ Json
+libraries (for benchmarks).
 
 To keep the repository cleaner and not to bloat developer machines a Dockerfile is
 provided. Therefore having `docker` is the only requisite for developing QuantumJson.

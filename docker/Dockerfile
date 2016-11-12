@@ -90,3 +90,10 @@ RUN bash -c "                                                                   
         && mv libstaticjson.a /usr/local/lib                                         \
     )                                                                                \
 "
+
+# Install ronn (manpage generator)
+RUN apt-get -y install \
+    ruby \
+    ruby-dev \
+    groff
+RUN gem install ronn
