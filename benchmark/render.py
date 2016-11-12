@@ -18,14 +18,23 @@ BENCHMARK_SCENARIOS = [
 	{
 		"id": "scenario1",
 		"name": "Scenario 1 (Reddit)",
+		"description": "Parsing a large JSON when only specific fields"
+		  + " are of interest. In this scenario, Reddit front page JSON (size: 82K)"
+		  + " is parsed while only post URL and scores are extraceted."
+		  + " Besides QuantumJson and StaticJSON, libraries parse the"
+		  + " full JSON.",
 	},
 	{
 		"id": "scenario2",
 		"name": "Scenario 2 (OMDB)",
+		"description": "A JSON from OMDB (size: 1K) is parsed. OMDB API is using"
+		  + " strings for every value, so this benchmark measures only"
+		  + " string parsing performance.",
 	},
 	{
 		"id": "scenario3",
 		"name": "Scenario 3 (StackOverflow)",
+		"description": "StackOverflow top users JSON (size: 44K)",
 	},
 ]
 
@@ -65,6 +74,8 @@ def render_md():
 	for sc in BENCHMARK_SCENARIOS:
 		print('##', sc['name'])
 		print('')
+		print(sc['description'])
+		print('')
 
 		for mode in BENCHMARK_MODES:
 			print('| Library | {} |'.format(mode['unit']))
@@ -88,6 +99,7 @@ def render_html():
 
 	for sc in BENCHMARK_SCENARIOS:
 		print('<h2>{}</h2>'.format(sc['name']))
+		print(sc['description'])
 
 		for mode in BENCHMARK_MODES:
 			print('<table>')
