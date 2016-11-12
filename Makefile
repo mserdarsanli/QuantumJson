@@ -95,8 +95,11 @@ docker-run-benchmarks:
 	           bazel --batch build                                                 \
 	               --genrule_strategy=standalone --spawn_strategy=standalone       \
 	               //benchmark:all                                                 \
-	        && cat bazel-genfiles/benchmark/Benchmark.md                           \
-	        " | tr -d "\r" | tee Benchmark.md
+	        && python3 benchmark/render.py                                         \
+	               --input_tsv bazel-genfiles/benchmark/results.tsv                \
+	               --render_target md > Benchmark.md                               \
+	        "
+	cat Benchmark.md
 
 docker-generate-manpages:
 	docker run --tty --interactive --volume "$(ROOT_DIR):/QuantumJson" \

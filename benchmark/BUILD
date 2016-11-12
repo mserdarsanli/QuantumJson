@@ -47,17 +47,13 @@ cc_library(
 BENCHMARK_MODES = [
 	{
 		"id": "benchmark_speed",
-		"name": "Speed Benchmark",
 		"copts": ["-DBENCHMARK_SPEED"],
 		"runtime_env": "",
 		"tools": [],
 		"repeat": 1000,
-		"table_header": "| Library | Speed (secs) |\n"
-		              + "| ------- | ------------ |\n",
 	},
 	{
 		"id": "benchmark_memory",
-		"name": "Memory Benchmark",
 		"copts": ["-DBENCHMARK_MEMORY"],
 		# load modified malloc to report memory usage
 		"runtime_env": "LD_PRELOAD=bazel-out/host/bin/benchmark/libmemory_reporter.so",
@@ -65,25 +61,20 @@ BENCHMARK_MODES = [
 			":memory_reporter",
 		],
 		"repeat": 1,
-		"table_header": "| Library | Memory (bytes) |\n"
-		              + "| ------- | -------------- |\n",
 	},
 ]
 
 BENCHMARK_SCENARIOS = [
 	{
 		"id": "scenario1",
-		"name": "Scenario 1 (Reddit)",
 		"input": ":data/reddit_front.json",
 	},
 	{
 		"id": "scenario2",
-		"name": "Scenario 2 (OMDB)",
 		"input": ":data/omdb_frozen.json",
 	},
 	{
 		"id": "scenario3",
-		"name": "Scenario 3 (StackOverflow)",
 		"input": ":data/stackoverflow_users.json",
 	},
 ]
@@ -91,14 +82,11 @@ BENCHMARK_SCENARIOS = [
 BENCHMARK_LIBRARIES = [
 	{
 		"id": "nlohmann_json",
-		"url": "https://github.com/nlohmann/json",
-		"bazel_deps": [
-		],
+		"bazel_deps": [],
 		"linkopts": [],
 	},
 	{
 		"id": "quantumjson",
-		"url": "https://github.com/mserdarsanli/QuantumJson",
 		"bazel_deps": [
 			":quantumjson_schemas",
 		],
@@ -106,31 +94,24 @@ BENCHMARK_LIBRARIES = [
 	},
 	{
 		"id": "jsoncpp",
-		"url": "https://github.com/open-source-parsers/jsoncpp",
-		"bazel_deps": [
-		],
+		"bazel_deps": [],
 		"linkopts": ["-ljsoncpp"],
 	},
 	{
 		"id": "rapidjson",
-		"url": "https://github.com/miloyip/rapidjson",
-		"bazel_deps": [
-		],
+		"bazel_deps": [],
 		"linkopts": [],
 	},
 	{
 		# TODO benchmark against a known version
 		"id": "boost_pt",
-		"url": "http://www.boost.org/doc/libs/release/libs/property_tree/",
-		"bazel_deps": [
-		],
+		"bazel_deps": [],
 		"linkopts": [],
 	},
 	{
 		"id": "staticjson",
 		"url": "https://github.com/netheril96/StaticJSON",
-		"bazel_deps": [
-		],
+		"bazel_deps": [],
 		"linkopts": ["-lstaticjson"],
 	},
 ]
