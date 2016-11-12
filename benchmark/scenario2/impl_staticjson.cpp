@@ -86,6 +86,22 @@ void Benchmark(int repeat, const std::string &input)
 		Movie m;
 		staticjson::from_json_string(input.c_str(), &m, nullptr);
 
+		#ifdef BENCHMARK_CHECK_CORRECTNESS
+
+		std::string title = m.Title;
+		std::string awards = m.Awards;
+		std::string poster = m.Poster;
+		std::string writer = m.Writer;
+		std::string imdbRating = m.imdbRating;
+
+		CHECK(title == "Frozen");
+		CHECK(awards == "Won 2 Oscars. Another 72 wins & 57 nominations.");
+		CHECK(poster == "http://ia.media-imdb.com/images/M/MV5BMTQ1MjQwMTE5OF5BMl5BanBnXkFtZTgwNjk3MTcyMDE@._V1_SX300.jpg");
+		CHECK(writer == "Jennifer Lee (screenplay), Hans Christian Andersen (story inspired by \"The Snow Queen\" by), Chris Buck (story by), Jennifer Lee (story by), Shane Morris (story by)");
+		CHECK(imdbRating == "7.6");
+
+		#endif
+
 		BENCHMARK_LOOP_END;
 	}
 
