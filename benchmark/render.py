@@ -35,24 +35,24 @@ BENCHMARK_LIBRARIES = [
 		"url": "https://github.com/mserdarsanli/QuantumJson",
 	},
 	{
-		"id": "nlohmann_json",
-		"url": "https://github.com/nlohmann/json",
-	},
-	{
-		"id": "jsoncpp",
-		"url": "https://github.com/open-source-parsers/jsoncpp",
+		"id": "staticjson",
+		"url": "https://github.com/netheril96/StaticJSON",
 	},
 	{
 		"id": "rapidjson",
 		"url": "https://github.com/miloyip/rapidjson",
 	},
 	{
-		"id": "boost_pt",
-		"url": "http://www.boost.org/doc/libs/release/libs/property_tree/",
+		"id": "jsoncpp",
+		"url": "https://github.com/open-source-parsers/jsoncpp",
 	},
 	{
-		"id": "staticjson",
-		"url": "https://github.com/netheril96/StaticJSON",
+		"id": "nlohmann_json",
+		"url": "https://github.com/nlohmann/json",
+	},
+	{
+		"id": "boost_pt",
+		"url": "http://www.boost.org/doc/libs/release/libs/property_tree/",
 	},
 ]
 
