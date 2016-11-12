@@ -377,8 +377,6 @@ void GenerateMatchers(ostream &out,
 	{
 		// There was only one group and we matched that already
 
-		bool skipNull = false;
-
 		out << FieldNameParsed % varsBegin->cppName
 		                       % (varsBegin->skipNull ? SkipNullValue : "");
 		return;
