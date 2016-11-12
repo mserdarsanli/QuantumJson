@@ -31,3 +31,8 @@ Inside docker use following commands:
     # Run benchmarks
     bazel --batch build --genrule_strategy=standalone --spawn_strategy=standalone //benchmark:all
 
+Or use following halper make targets
+
+    make docker-build
+    make docker-run-tests
+    make docker-run-benchmarks
