@@ -46,18 +46,14 @@ cc_library(
 
 BENCHMARK_MODES = [
 	{
-		"name": "Speed Benchmark",
-		"suffix": "benchmark_speed",
+		"id": "benchmark_speed",
 		"copts": ["-DBENCHMARK_SPEED"],
 		"runtime_env": "",
 		"tools": [],
 		"repeat": 1000,
-		"table_header": "| Library | Speed (secs) |\n"
-		              + "| ------- | ------------ |\n",
 	},
 	{
-		"name": "Memory Benchmark",
-		"suffix": "benchmark_memory",
+		"id": "benchmark_memory",
 		"copts": ["-DBENCHMARK_MEMORY"],
 		# load modified malloc to report memory usage
 		"runtime_env": "LD_PRELOAD=bazel-out/host/bin/benchmark/libmemory_reporter.so",
@@ -65,25 +61,20 @@ BENCHMARK_MODES = [
 			":memory_reporter",
 		],
 		"repeat": 1,
-		"table_header": "| Library | Memory (bytes) |\n"
-		              + "| ------- | -------------- |\n",
 	},
 ]
 
 BENCHMARK_SCENARIOS = [
 	{
-		"dir": "scenario1",
-		"name": "Scenario 1 (Reddit)",
+		"id": "scenario1",
 		"input": ":data/reddit_front.json",
 	},
 	{
-		"dir": "scenario2",
-		"name": "Scenario 2 (OMDB)",
+		"id": "scenario2",
 		"input": ":data/omdb_frozen.json",
 	},
 	{
-		"dir": "scenario3",
-		"name": "Scenario 3 (StackOverflow)",
+		"id": "scenario3",
 		"input": ":data/stackoverflow_users.json",
 	},
 ]
@@ -91,14 +82,11 @@ BENCHMARK_SCENARIOS = [
 BENCHMARK_LIBRARIES = [
 	{
 		"id": "nlohmann_json",
-		"url": "https://github.com/nlohmann/json",
-		"bazel_deps": [
-		],
+		"bazel_deps": [],
 		"linkopts": [],
 	},
 	{
 		"id": "quantumjson",
-		"url": "https://github.com/mserdarsanli/QuantumJson",
 		"bazel_deps": [
 			":quantumjson_schemas",
 		],
@@ -106,31 +94,24 @@ BENCHMARK_LIBRARIES = [
 	},
 	{
 		"id": "jsoncpp",
-		"url": "https://github.com/open-source-parsers/jsoncpp",
-		"bazel_deps": [
-		],
+		"bazel_deps": [],
 		"linkopts": ["-ljsoncpp"],
 	},
 	{
 		"id": "rapidjson",
-		"url": "https://github.com/miloyip/rapidjson",
-		"bazel_deps": [
-		],
+		"bazel_deps": [],
 		"linkopts": [],
 	},
 	{
 		# TODO benchmark against a known version
 		"id": "boost_pt",
-		"url": "http://www.boost.org/doc/libs/release/libs/property_tree/",
-		"bazel_deps": [
-		],
+		"bazel_deps": [],
 		"linkopts": [],
 	},
 	{
 		"id": "staticjson",
 		"url": "https://github.com/netheril96/StaticJSON",
-		"bazel_deps": [
-		],
+		"bazel_deps": [],
 		"linkopts": ["-lstaticjson"],
 	},
 ]
@@ -148,9 +129,9 @@ cc_json_schema_lib(
 	[
 		# Binary to run for the benchmark
 		cc_binary(
-			name = "bin_%s_%s_%s" % (lib["id"], sc["dir"], mode["suffix"]),
+			name = "bin_%s_%s_%s" % (lib["id"], sc["id"], mode["id"]),
 			srcs = [
-				"%s/impl_%s.cpp" % (sc["dir"], lib["id"]),
+				"%s/impl_%s.cpp" % (sc["id"], lib["id"]),
 				"Benchmark.hpp",
 				"Executor.cpp",
 			],
@@ -161,23 +142,23 @@ cc_json_schema_lib(
 
 		# Rule to run and save the benchmark
 		genrule(
-			name = "run_%s_%s_%s" % (lib["id"], sc["dir"], mode["suffix"]),
+			name = "run_%s_%s_%s" % (lib["id"], sc["id"], mode["id"]),
 			tools = mode["tools"] + [
-				":bin_%s_%s_%s" % (lib["id"], sc["dir"], mode["suffix"]),
+				":bin_%s_%s_%s" % (lib["id"], sc["id"], mode["id"]),
 			],
 			srcs = [
 				sc["input"],
 			],
 			outs = [
-				":result_%s_%s_%s.md" % (lib["id"], sc["dir"], mode["suffix"]),
+				":result_%s_%s_%s.txt" % (lib["id"], sc["id"], mode["id"]),
 			],
-			cmd = """ echo "| {lib} | $$({ENV} {bin} {repeat} < {input}) |" > {output}
+			cmd = """ echo "{scenario}\t{lib}\t{mode}\t$$({ENV} {bin} {repeat} < {input})" > {output}
 			        """.format(
 			    ENV = mode["runtime_env"],
 			    lib = lib["id"],
-			    mode = mode["name"],
-			    scenario = sc["name"],
-			    bin = "$(location :bin_%s_%s_%s)" % (lib["id"], sc["dir"], mode["suffix"]),
+			    mode = mode["id"],
+			    scenario = sc["id"],
+			    bin = "$(location :bin_%s_%s_%s)" % (lib["id"], sc["id"], mode["id"]),
 			    repeat = str(mode["repeat"]),
 			    input = "$(location %s)" % sc["input"],
 			    output = "$(OUTS)",
@@ -189,43 +170,16 @@ cc_json_schema_lib(
 	for mode in BENCHMARK_MODES
 ]
 
-[
-	genrule(
-		name = "res_%s_%s" % (sc["dir"], mode["suffix"]),
-		srcs = [
-			"result_%s_%s_%s.md" % (lib["id"], sc["dir"], mode["suffix"])
-			for lib in BENCHMARK_LIBRARIES
-		],
-		outs = [
-			"res_%s_%s.md" % (sc["dir"], mode["suffix"]),
-		],
-		cmd = "(echo -n \"%s\" && cat $(SRCS)) > $(OUTS)" % (mode["table_header"]),
-	)
-	for mode in BENCHMARK_MODES
-	for sc in BENCHMARK_SCENARIOS
-]
-
 genrule(
-	name = "benchmark",
+	name = "results",
 	srcs = [
-		"res_%s_%s.md" % (sc["dir"], mode["suffix"])
-		for mode in BENCHMARK_MODES
+		"result_%s_%s_%s.txt" % (lib["id"], sc["id"], mode["id"])
 		for sc in BENCHMARK_SCENARIOS
+		for lib in BENCHMARK_LIBRARIES
+		for mode in BENCHMARK_MODES
 	],
 	outs = [
-		"Benchmark.md",
+		"results.tsv",
 	],
-	# TODO generate the command fully
-	cmd = "( echo  \"# Benchmarks\n\" \n" + "\n".join([
-		( "echo  \"## %s\" \n"
-		+ "echo  \"\" \n"
-		+ "cat $(location res_%s_%s.md) \n"
-		+ "echo  \"\" \n"
-		+ "cat $(location res_%s_%s.md) \n"
-		+ "echo  \"\" \n" )
-		% (sc["name"],
-		   sc["dir"], BENCHMARK_MODES[0]["suffix"],
-		   sc["dir"], BENCHMARK_MODES[1]["suffix"])
-		for sc in BENCHMARK_SCENARIOS
-	]) + ") > $(OUTS)",
+	cmd = "cat $(SRCS) > $(OUTS)",
 )
