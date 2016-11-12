@@ -53,12 +53,3 @@ struct
     std::string desc;
 }
 ```
-
-Attributes can be used to control such behavior.
-
-Following is a list of the attributes:
-
-  * on_missing(action) action: "none" (default) | "throw"
-  * on_null(action) action: "throw" (default) | "skip"
-  * json_field_name(name)
-

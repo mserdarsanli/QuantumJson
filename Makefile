@@ -73,7 +73,7 @@ install: jc
 # Beware that using these commans will trigger rebuild every time, since docker
 # instance will be gone after the command completes.
 
-.PHONY: docker-build docker-run-tests docker-run-benchmarks
+.PHONY: docker-build docker-run-tests docker-run-benchmarks docker-generate-manpages
 
 # Get installation directory (http://stackoverflow.com/a/23324703/620438)
 ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -94,3 +94,8 @@ docker-run-benchmarks:
 	    bazel --batch build \
 	        --genrule_strategy=standalone --spawn_strategy=standalone \
 	        //benchmark:all
+
+docker-generate-manpages:
+	docker run --tty --interactive --volume "$(ROOT_DIR):/QuantumJson" \
+	    --workdir /QuantumJson quantumjson-build-server \
+	    ronn --pipe --html man/qj.1.ronn | tr -d "\r" > docs/qj.1.html

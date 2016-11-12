@@ -87,6 +87,39 @@ As an example, the code will be able to parse following JSON:
         ]
     }
 
+### Attributes
+
+Some C++ attributes can be used to control specific QuantumJson behaviors.
+
+  * `json_field_name(name)`:
+    name: <string>
+
+    Can be used when attribute name is not a valid C++ variable name.
+
+        struct Foo
+        {
+            int statusCode [[ json_field_name("status-code") ]];
+        };
+        
+        {"status-code": 404}  // statusCode == 404
+        {"statusCode": 404}   // throws
+
+
+  * `on_null(action)`:
+    action: "throw" (default) | "skip"
+
+    Variables having `on_null("skip")` attribute will skip JSON `null` values
+    instead of failing.
+
+        struct Foo
+        {
+            string x [[ on_null("skip") ]];
+        };
+        
+        // Following JSON values are accepted.
+        {"x": "val"}
+        {"x": null}  // x has default initialized value
+
 ## API
 
 Following is a synopsis of the generated API. Note that API might change.
