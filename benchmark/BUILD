@@ -62,6 +62,15 @@ BENCHMARK_MODES = [
 		],
 		"repeat": 1,
 	},
+	{
+		# Mode to verify if benchmarks are actually parsing correctly
+		# Does not affect speed/memory benchmarks
+		"id": "benchmark_correctness",
+		"copts": ["-DBENCHMARK_CHECK_CORRECTNESS"],
+		"runtime_env": "",
+		"tools": [],
+		"repeat": 1,
+	},
 ]
 
 BENCHMARK_SCENARIOS = [

@@ -43,6 +43,37 @@ void Benchmark(int repeat, const std::string &input)
 		pt::ptree root;
 		pt::read_json(ss, root);
 
+		#ifdef BENCHMARK_CHECK_CORRECTNESS
+
+		std::string url1, url25;
+		int score1, score25;
+
+		// boost_pt has a horrible api, not allowing random access to
+		// list elements.
+		int n = 0;
+		for (const auto &ch : root.get_child("data.children"))
+		{
+			++n;
+			if (n == 1)
+			{
+				url1 = ch.second.get<std::string>("data.url");
+				score1 = ch.second.get<int>("data.score");
+			}
+			if (n == 25)
+			{
+				url25 = ch.second.get<std::string>("data.url");
+				score25 = ch.second.get<int>("data.score");
+			}
+		}
+
+		// Check first and last values
+		CHECK(url1 == "http://i.imgur.com/RkeezA0.jpg");
+		CHECK(score1 == 6607);
+		CHECK(url25 == "https://www.youtube.com/watch?v=PMNFaAUs2mo");
+		CHECK(score25 == 4679);
+
+		#endif
+
 		BENCHMARK_LOOP_END;
 	}
 
