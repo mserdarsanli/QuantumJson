@@ -98,6 +98,9 @@ docker-run-benchmarks:
 	        && python3 benchmark/render.py                                         \
 	               --input_tsv bazel-genfiles/benchmark/results.tsv                \
 	               --render_target md > Benchmark.md                               \
+	        && python3 benchmark/render.py                                         \
+	               --input_tsv bazel-genfiles/benchmark/results.tsv                \
+	               --render_target html > docs/Benchmarks.html                     \
 	        "
 	cat Benchmark.md
 

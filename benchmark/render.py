@@ -75,8 +75,32 @@ def render_md():
 				print('| {} | {} |'.format(lib['id'], res))
 			print('')
 
+BAR_WIDTH_MAX = 300
+def benchmark_bar(ratio):
+	return '<div style="width: {}px; background-color: #CC0000;">&#65279;</div>'.format(
+	    round(BAR_WIDTH_MAX*ratio))
+
 def render_html():
-	assert 0 == 'not implemented'
+	print('<h1>Benchmarks</h1>')
+
+	for sc in BENCHMARK_SCENARIOS:
+		print('<h2>{}</h2>'.format(sc['name']))
+
+		for mode in BENCHMARK_MODES:
+			print('<table>')
+			print('<tr><th>Library</th><th colspan="2">{}</th></tr>'.format(mode['unit']))
+
+			maxRes = 0
+			for lib in BENCHMARK_LIBRARIES:
+				res = float(BENCHMARK_DATA[ (sc['id'], lib['id'], mode['id']) ])
+				maxRes = max(maxRes, res)
+
+			for lib in BENCHMARK_LIBRARIES:
+				res = float(BENCHMARK_DATA[ (sc['id'], lib['id'], mode['id']) ])
+				print('<tr><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
+				    lib['id'], res, benchmark_bar(res / maxRes)
+				))
+			print('</table>')
 
 def main():
 	parser = argparse.ArgumentParser(description='Render benchmark results')
