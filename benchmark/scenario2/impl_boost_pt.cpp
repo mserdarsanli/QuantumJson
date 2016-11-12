@@ -43,6 +43,22 @@ void Benchmark(int repeat, const std::string &input)
 		pt::ptree root;
 		pt::read_json(ss, root);
 
+		#ifdef BENCHMARK_CHECK_CORRECTNESS
+
+		std::string title = root.get<std::string>("Title");
+		std::string awards = root.get<std::string>("Awards");
+		std::string poster = root.get<std::string>("Poster");
+		std::string writer = root.get<std::string>("Writer");
+		std::string imdbRating = root.get<std::string>("imdbRating");
+
+		CHECK(title == "Frozen");
+		CHECK(awards == "Won 2 Oscars. Another 72 wins & 57 nominations.");
+		CHECK(poster == "http://ia.media-imdb.com/images/M/MV5BMTQ1MjQwMTE5OF5BMl5BanBnXkFtZTgwNjk3MTcyMDE@._V1_SX300.jpg");
+		CHECK(writer == "Jennifer Lee (screenplay), Hans Christian Andersen (story inspired by \"The Snow Queen\" by), Chris Buck (story by), Jennifer Lee (story by), Shane Morris (story by)");
+		CHECK(imdbRating == "7.6");
+
+		#endif
+
 		BENCHMARK_LOOP_END;
 	}
 

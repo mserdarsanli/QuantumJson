@@ -31,7 +31,7 @@
 // a call to calloc is used with magic values.
 extern volatile void* __do_not_omit;
 
-#if defined BENCHMARK_MEMORY && !defined BENCHMARK_SPEED
+#if defined BENCHMARK_MEMORY && !defined BENCHMARK_SPEED && !defined BENCHMARK_CHECK_CORRECTNESS
 
 	// Benchmarking Memory
 
@@ -59,7 +59,7 @@ extern volatile void* __do_not_omit;
 		std::cout << __max_memory_used_during_parsing - __memory_used_before_parsing << "\n"; \
 	}
 
-#elif !defined BENCHMARK_MEMORY && defined BENCHMARK_SPEED
+#elif !defined BENCHMARK_MEMORY && defined BENCHMARK_SPEED && !defined BENCHMARK_CHECK_CORRECTNESS
 
 	#include <time.h>
 	#include <stdio.h>
@@ -76,9 +76,34 @@ extern volatile void* __do_not_omit;
 	#define BENCHMARK_LOOP_BEGIN
 	#define BENCHMARK_LOOP_END
 
+#elif !defined BENCHMARK_MEMORY && !defined BENCHMARK_SPEED && defined BENCHMARK_CHECK_CORRECTNESS
+
+	#define BENCHMARK_BEGIN \
+		bool _check_done = false;
+
+	#define BENCHMARK_END \
+		if (!_check_done) \
+		{ \
+			std::cerr << "No correctness check was performed\n"; \
+			std::exit(1); \
+		}
+
+	#define BENCHMARK_LOOP_BEGIN
+	#define BENCHMARK_LOOP_END
+
+	#define CHECK(expr) \
+	{ \
+		_check_done = true; \
+		if (!(expr)) \
+		{ \
+			std::cerr << "Check failed: [" << #expr << "]\n"; \
+			std::exit(1); \
+		} \
+	}
+
 #else
 
-	#error "Specify one of BENCHMARK_MEMORY | BENCHMARK_SPEED"
+	#error "Specify one of BENCHMARK_MEMORY | BENCHMARK_SPEED | BENCHMARK_CHECK_CORRECTNESS"
 
 #endif
 

@@ -36,6 +36,18 @@ void Benchmark(int repeat, const std::string &input)
 
 		auto j3 = nlohmann::json::parse(input);
 
+		#ifdef BENCHMARK_CHECK_CORRECTNESS
+		std::string url1 = j3["data"]["children"][0]["data"]["url"];
+		std::string url25 = j3["data"]["children"][24]["data"]["url"];
+		int score1 = j3["data"]["children"][0]["data"]["score"];
+		int score25 = j3["data"]["children"][24]["data"]["score"];
+
+		CHECK(url1 == "http://i.imgur.com/RkeezA0.jpg");
+		CHECK(score1 == 6607);
+		CHECK(url25 == "https://www.youtube.com/watch?v=PMNFaAUs2mo");
+		CHECK(score25 == 4679);
+		#endif
+
 		BENCHMARK_LOOP_END;
 	}
 

@@ -62,6 +62,15 @@ BENCHMARK_MODES = [
 		],
 		"repeat": 1,
 	},
+	{
+		# Mode to verify if benchmarks are actually parsing correctly
+		# Does not affect speed/memory benchmarks
+		"id": "benchmark_correctness",
+		"copts": ["-DBENCHMARK_CHECK_CORRECTNESS"],
+		"runtime_env": "",
+		"tools": [],
+		"repeat": 1,
+	},
 ]
 
 BENCHMARK_SCENARIOS = [
@@ -152,8 +161,9 @@ cc_json_schema_lib(
 			outs = [
 				":result_%s_%s_%s.txt" % (lib["id"], sc["id"], mode["id"]),
 			],
-			cmd = """ echo "{scenario}\t{lib}\t{mode}\t$$({ENV} {bin} {repeat} < {input})" > {output}
-			        """.format(
+			cmd = """ ( RES=$$({ENV} {bin} {repeat} < {input}) \
+			       && echo "{scenario}\t{lib}\t{mode}\t$$RES" > {output}
+			       ) """.format(
 			    ENV = mode["runtime_env"],
 			    lib = lib["id"],
 			    mode = mode["id"],
@@ -177,9 +187,25 @@ genrule(
 		for sc in BENCHMARK_SCENARIOS
 		for lib in BENCHMARK_LIBRARIES
 		for mode in BENCHMARK_MODES
+		if mode['id'] != "benchmark_correctness"
 	],
 	outs = [
 		"results.tsv",
+	],
+	cmd = "cat $(SRCS) > $(OUTS)",
+)
+
+genrule(
+	name = "correctness",
+	srcs = [
+		"result_%s_%s_%s.txt" % (lib["id"], sc["id"], mode["id"])
+		for sc in BENCHMARK_SCENARIOS
+		for lib in BENCHMARK_LIBRARIES
+		for mode in BENCHMARK_MODES
+		if mode['id'] == "benchmark_correctness"
+	],
+	outs = [
+		"check_correctness",
 	],
 	cmd = "cat $(SRCS) > $(OUTS)",
 )

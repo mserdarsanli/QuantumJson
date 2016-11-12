@@ -35,6 +35,18 @@ void Benchmark(int repeat, const std::string &input)
 		rapidjson::Document document;
 		document.Parse(input.c_str()); // TODO check if this is the right api
 
+		#ifdef BENCHMARK_CHECK_CORRECTNESS
+		std::string url1 = document["data"]["children"][0]["data"]["url"].GetString();
+		std::string url25 = document["data"]["children"][24]["data"]["url"].GetString();
+		int score1 = document["data"]["children"][0]["data"]["score"].GetInt();
+		int score25 = document["data"]["children"][24]["data"]["score"].GetInt();
+
+		CHECK(url1 == "http://i.imgur.com/RkeezA0.jpg");
+		CHECK(score1 == 6607);
+		CHECK(url25 == "https://www.youtube.com/watch?v=PMNFaAUs2mo");
+		CHECK(score25 == 4679);
+		#endif
+
 		BENCHMARK_LOOP_END;
 	}
 
