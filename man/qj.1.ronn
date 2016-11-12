@@ -132,7 +132,7 @@ Following is a synopsis of the generated API. Note that API might change.
     void MergeFromJson(InputIteratorType begin, InputIteratorType end);
 
     template <typename OutputIteratorType>
-    void MergeFromJson(OutputIteratorType out);
+    void SerializeTo(OutputIteratorType out);
 
 ## AUTHOR
 
