@@ -97,3 +97,6 @@ RUN apt-get -y install \
     ruby-dev \
     groff
 RUN gem install ronn
+
+RUN apt-get -y install \
+    python3
