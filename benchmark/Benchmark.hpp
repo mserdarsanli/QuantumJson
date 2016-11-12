@@ -78,17 +78,28 @@ extern volatile void* __do_not_omit;
 
 #elif !defined BENCHMARK_MEMORY && !defined BENCHMARK_SPEED && defined BENCHMARK_CHECK_CORRECTNESS
 
-	#define BENCHMARK_BEGIN
-	#define BENCHMARK_END
+	#define BENCHMARK_BEGIN \
+		bool _check_done = false;
+
+	#define BENCHMARK_END \
+		if (!_check_done) \
+		{ \
+			std::cerr << "No correctness check was performed\n"; \
+			std::exit(1); \
+		}
+
 	#define BENCHMARK_LOOP_BEGIN
 	#define BENCHMARK_LOOP_END
 
 	#define CHECK(expr) \
+	{ \
+		_check_done = true; \
 		if (!(expr)) \
 		{ \
 			std::cerr << "Check failed: [" << #expr << "]\n"; \
 			std::exit(1); \
-		}
+		} \
+	}
 
 #else
 
