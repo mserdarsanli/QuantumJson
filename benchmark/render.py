@@ -34,7 +34,7 @@ BENCHMARK_SCENARIOS = [
 	{
 		"id": "scenario3",
 		"name": "Scenario 3 (StackOverflow)",
-		"description": "StackOverflow top users JSON (size: 44K)",
+		"description": "StackOverflow top users JSON (size: 20K)",
 	},
 ]
 
