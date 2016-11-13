@@ -6,6 +6,7 @@
 
 - Manual page for documentation
 - map<string, Foo> type for dictionaries
+- [GCC,Clang] use __builtin_expect for performance
 
 ### Fixed
 
