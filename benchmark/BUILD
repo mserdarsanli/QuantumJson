@@ -86,6 +86,10 @@ BENCHMARK_SCENARIOS = [
 		"id": "scenario3",
 		"input": ":data/stackoverflow_users.json",
 	},
+	{
+		"id": "scenario4",
+		"input": ":data/tfl_accident_stats_2015.json",
+	},
 ]
 
 BENCHMARK_LIBRARIES = [
@@ -131,6 +135,7 @@ cc_json_schema_lib(
 		"schema/RedditListing.json.hpp",
 		"schema/OMDB.json.hpp",
 		"schema/StackOverflow.json.hpp",
+		"schema/TFL.json.hpp",
 	],
 )
 

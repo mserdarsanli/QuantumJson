@@ -36,6 +36,11 @@ BENCHMARK_SCENARIOS = [
 		"name": "Scenario 3 (StackOverflow)",
 		"description": "StackOverflow top users JSON (size: 20K)",
 	},
+	{
+		"id": "scenario4",
+		"name": "Scenario 4 (TFL accident stats 2015)",
+		"description": "A large JSON (18M) from an open API",
+	},
 ]
 
 BENCHMARK_LIBRARIES = [
