@@ -1,0 +1,4 @@
+[submodule "benchmark/data"]
+	path = benchmark/data
+	url = https://github.com/mserdarsanli/QuantumJson.git
+	branch = BenchmarkData
