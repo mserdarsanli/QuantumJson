@@ -333,7 +333,7 @@ void MatchOnlyPrefix(ostream &out, const string &prefix)
 	out << "\t// Matching common prefix: [" << prefix << "]\n";
 	for (char c : prefix)
 	{
-		out << "\tif (" << PeekNextChar << " != '" << c << "') goto " << Labels::UnknownField << ";\n";
+		out << "\tif (QUANTUMJSON_UNLIKELY(" << PeekNextChar << " != '" << c << "')) goto " << Labels::UnknownField << ";\n";
 		out << "\t" << ConsumeNextChar << ";\n";
 	}
 }
