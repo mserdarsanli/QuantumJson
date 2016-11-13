@@ -89,6 +89,7 @@ docker-run-tests:
 	        //tests:all //src:all
 
 docker-run-benchmarks:
+	git submodule update benchmark/data
 	docker run --volume "$(ROOT_DIR):/QuantumJson"                                 \
 	    --workdir /QuantumJson quantumjson-build-server                            \
 	    bash -c "                                                                  \
