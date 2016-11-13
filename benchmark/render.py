@@ -70,6 +70,8 @@ BENCHMARK_LIBRARIES = [
 	},
 ]
 
+INTRO_TEXT = ( "For speed benchmarks, the same json is parsed N times. N is set"
+  " per scenario to make best performing library to finish at roughly 1s.")
 BENCHMARK_DATA = {}
 
 def render_md():
@@ -101,6 +103,7 @@ def libUrl(lib):
 
 def render_html():
 	print('<h1>Benchmarks</h1>')
+	print(INTRO_TEXT)
 
 	for sc in BENCHMARK_SCENARIOS:
 		print('<h2>{}</h2>'.format(sc['name']))

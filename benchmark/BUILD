@@ -50,7 +50,7 @@ BENCHMARK_MODES = [
 		"copts": ["-DBENCHMARK_SPEED"],
 		"runtime_env": "",
 		"tools": [],
-		"repeat": 1000,
+		"repeat": True,
 	},
 	{
 		"id": "benchmark_memory",
@@ -60,7 +60,7 @@ BENCHMARK_MODES = [
 		"tools": [
 			":memory_reporter",
 		],
-		"repeat": 1,
+		"repeat": False,
 	},
 	{
 		# Mode to verify if benchmarks are actually parsing correctly
@@ -69,7 +69,7 @@ BENCHMARK_MODES = [
 		"copts": ["-DBENCHMARK_CHECK_CORRECTNESS"],
 		"runtime_env": "",
 		"tools": [],
-		"repeat": 1,
+		"repeat": False,
 	},
 ]
 
@@ -77,18 +77,22 @@ BENCHMARK_SCENARIOS = [
 	{
 		"id": "scenario1",
 		"input": ":data/reddit_front.json",
+		"repeat_cnt": 5000,
 	},
 	{
 		"id": "scenario2",
 		"input": ":data/omdb_frozen.json",
+		"repeat_cnt": 300000,
 	},
 	{
 		"id": "scenario3",
 		"input": ":data/stackoverflow_users.json",
+		"repeat_cnt": 14000,
 	},
 	{
 		"id": "scenario4",
 		"input": ":data/tfl_accident_stats_2015.json",
+		"repeat_cnt": 15,
 	},
 ]
 
@@ -174,7 +178,7 @@ cc_json_schema_lib(
 			    mode = mode["id"],
 			    scenario = sc["id"],
 			    bin = "$(location :bin_%s_%s_%s)" % (lib["id"], sc["id"], mode["id"]),
-			    repeat = str(mode["repeat"]),
+			    repeat = str(sc["repeat_cnt"] if mode["repeat"] else 1),
 			    input = "$(location %s)" % sc["input"],
 			    output = "$(OUTS)",
 			),
