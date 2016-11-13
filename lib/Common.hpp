@@ -38,17 +38,25 @@
 #include <errno.h>
 #include <unistd.h>
 
+#if defined(__GNUC__) || defined(__clang__)
+#define QUANTUMJSON_LIKELY(x) __builtin_expect(!!(x), 1)
+#define QUANTUMJSON_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define QUANTUMJSON_LIKELY(x) (x)
+#define QUANTUMJSON_UNLIKELY(x) (x)
+#endif
+
 // Exceptions seem to have a large (a few percent) performance cost by
 // preventing inlining (though I am not really sure about why).
 // So this simple alternative is used.
 #define QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE \
-	if (errorCode != ErrorCode::NoError) \
+	if (QUANTUMJSON_UNLIKELY(errorCode != ErrorCode::NoError)) \
 	{ \
 		return; \
 	}
 
 #define QUANTUMJSON_CHECK_EOF_AND_PROPAGATE \
-	if (it == end) \
+	if (QUANTUMJSON_UNLIKELY(it == end)) \
 	{ \
 		errorCode = ErrorCode::UnexpectedEOF; \
 		return; \
@@ -123,7 +131,9 @@ struct Parser
 		while (it != end)
 		{
 			char c = *it;
-			if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+			// Most JSON data are compact, so whitespace is marked as
+			// unlikely
+			if (QUANTUMJSON_UNLIKELY(c == ' ' || c == '\t' || c == '\n' || c == '\r'))
 			{
 				++it;
 			}
@@ -138,7 +148,10 @@ struct Parser
 	{
 		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
-		if ((*it >= '0' && *it <= '9') || (*it >= 'a' && *it <= 'f') || (*it >= 'A' && *it <= 'F'))
+		if (QUANTUMJSON_LIKELY(
+		       (*it >= '0' && *it <= '9')
+		    || (*it >= 'a' && *it <= 'f')
+		    || (*it >= 'A' && *it <= 'F')))
 		{
 			++it;
 			return;
@@ -151,21 +164,23 @@ struct Parser
 	{
 		SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
-		while (it != end)
+		while (1)
 		{
-			if ((*it & 0b11100000) == 0)
+			QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+
+			if (QUANTUMJSON_UNLIKELY((*it & 0b11100000) == 0))
 			{
 				errorCode = ErrorCode::ControlCharacterInString;
 				return;
 			}
 
-			if (*it == '"')
+			if (QUANTUMJSON_UNLIKELY(*it == '"'))
 			{
 				++it;
 				return;
 			}
 
-			if (*it == '\\')
+			if (QUANTUMJSON_UNLIKELY(*it == '\\'))
 			{
 				++it;
 
@@ -195,15 +210,24 @@ struct Parser
 
 			++it;
 		}
-
-		errorCode = ErrorCode::UnexpectedEOF;
 	}
 
 	void SkipNumber()
 	{
 		// TODO implement correctly
-		while (it != end && ((*it >= '0' && *it <='9') || *it == '.' || *it == '-'))
-			++it;
+		while (1)
+		{
+			QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+			if (QUANTUMJSON_LIKELY(*it >= '0' && *it <='9')
+			    || *it == '.' || *it == '-')
+			{
+				++it;
+			}
+			else
+			{
+				break;
+			}
+		}
 	}
 
 	void SkipNull()
@@ -235,9 +259,28 @@ struct Parser
 	{
 		SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		SkipWhitespace();
+		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+		bool isFirstField = true;
 
-		if (it != end && *it != '}')
+		while (1)
 		{
+			QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+			if (QUANTUMJSON_UNLIKELY(*it == '}'))
+			{
+				SkipChar('}'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+				return;
+			}
+
+			if (isFirstField)
+			{
+				isFirstField = false;
+			}
+			else
+			{
+				SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+				SkipWhitespace();
+			}
+
 			SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
 			SkipChar(':'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
@@ -245,37 +288,34 @@ struct Parser
 			SkipValue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
 		}
-
-		while (it != end && *it != '}')
-		{
-			SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-			SkipWhitespace();
-			SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-			SkipWhitespace();
-			SkipChar(':'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-			SkipWhitespace();
-			SkipValue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-			SkipWhitespace();
-		}
-
-		SkipChar('}'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	void SkipList()
 	{
 		SkipChar('['); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		SkipWhitespace();
+		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+		bool isFirstField = true;
 
-		if (it != end && *it != ']')
+		while (1)
 		{
-			SkipValue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-			SkipWhitespace();
-		}
+			QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+			if (QUANTUMJSON_UNLIKELY(*it == ']'))
+			{
+				SkipChar(']'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+				return;
+			}
 
-		while (it != end && *it != ']')
-		{
-			SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-			SkipWhitespace();
+			if (isFirstField)
+			{
+				isFirstField = false;
+			}
+			else
+			{
+				SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+				SkipWhitespace();
+			}
+
 			SkipValue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			SkipWhitespace();
 		}
@@ -331,7 +371,7 @@ struct Parser
 	{
 		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
-		if (*it != c)
+		if (QUANTUMJSON_UNLIKELY(*it != c))
 		{
 			errorCode = ErrorCode::UnexpectedChar;
 			return;
@@ -345,7 +385,7 @@ struct Parser
 		*skipped = false;
 
 		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
-		if (*it == 'n')
+		if (QUANTUMJSON_UNLIKELY(*it == 'n'))
 		{
 			SkipNull(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
@@ -356,9 +396,9 @@ struct Parser
 	inline
 	int fromHex(char c)
 	{
-		if (c >= '0' && c <= '9') return c - '0';
-		if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-		if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+		if (QUANTUMJSON_LIKELY(c >= '0' && c <= '9')) return c - '0';
+		if (QUANTUMJSON_LIKELY(c >= 'a' && c <= 'f')) return c - 'a' + 10;
+		if (QUANTUMJSON_LIKELY(c >= 'A' && c <= 'F')) return c - 'A' + 10;
 		errorCode = ErrorCode::UnexpectedChar;
 		return -1;
 	}
@@ -366,7 +406,7 @@ struct Parser
 	inline
 	void Utf8Append(int codePoint, std::string &str)
 	{
-		if (codePoint <= 0x7f)
+		if (QUANTUMJSON_LIKELY(codePoint <= 0x7f))
 		{
 			str.push_back( codePoint );
 			return;
@@ -404,13 +444,13 @@ struct Parser
 	{
 		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
-		if (*it == 't')
+		if (QUANTUMJSON_LIKELY(*it == 't'))
 		{
 			SkipTrue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			obj = true;
 			return;
 		}
-		else if (*it == 'f')
+		else if (QUANTUMJSON_LIKELY(*it == 'f'))
 		{
 			SkipFalse(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			obj = false;
@@ -425,7 +465,7 @@ struct Parser
 		SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 		// Parse string characters
-		while (it != end && *it != '"')
+		while (QUANTUMJSON_LIKELY(it != end && *it != '"'))
 		{
 			if ((*it & 0b11100000) == 0)
 			{
@@ -613,7 +653,7 @@ struct Parser
 	// TODO FIXME it == end checks are not done here
 	void ParseValueInto(double &obj)
 	{
-		if (*it != '-' && (*it < '0' || *it > '9'))
+		if (QUANTUMJSON_UNLIKELY(*it != '-' && (*it < '0' || *it > '9')))
 		{
 			errorCode = ErrorCode::UnexpectedToken;
 			return;
@@ -717,9 +757,11 @@ struct Parser
 		SkipChar('['); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		SkipWhitespace();
 
-		while (it != end)
+		while (1)
 		{
-			if (*it == ']')
+			QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+
+			if (QUANTUMJSON_UNLIKELY(*it == ']'))
 			{
 				++it;
 				return;
@@ -737,8 +779,6 @@ struct Parser
 
 			SkipWhitespace();
 		}
-
-		errorCode = ErrorCode::UnexpectedEOF;
 	}
 
 	template <typename MapElemType>
@@ -748,9 +788,11 @@ struct Parser
 		SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		SkipWhitespace();
 
-		while (it != end)
+		while (1)
 		{
-			if (*it == '}')
+			QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+
+			if (QUANTUMJSON_UNLIKELY(*it == '}'))
 			{
 				++it;
 				return;
