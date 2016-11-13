@@ -295,15 +295,15 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 
 			if (putSeparator)
 			{
-				out << "\t*(++s.out) = ',';\n";
+				out << "\t*(s.out++) = ',';\n";
 			}
 			putSeparator = true;
 
 			for (char c : v.jsonName)
 			{
-				out << "\t*(++s.out) = '" << c << "';\n";
+				out << "\t*(s.out++) = '" << c << "';\n";
 			}
-			out << "\t*(++s.out) = ':';\n";
+			out << "\t*(s.out++) = ':';\n";
 			out << "\ts.SerializeValue(this->" << var.name << ");\n";
 		}
 
@@ -333,7 +333,7 @@ void MatchOnlyPrefix(ostream &out, const string &prefix)
 	out << "\t// Matching common prefix: [" << prefix << "]\n";
 	for (char c : prefix)
 	{
-		out << "\tif (" << PeekNextChar << " != '" << c << "') goto " << Labels::UnknownField << ";\n";
+		out << "\tif (QUANTUMJSON_UNLIKELY(" << PeekNextChar << " != '" << c << "')) goto " << Labels::UnknownField << ";\n";
 		out << "\t" << ConsumeNextChar << ";\n";
 	}
 }
