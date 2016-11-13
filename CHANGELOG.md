@@ -17,6 +17,8 @@
 ### Changed
 
 - Docker is used for development environment now
+- Benchmark data is now stored in a submodule. This will allow having large
+  test data without making `master` branch larger.
 
 ## [0.2.0] - 2016-10-30
 
