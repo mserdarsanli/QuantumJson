@@ -295,15 +295,15 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 
 			if (putSeparator)
 			{
-				out << "\t*(++s.out) = ',';\n";
+				out << "\t*(s.out++) = ',';\n";
 			}
 			putSeparator = true;
 
 			for (char c : v.jsonName)
 			{
-				out << "\t*(++s.out) = '" << c << "';\n";
+				out << "\t*(s.out++) = '" << c << "';\n";
 			}
-			out << "\t*(++s.out) = ':';\n";
+			out << "\t*(s.out++) = ':';\n";
 			out << "\ts.SerializeValue(this->" << var.name << ");\n";
 		}
 
