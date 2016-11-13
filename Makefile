@@ -92,7 +92,7 @@ docker-run-benchmarks:
 	docker run --volume "$(ROOT_DIR):/QuantumJson"                                 \
 	    --workdir /QuantumJson quantumjson-build-server                            \
 	    bash -c "                                                                  \
-	           bazel --batch build                                                 \
+	           bazel --batch build --copt=-O3                                      \
 	               --genrule_strategy=standalone --spawn_strategy=standalone       \
 	               //benchmark:all                                                 \
 	        && python3 benchmark/render.py                                         \
