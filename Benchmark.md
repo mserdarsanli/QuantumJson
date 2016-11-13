@@ -6,12 +6,12 @@ Parsing a large JSON when only specific fields are of interest. In this scenario
 
 | Library | Runtime (seconds) |
 | ------- | ----------------- |
-| quantumjson | 0.135952 |
-| staticjson | 4.799339 |
-| rapidjson | 0.196754 |
-| jsoncpp | 1.749077 |
-| nlohmann_json | 1.649837 |
-| boost_pt | 2.871581 |
+| quantumjson | 0.691758 |
+| staticjson | 22.715060 |
+| rapidjson | 0.994481 |
+| jsoncpp | 7.689204 |
+| nlohmann_json | 7.776564 |
+| boost_pt | 17.386719 |
 
 | Library | Memory Allocations (bytes) |
 | ------- | -------------------------- |
@@ -28,12 +28,12 @@ A JSON from OMDB (size: 1K) is parsed. OMDB API is using strings for every value
 
 | Library | Runtime (seconds) |
 | ------- | ----------------- |
-| quantumjson | 0.004052 |
-| staticjson | 0.074205 |
-| rapidjson | 0.002850 |
-| jsoncpp | 0.011770 |
-| nlohmann_json | 0.024251 |
-| boost_pt | 0.018409 |
+| quantumjson | 1.807872 |
+| staticjson | 20.913615 |
+| rapidjson | 1.199518 |
+| jsoncpp | 5.084865 |
+| nlohmann_json | 5.332749 |
+| boost_pt | 6.261509 |
 
 | Library | Memory Allocations (bytes) |
 | ------- | -------------------------- |
@@ -50,12 +50,12 @@ StackOverflow top users JSON (size: 20K)
 
 | Library | Runtime (seconds) |
 | ------- | ----------------- |
-| quantumjson | 0.080496 |
-| staticjson | 1.722847 |
-| rapidjson | 0.049284 |
-| jsoncpp | 0.495034 |
-| nlohmann_json | 0.511687 |
-| boost_pt | 1.128603 |
+| quantumjson | 1.448972 |
+| staticjson | 21.454365 |
+| rapidjson | 0.948761 |
+| jsoncpp | 5.739544 |
+| nlohmann_json | 6.400174 |
+| boost_pt | 10.775744 |
 
 | Library | Memory Allocations (bytes) |
 | ------- | -------------------------- |
@@ -65,4 +65,26 @@ StackOverflow top users JSON (size: 20K)
 | jsoncpp | 115337 |
 | nlohmann_json | 74872 |
 | boost_pt | 219879 |
+
+## Scenario 4 (TFL accident stats 2015)
+
+A large JSON (18M) from an open API
+
+| Library | Runtime (seconds) |
+| ------- | ----------------- |
+| quantumjson | 1.601327 |
+| staticjson | 17.845755 |
+| rapidjson | 0.939199 |
+| jsoncpp | 7.385636 |
+| nlohmann_json | 7.521255 |
+| boost_pt | 13.388425 |
+
+| Library | Memory Allocations (bytes) |
+| ------- | -------------------------- |
+| quantumjson | 26661191 |
+| staticjson | 26663840 |
+| rapidjson | 30288258 |
+| jsoncpp | 110306241 |
+| nlohmann_json | 71926009 |
+| boost_pt | 192770058 |
 

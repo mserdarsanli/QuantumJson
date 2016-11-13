@@ -1,14 +1,15 @@
 <h1>Benchmarks</h1>
+For speed benchmarks, the same json is parsed N times. N is set per scenario to make best performing library to finish at roughly 1s.
 <h2>Scenario 1 (Reddit)</h2>
 Parsing a large JSON when only specific fields are of interest. In this scenario, Reddit front page JSON (size: 82K) is parsed while only post URL and scores are extraceted. Besides QuantumJson and StaticJSON, libraries parse the full JSON.
 <table>
 <tr><th align="left">Library</th><th align="left" colspan="2">Runtime (seconds)</th></tr>
-<tr><td><a href="https://github.com/mserdarsanli/QuantumJson">quantumjson</a></td><td align="right">0.135952</td><td><div style="width: 8px; background-color: #0000FF;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/netheril96/StaticJSON">staticjson</a></td><td align="right">4.799339</td><td><div style="width: 300px; background-color: #800080;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/miloyip/rapidjson">rapidjson</a></td><td align="right">0.196754</td><td><div style="width: 12px; background-color: #990099;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/open-source-parsers/jsoncpp">jsoncpp</a></td><td align="right">1.749077</td><td><div style="width: 109px; background-color: #b300b3;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/nlohmann/json">nlohmann_json</a></td><td align="right">1.649837</td><td><div style="width: 103px; background-color: #cc00cc;">&#65279;</div></td></tr>
-<tr><td><a href="http://www.boost.org/doc/libs/release/libs/property_tree/">boost_pt</a></td><td align="right">2.871581</td><td><div style="width: 179px; background-color: #e600e6;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/mserdarsanli/QuantumJson">quantumjson</a></td><td align="right">0.691758</td><td><div style="width: 9px; background-color: #0000FF;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/netheril96/StaticJSON">staticjson</a></td><td align="right">22.715060</td><td><div style="width: 300px; background-color: #800080;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/miloyip/rapidjson">rapidjson</a></td><td align="right">0.994481</td><td><div style="width: 13px; background-color: #990099;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/open-source-parsers/jsoncpp">jsoncpp</a></td><td align="right">7.689204</td><td><div style="width: 102px; background-color: #b300b3;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/nlohmann/json">nlohmann_json</a></td><td align="right">7.776564</td><td><div style="width: 103px; background-color: #cc00cc;">&#65279;</div></td></tr>
+<tr><td><a href="http://www.boost.org/doc/libs/release/libs/property_tree/">boost_pt</a></td><td align="right">17.386719</td><td><div style="width: 230px; background-color: #e600e6;">&#65279;</div></td></tr>
 </table>
 <table>
 <tr><th align="left">Library</th><th align="left" colspan="2">Memory Allocations (bytes)</th></tr>
@@ -23,12 +24,12 @@ Parsing a large JSON when only specific fields are of interest. In this scenario
 A JSON from OMDB (size: 1K) is parsed. OMDB API is using strings for every value, so this benchmark measures only string parsing performance.
 <table>
 <tr><th align="left">Library</th><th align="left" colspan="2">Runtime (seconds)</th></tr>
-<tr><td><a href="https://github.com/mserdarsanli/QuantumJson">quantumjson</a></td><td align="right">0.004052</td><td><div style="width: 16px; background-color: #0000FF;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/netheril96/StaticJSON">staticjson</a></td><td align="right">0.074205</td><td><div style="width: 300px; background-color: #800080;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/miloyip/rapidjson">rapidjson</a></td><td align="right">0.002850</td><td><div style="width: 12px; background-color: #990099;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/open-source-parsers/jsoncpp">jsoncpp</a></td><td align="right">0.011770</td><td><div style="width: 48px; background-color: #b300b3;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/nlohmann/json">nlohmann_json</a></td><td align="right">0.024251</td><td><div style="width: 98px; background-color: #cc00cc;">&#65279;</div></td></tr>
-<tr><td><a href="http://www.boost.org/doc/libs/release/libs/property_tree/">boost_pt</a></td><td align="right">0.018409</td><td><div style="width: 74px; background-color: #e600e6;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/mserdarsanli/QuantumJson">quantumjson</a></td><td align="right">1.807872</td><td><div style="width: 26px; background-color: #0000FF;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/netheril96/StaticJSON">staticjson</a></td><td align="right">20.913615</td><td><div style="width: 300px; background-color: #800080;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/miloyip/rapidjson">rapidjson</a></td><td align="right">1.199518</td><td><div style="width: 17px; background-color: #990099;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/open-source-parsers/jsoncpp">jsoncpp</a></td><td align="right">5.084865</td><td><div style="width: 73px; background-color: #b300b3;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/nlohmann/json">nlohmann_json</a></td><td align="right">5.332749</td><td><div style="width: 76px; background-color: #cc00cc;">&#65279;</div></td></tr>
+<tr><td><a href="http://www.boost.org/doc/libs/release/libs/property_tree/">boost_pt</a></td><td align="right">6.261509</td><td><div style="width: 90px; background-color: #e600e6;">&#65279;</div></td></tr>
 </table>
 <table>
 <tr><th align="left">Library</th><th align="left" colspan="2">Memory Allocations (bytes)</th></tr>
@@ -43,12 +44,12 @@ A JSON from OMDB (size: 1K) is parsed. OMDB API is using strings for every value
 StackOverflow top users JSON (size: 20K)
 <table>
 <tr><th align="left">Library</th><th align="left" colspan="2">Runtime (seconds)</th></tr>
-<tr><td><a href="https://github.com/mserdarsanli/QuantumJson">quantumjson</a></td><td align="right">0.080496</td><td><div style="width: 14px; background-color: #0000FF;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/netheril96/StaticJSON">staticjson</a></td><td align="right">1.722847</td><td><div style="width: 300px; background-color: #800080;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/miloyip/rapidjson">rapidjson</a></td><td align="right">0.049284</td><td><div style="width: 9px; background-color: #990099;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/open-source-parsers/jsoncpp">jsoncpp</a></td><td align="right">0.495034</td><td><div style="width: 86px; background-color: #b300b3;">&#65279;</div></td></tr>
-<tr><td><a href="https://github.com/nlohmann/json">nlohmann_json</a></td><td align="right">0.511687</td><td><div style="width: 89px; background-color: #cc00cc;">&#65279;</div></td></tr>
-<tr><td><a href="http://www.boost.org/doc/libs/release/libs/property_tree/">boost_pt</a></td><td align="right">1.128603</td><td><div style="width: 197px; background-color: #e600e6;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/mserdarsanli/QuantumJson">quantumjson</a></td><td align="right">1.448972</td><td><div style="width: 20px; background-color: #0000FF;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/netheril96/StaticJSON">staticjson</a></td><td align="right">21.454365</td><td><div style="width: 300px; background-color: #800080;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/miloyip/rapidjson">rapidjson</a></td><td align="right">0.948761</td><td><div style="width: 13px; background-color: #990099;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/open-source-parsers/jsoncpp">jsoncpp</a></td><td align="right">5.739544</td><td><div style="width: 80px; background-color: #b300b3;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/nlohmann/json">nlohmann_json</a></td><td align="right">6.400174</td><td><div style="width: 89px; background-color: #cc00cc;">&#65279;</div></td></tr>
+<tr><td><a href="http://www.boost.org/doc/libs/release/libs/property_tree/">boost_pt</a></td><td align="right">10.775744</td><td><div style="width: 151px; background-color: #e600e6;">&#65279;</div></td></tr>
 </table>
 <table>
 <tr><th align="left">Library</th><th align="left" colspan="2">Memory Allocations (bytes)</th></tr>
@@ -58,4 +59,24 @@ StackOverflow top users JSON (size: 20K)
 <tr><td><a href="https://github.com/open-source-parsers/jsoncpp">jsoncpp</a></td><td align="right">115337</td><td><div style="width: 157px; background-color: #b300b3;">&#65279;</div></td></tr>
 <tr><td><a href="https://github.com/nlohmann/json">nlohmann_json</a></td><td align="right">74872</td><td><div style="width: 102px; background-color: #cc00cc;">&#65279;</div></td></tr>
 <tr><td><a href="http://www.boost.org/doc/libs/release/libs/property_tree/">boost_pt</a></td><td align="right">219879</td><td><div style="width: 300px; background-color: #e600e6;">&#65279;</div></td></tr>
+</table>
+<h2>Scenario 4 (TFL accident stats 2015)</h2>
+A large JSON (18M) from an open API
+<table>
+<tr><th align="left">Library</th><th align="left" colspan="2">Runtime (seconds)</th></tr>
+<tr><td><a href="https://github.com/mserdarsanli/QuantumJson">quantumjson</a></td><td align="right">1.601327</td><td><div style="width: 27px; background-color: #0000FF;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/netheril96/StaticJSON">staticjson</a></td><td align="right">17.845755</td><td><div style="width: 300px; background-color: #800080;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/miloyip/rapidjson">rapidjson</a></td><td align="right">0.939199</td><td><div style="width: 16px; background-color: #990099;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/open-source-parsers/jsoncpp">jsoncpp</a></td><td align="right">7.385636</td><td><div style="width: 124px; background-color: #b300b3;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/nlohmann/json">nlohmann_json</a></td><td align="right">7.521255</td><td><div style="width: 126px; background-color: #cc00cc;">&#65279;</div></td></tr>
+<tr><td><a href="http://www.boost.org/doc/libs/release/libs/property_tree/">boost_pt</a></td><td align="right">13.388425</td><td><div style="width: 225px; background-color: #e600e6;">&#65279;</div></td></tr>
+</table>
+<table>
+<tr><th align="left">Library</th><th align="left" colspan="2">Memory Allocations (bytes)</th></tr>
+<tr><td><a href="https://github.com/mserdarsanli/QuantumJson">quantumjson</a></td><td align="right">26661191</td><td><div style="width: 41px; background-color: #0000FF;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/netheril96/StaticJSON">staticjson</a></td><td align="right">26663840</td><td><div style="width: 41px; background-color: #800080;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/miloyip/rapidjson">rapidjson</a></td><td align="right">30288258</td><td><div style="width: 47px; background-color: #990099;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/open-source-parsers/jsoncpp">jsoncpp</a></td><td align="right">110306241</td><td><div style="width: 172px; background-color: #b300b3;">&#65279;</div></td></tr>
+<tr><td><a href="https://github.com/nlohmann/json">nlohmann_json</a></td><td align="right">71926009</td><td><div style="width: 112px; background-color: #cc00cc;">&#65279;</div></td></tr>
+<tr><td><a href="http://www.boost.org/doc/libs/release/libs/property_tree/">boost_pt</a></td><td align="right">192770058</td><td><div style="width: 300px; background-color: #e600e6;">&#65279;</div></td></tr>
 </table>
