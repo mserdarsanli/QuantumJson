@@ -67,6 +67,8 @@ clean:
 
 install: jc
 	cp -f jc /usr/local/bin/jc
+	mkdir -p /usr/local/man/man1
+	cp -f docs/quantumjson.1.gz /usr/local/man/man1
 
 
 # Docker specific helper commands
@@ -109,3 +111,6 @@ docker-generate-manpages:
 	docker run --tty --interactive --volume "$(ROOT_DIR):/QuantumJson" \
 	    --workdir /QuantumJson quantumjson-build-server \
 	    ronn --pipe --html man/qj.1.ronn | tr -d "\r" > docs/qj.1.html
+	docker run --tty --interactive --volume "$(ROOT_DIR):/QuantumJson" \
+	    --workdir /QuantumJson quantumjson-build-server \
+	    ronn --pipe --roff man/qj.1.ronn | tr -d "\r" | gzip -c > docs/quantumjson.1.gz
