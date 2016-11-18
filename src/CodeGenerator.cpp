@@ -174,15 +174,6 @@ format ParseNextFieldEnd(R"(
 }
 )");
 
-char IncludeStandardHeaders[] = R"(
-#include <functional>
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <vector>
-
-)";
-
 char ParserCommonStuff[] = R"(
 	auto &it = parser.it;
 	auto &end = parser.end;
@@ -253,8 +244,6 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 {
 	// TODO use include guards
 	out << "#pragma once\n\n";
-
-	out << IncludeStandardHeaders;
 
 	GenerateCommonParserDefinitions(out);
 
