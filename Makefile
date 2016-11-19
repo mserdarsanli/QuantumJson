@@ -4,6 +4,7 @@
 
 HDRS = src/Attributes.hpp \
        src/CodeGenerator.hpp \
+       src/CodeGeneratorSnippets.hpp \
        src/JsonParserLibrary.hpp \
        src/Parser.hpp \
        src/Tokenizer.hpp \
