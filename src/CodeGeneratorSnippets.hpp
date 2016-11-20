@@ -72,7 +72,9 @@ string StructDefBegin(const string &className)
 string StructDefEnd()
 {
 	Template tmpl(
+	    "\t"    "template <typename T> friend struct QuantumJsonImpl__::Parser;\n"
 	    "};\n"
+	    "\n"
 	);
 	return tmpl.format({
 	});
@@ -150,8 +152,8 @@ string MemberFunctionDeclarations()
 	    "\t"    "template <typename OutputIteratorType>\n"
 	    "\t"    "void SerializeTo(QuantumJsonImpl__::Serializer<OutputIteratorType> &s) const;\n"
 	    "\n"
+	    "private:\n"
 	    "\t"    "// Private methods that are called by parser\n"
-	    "\t"    "// TODO make these private and make parser a friend class\n"
 	    "\n"
 	    "\t"    "// Function that parses one field only\n"
 	    "\t"    "// If the object is as follows:\n"
