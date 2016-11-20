@@ -195,7 +195,7 @@ string ParseValueIntoField(const string &cppFieldName)
 string MaybeSkipNullValue()
 {
 	Template tmpl(
-	    "\t"    "// Field skip null values for this field.\n"
+	    "\t"    "// Skip null values for this field.\n"
 	    "\t"    "{\n"
 	    "\t"    "\t"    "bool skipped = false;\n"
 	    "\t"    "\t"    "parser.MaybeSkipNull(&skipped);\n"
