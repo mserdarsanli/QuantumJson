@@ -23,6 +23,7 @@
 #pragma once
 
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -33,6 +34,36 @@ struct VariableTypeDef
 	std::string typeName;
 	std::vector<VariableTypeDef> of; // template parameters
 
+	std::string Render() const
+	{
+		std::stringstream out;
+		RenderInto(out);
+		return out.str();
+	}
+
+private:
+	void RenderInto(std::ostream &out) const
+	{
+		out << this->typeName;
+
+		if (this->of.size())
+		{
+			out << "< ";
+
+			for (size_t i = 0; i < this->of.size(); ++i)
+			{
+				if (i != 0)
+				{
+					out << " , ";
+				}
+				this->of[i].RenderInto(out);
+			}
+
+			out << " >";
+		}
+	}
+
+public:
 	void Print(int indent) const
 	{
 		std::cout << std::string(indent, ' ') << typeName << "\n";

@@ -66,38 +66,6 @@ struct Variable
 	}
 };
 
-static
-void RenderVariableType(ostream &out, const VariableTypeDef &vt)
-{
-	out << vt.typeName;
-
-	if (vt.of.size())
-	{
-		out << "< ";
-
-		for (size_t i = 0; i < vt.of.size(); ++i)
-		{
-			if (i != 0)
-			{
-				out << " , ";
-			}
-			RenderVariableType(out, vt.of[i]);
-		}
-
-		out << " >";
-	}
-}
-
-char PeekNextChar[] = R"(*it)";
-char ConsumeNextChar[] = R"(++it)";
-
-// Base gooto labels for generated parser state machine
-struct Labels
-{
-	static constexpr const char *Start = "_Start";
-	static constexpr const char *UnknownField = "_UnknownField";
-};
-
 void GenerateParserForStructDef(ostream &out, const StructDef &s);
 
 void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
@@ -113,9 +81,7 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 
 		for (const VariableDef &var : s.variables)
 		{
-			out << "\t";
-			RenderVariableType(out, var.type);
-			out << " " << var.name << ";\n";
+			out << VariableDefinition(var.type.Render(), var.name);
 		}
 
 		out << MemberFunctionDeclarations();
@@ -137,21 +103,20 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 		{
 			Variable v(var);
 
-			out << "\n";
-			out << "\t// Render field " << v.cppName << "\n";
+			out << RenderFieldBegin(v.cppName);
 
 			if (putSeparator)
 			{
-				out << "\t*(s.out++) = ',';\n";
+				out << PutFieldSeperator();
 			}
 			putSeparator = true;
 
 			for (char c : v.jsonName)
 			{
-				out << "\t*(s.out++) = '" << c << "';\n";
+				out << PutCharacter(c);
 			}
-			out << "\t*(s.out++) = ':';\n";
-			out << "\ts.SerializeValue(this->" << var.name << ");\n";
+			out << RenderFieldNameEnd();
+			out << SerializeFieldValue(var.name);
 		}
 
 		out << SerializeToJsonDefinitionEnd();
@@ -171,11 +136,10 @@ struct MatchState
 // Not matching will jump to unknown field label
 void MatchOnlyPrefix(ostream &out, const string &prefix)
 {
-	out << "\t// Matching common prefix: [" << prefix << "]\n";
+	out << MatchCommonPrefixBegin(prefix);
 	for (char c : prefix)
 	{
-		out << "\tif (QUANTUMJSON_UNLIKELY(" << PeekNextChar << " != '" << c << "')) goto " << Labels::UnknownField << ";\n";
-		out << "\t" << ConsumeNextChar << ";\n";
+		out << MatchKnownFieldChar(c);
 	}
 }
 
@@ -200,9 +164,7 @@ void GenerateMatchers(ostream &out,
 {
 	if (varsBegin == varsEnd) return;
 
-	out << "\t\n";
-	out << "\t// ###\n";
-	out << "\t// Matching range [" << varsBegin->jsonName << ", " << (varsEnd-1)->jsonName << "]\n";
+	out << MatchRangeBegin(varsBegin->jsonName, (varsEnd-1)->jsonName);
 
 	out << GotoLabel(ms.gotoLabelName, ms.matched);
 
@@ -259,16 +221,13 @@ void GenerateMatchers(ostream &out,
 	};
 	unmatchedGroups.emplace_back(GroupToMatch{nextState, groupBegin, varsEnd, matchedChars});
 
-	// Create jump table
-	out << "\tswitch (" << PeekNextChar << ")\n"
-	    << "\t{\n";
+	out << SwitchOnNextChar();
 	for (const auto &g : unmatchedGroups)
 	{
-		out << "\t\tcase '" << (g.begin->jsonName)[g.matchedChars] << "': "
-		    << "goto " << g.matchState.gotoLabelName << ";\n";
+		out << CaseCharGotoLabel(g.begin->jsonName[g.matchedChars], g.matchState.gotoLabelName);
 	}
-	out << "\t\tdefault: goto " << Labels::UnknownField << ";\n"
-	    << "\t}\n";
+	out << CaseDefaultGotoUnknownField();
+	out << SwitchEnd();
 
 	for (const auto &g : unmatchedGroups)
 	{
@@ -290,7 +249,7 @@ void GenerateParserForStructDef(ostream &out, const StructDef &s)
 	out << ParserCommonStuff();
 
 	int stateCounter = 0;
-	MatchState initialState = {"", Labels::Start};
+	MatchState initialState = {"", "_Start"};
 	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end());
 
 	out << ParseNextFieldEnd();

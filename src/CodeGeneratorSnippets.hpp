@@ -292,3 +292,136 @@ string ParserCommonStuff()
 	});
 }
 
+string MatchKnownFieldChar(char c)
+{
+	Template tmpl(
+	    "\t"    "if (QUANTUMJSON_UNLIKELY(*it != '${expectedChar}')) goto _UnknownField;\n"
+	    "\t"    "++it;\n"
+	);
+	return tmpl.format({
+	    {"${expectedChar}", string(1, c)},
+	});
+}
+
+string CaseCharGotoLabel(char c, const string &label)
+{
+	Template tmpl(
+	    "\t"    "\t"    "case '${expectedChar}': goto ${label};\n"
+	);
+	return tmpl.format({
+	    {"${expectedChar}", string(1, c)},
+	    {"${label}", label},
+	});
+}
+
+string CaseDefaultGotoUnknownField()
+{
+	Template tmpl(
+	    "\t"    "\t"    "default: goto _UnknownField;\n"
+	);
+	return tmpl.format({
+	});
+}
+
+string SwitchOnNextChar()
+{
+	Template tmpl(
+	    "\t"    "// Create jump table\n"
+	    "\t"    "switch (*it)\n"
+	    "\t"    "{\n"
+	);
+	return tmpl.format({
+	});
+}
+
+string SwitchEnd()
+{
+	Template tmpl(
+	    "\t"    "}\n"
+	);
+	return tmpl.format({
+	});
+}
+
+string VariableDefinition(const string &varType, const string &varName)
+{
+	Template tmpl(
+	    "\t"    "${varType} ${varName};\n"
+	);
+	return tmpl.format({
+	    {"${varType}", varType},
+	    {"${varName}", varName},
+	});
+}
+
+string MatchCommonPrefixBegin(const string &prefix)
+{
+	Template tmpl(
+	    "\t"    "// Matching common prefix: [${prefix}]\n"
+	);
+	return tmpl.format({
+	    {"${prefix}", prefix},
+	});
+}
+
+string MatchRangeBegin(const string &first, const string &last)
+{
+	Template tmpl(
+	    "\t"    "\n"
+	    "\t"    "// ###\n"
+	    "\t"    "// Matching range [${first}, ${last}]\n"
+	);
+	return tmpl.format({
+	    {"${first}", first},
+	    {"${last}", last},
+	});
+}
+
+string RenderFieldBegin(const string &fieldName)
+{
+	Template tmpl(
+	    "\n"
+	    "\t"    "// Render field ${fieldName}\n"
+	);
+	return tmpl.format({
+	    {"${fieldName}", fieldName},
+	});
+}
+
+string PutFieldSeperator()
+{
+	Template tmpl(
+	    "\t"    "*(s.out++) = ',';\n"
+	);
+	return tmpl.format({
+	});
+}
+
+string PutCharacter(char c)
+{
+	Template tmpl(
+	    "\t"    "*(s.out++) = '${char}';\n"
+	);
+	return tmpl.format({
+	    {"${char}", string(1, c)},
+	});
+}
+
+string RenderFieldNameEnd()
+{
+	Template tmpl(
+	    "\t"    "*(s.out++) = ':';\n"
+	);
+	return tmpl.format({
+	});
+}
+
+string SerializeFieldValue(const string &varName)
+{
+	Template tmpl(
+	    "\t"    "s.SerializeValue(this->${varName});\n"
+	);
+	return tmpl.format({
+	    {"${varName}", varName},
+	});
+}
