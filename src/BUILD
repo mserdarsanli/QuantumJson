@@ -31,6 +31,7 @@ cc_library(
 
 		"Attributes.hpp",
 		"CodeGenerator.hpp",
+		"CodeGeneratorSnippets.hpp",
 		"JsonParserLibrary.hpp",
 		"Parser.hpp",
 		"Tokenizer.hpp",
