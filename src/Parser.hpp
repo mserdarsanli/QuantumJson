@@ -62,19 +62,6 @@ private:
 			out << " >";
 		}
 	}
-
-public:
-	void Print(int indent) const
-	{
-		std::cout << std::string(indent, ' ') << typeName << "\n";
-		for (const auto &o : of)
-			o.Print(indent + 4);
-	}
-
-	void Print() const
-	{
-		Print(0);
-	}
 };
 
 struct AttributeDef
@@ -95,30 +82,11 @@ struct StructDef
 {
 	std::string name;
 	std::vector<VariableDef> variables;
-
-	void Print() const
-	{
-		std::cout << "Struct [" << name << "]\n";
-		for (const VariableDef &v : variables)
-		{
-			std::cout << "   " << v.name << ":\n";
-			v.type.Print(5);
-		}
-	}
 };
 
 struct ParsedFile
 {
 	std::vector<StructDef> structs;
-
-	void Print() const
-	{
-		std::cout << "Parsed file\n";
-		for (const StructDef &s : structs)
-		{
-			s.Print();
-		}
-	}
 };
 
 ParsedFile Parse(const std::vector<Token> &tokens);
