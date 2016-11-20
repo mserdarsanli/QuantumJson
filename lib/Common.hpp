@@ -400,6 +400,41 @@ struct InputProcessor
 };
 
 
+// Class that goes over the JSON oand allocates string/vector members to
+// relevant sizes. Later, `Parser` goes over the JSON again and parses the
+// data into vectors/strings that have reserved capacities. This prevents
+// strings/vectors growing with `push_back` calls and prevents copying of
+// data.
+template <typename InputIteratorType>
+struct PreAllocator : InputProcessor<InputIteratorType>
+{
+	// PreAllocator does not instantiate when the input is not a
+	// `random_acceess_iterator`.
+	static_assert(std::is_base_of<
+	                  std::random_access_iterator_tag,
+	                  typename std::iterator_traits<InputIteratorType>::iterator_category
+	              >::value, "PreAllocator only works with random access iterators");
+
+	PreAllocator(InputIteratorType begin, InputIteratorType end)
+	  : InputProcessor<InputIteratorType>(begin, end)
+	{
+	}
+
+	void ReserveSpaceIn(std::string &obj)
+	{
+		obj.clear();
+
+		// Reserve just enough space
+		auto begin = this->it;
+		this->SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		// TODO FIXME this size logic does not account for escapes in the string
+		size_t strSize = this->it - begin - 2;
+		this->it = begin;
+		obj.reserve( strSize );
+	}
+};
+
+
 template <typename InputIteratorType>
 struct Parser : InputProcessor<InputIteratorType>
 {
@@ -475,7 +510,7 @@ struct Parser : InputProcessor<InputIteratorType>
 		return -1;
 	}
 
-	void ParseValueIntoStringImpl(std::string &obj)
+	void ParseValueInto(std::string &obj)
 	{
 		this->SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
@@ -616,53 +651,6 @@ struct Parser : InputProcessor<InputIteratorType>
 		}
 
 		this->SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-	}
-
-	// Following two functions use SFINAE to provide two different string
-	// parsers, allowing random access iterators one to measure and reserve
-	// size before, to prevent unnecessary allocations.
-	// InputIterator alternative is using default std::string growth.
-
-	// Faster parser that works for random access iterator
-	template <typename IteratorType>
-	void ParseValueIntoHelper(std::string &obj,
-	    typename std::enable_if<
-	        std::is_base_of<
-	            std::random_access_iterator_tag,
-	            typename std::iterator_traits<IteratorType>::iterator_category
-	        >::value
-	    >::type * = 0)
-	{
-		obj.clear();
-
-		// Reserve just enough space
-		auto begin = this->it;
-		this->SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-		// TODO FIXME this size logic does not account for escapes in the string
-		size_t strSize = this->it - begin - 2;
-		this->it = begin;
-		obj.reserve( strSize );
-
-		ParseValueIntoStringImpl(obj); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-	}
-
-	// Slower parser that works for any iterator
-	template <typename IteratorType>
-	void ParseValueIntoHelper(std::string &obj,
-	    typename std::enable_if<
-	        ! std::is_base_of<
-	            std::random_access_iterator_tag,
-	            typename std::iterator_traits<IteratorType>::iterator_category
-	        >::value
-	    >::type * = 0)
-	{
-		obj.clear();
-		ParseValueIntoStringImpl(obj); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-	}
-
-	void ParseValueInto(std::string &obj)
-	{
-		ParseValueIntoHelper< InputIteratorType >(obj); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	// TODO FIXME it == end checks are not done here
