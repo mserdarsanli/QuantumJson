@@ -422,6 +422,7 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 
 	void ReserveSpaceIn(std::string &obj)
 	{
+		// TODO remove all obj.clear stuff
 		obj.clear();
 
 		// Reserve just enough space
@@ -431,6 +432,42 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 		size_t strSize = this->it - begin - 2;
 		this->it = begin;
 		obj.reserve( strSize );
+	}
+
+	template <typename ElemType>
+	void ReserveSpaceIn(std::vector<ElemType> &obj)
+	{
+		// Reserve just enough space
+		size_t elemCnt = 0;
+		auto begin = this->it;
+
+		this->SkipChar('['); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		this->SkipWhitespace();
+
+		while (1)
+		{
+			QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+
+			if (QUANTUMJSON_UNLIKELY(*(this->it) == ']'))
+			{
+				++this->it;
+				break;
+			}
+
+			if (elemCnt > 0)
+			{
+				this->SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+				this->SkipWhitespace();
+			}
+
+			// TODO Reserve space in element too
+			this->SkipValue();
+			this->SkipWhitespace();
+			++elemCnt;
+		}
+
+		this->it = begin;
+		obj.reserve( elemCnt );
 	}
 };
 

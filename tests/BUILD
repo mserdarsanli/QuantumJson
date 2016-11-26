@@ -103,6 +103,16 @@ cc_test(
 )
 
 cc_test(
+	name = "reserved_sizes",
+	srcs = [
+		"ReservedSizes.cpp",
+	],
+	deps = [
+		"//lib:lib_impl",
+	],
+)
+
+cc_test(
 	name = "utf8_stress_test",
 	srcs = [
 		"Utf8StressTest.cpp",
