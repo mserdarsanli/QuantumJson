@@ -60,3 +60,28 @@ TEST_CASE("Basic element type allocations check")
 		CHECK( obj.capacity() == 17 );
 	}
 }
+
+TEST_CASE("Recursive list reserve")
+{
+	string listValue = "["
+	    "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],"
+	    "[],"
+	    "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]"
+	    "]";
+
+
+	SECTION("Prereserve recursive")
+	{
+		vector< vector<int> > obj;
+
+		// TODO this part should be automatic
+		QuantumJsonImpl__::PreAllocator<string::const_iterator> preAllocator(
+		    listValue.begin(), listValue.end());
+		preAllocator.ReserveSpaceIn(obj);
+
+		CHECK( obj.capacity() == 3 );
+		CHECK( obj[0].capacity() == 16 );
+		CHECK( obj[1].capacity() == 0 );
+		CHECK( obj[2].capacity() == 17 );
+	}
+}

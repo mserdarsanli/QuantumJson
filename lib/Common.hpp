@@ -26,6 +26,7 @@
 #include <cinttypes>
 #include <cmath>
 #include <cstdlib>
+#include <deque>
 #include <functional>
 #include <iostream>
 #include <iterator>
@@ -400,11 +401,15 @@ struct InputProcessor
 };
 
 
-// Class that goes over the JSON oand allocates string/vector members to
+// Class that goes over the JSON and allocates string/vector members to
 // relevant sizes. Later, `Parser` goes over the JSON again and parses the
 // data into vectors/strings that have reserved capacities. This prevents
 // strings/vectors growing with `push_back` calls and prevents copying of
 // data.
+//
+// In the first pass, JSON list/string sizes are computed and stored in
+// `sizes` deque. Second pass is over the `sizes` which is used to
+// reserve space in containers.
 template <typename InputIteratorType>
 struct PreAllocator : InputProcessor<InputIteratorType>
 {
@@ -420,26 +425,51 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 	{
 	}
 
-	void ReserveSpaceIn(std::string &obj)
+	// TODO When used for non recursive types like std::string, std::vector<int>
+	// this will cause two extra memory allocations (for deque) even though
+	// only one value will be necessary. Either handle them specially or use
+	// a deque that can holde a few elemnts without dynamic allocation.
+	template <typename T>
+	void ReserveSpaceIn(T &obj)
 	{
-		// TODO remove all obj.clear stuff
-		obj.clear();
+		CalculateSpaceToReserveIn(static_cast<const T*>(nullptr));
+		ReserveCalculatedSpaceIn(obj);
+	}
 
+private:
+	void CalculateSpaceToReserveIn(const std::string *)
+	{
 		// Reserve just enough space
 		auto begin = this->it;
 		this->SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		// TODO FIXME this size logic does not account for escapes in the string
 		size_t strSize = this->it - begin - 2;
-		this->it = begin;
-		obj.reserve( strSize );
+		sizes.push_back( strSize );
 	}
 
-	template <typename ElemType>
-	void ReserveSpaceIn(std::vector<ElemType> &obj)
+	void ReserveCalculatedSpaceIn(std::string &obj)
 	{
+		obj.reserve( sizes[0] );
+		sizes.pop_front();
+	}
+
+	// Basic types, no-op
+	// TODO find a nicer solution here with no unnecessary function calls
+	void CalculateSpaceToReserveIn(const int *)
+	{
+		this->SkipNumber();
+	}
+	void ReserveCalculatedSpaceIn(int &obj) { }
+
+	// Argument is only provided for template overloading, it is not used
+	template <typename ElemType>
+	void CalculateSpaceToReserveIn(const std::vector<ElemType> *)
+	{
+		sizes.push_back(0);
+		size_t sizeIdx = sizes.size() - 1;
+
 		// Reserve just enough space
 		size_t elemCnt = 0;
-		auto begin = this->it;
 
 		this->SkipChar('['); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		this->SkipWhitespace();
@@ -460,15 +490,29 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 				this->SkipWhitespace();
 			}
 
-			// TODO Reserve space in element too
-			this->SkipValue();
+			CalculateSpaceToReserveIn(static_cast<const ElemType*>(nullptr));
+			QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+
 			this->SkipWhitespace();
 			++elemCnt;
 		}
 
-		this->it = begin;
-		obj.reserve( elemCnt );
+		sizes[ sizeIdx ] = elemCnt;
 	}
+
+	template <typename ElemType>
+	void ReserveCalculatedSpaceIn(std::vector<ElemType> &obj)
+	{
+		obj.resize( sizes[0] );
+		sizes.pop_front();
+
+		for (auto &e : obj)
+		{
+			ReserveCalculatedSpaceIn(e);
+		}
+	}
+
+	std::deque< size_t > sizes;
 };
 
 
