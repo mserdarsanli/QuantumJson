@@ -85,3 +85,35 @@ TEST_CASE("Recursive list reserve")
 		CHECK( obj[2].capacity() == 17 );
 	}
 }
+
+TEST_CASE("Reserve list of strings")
+{
+	string listValue = "["
+	    "\"xxxxxxxxxxxxxxxxxxxxx\","
+	    "\"\","
+	    "\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\""
+	    "]";
+
+	size_t emptyStringCapacity = -1;
+	{
+		string a;
+		emptyStringCapacity = a.capacity();
+	}
+
+	SECTION("Prereserve recursive")
+	{
+		vector< string > obj;
+
+		// TODO this part should be automatic
+		QuantumJsonImpl__::PreAllocator<string::const_iterator> preAllocator(
+		    listValue.begin(), listValue.end());
+		preAllocator.ReserveSpaceIn(obj);
+
+		CHECK( obj.capacity() == 3 );
+		// Following tests are dependent on standard library implementation
+		// Still useful to have tests rather than nothing.
+		CHECK( obj[0].capacity() > emptyStringCapacity );
+		CHECK( obj[1].capacity() == emptyStringCapacity );
+		CHECK( obj[2].capacity() > obj[0].capacity() );
+	}
+}
