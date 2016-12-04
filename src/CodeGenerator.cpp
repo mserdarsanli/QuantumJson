@@ -67,6 +67,7 @@ struct Variable
 };
 
 void GenerateParserForStructDef(ostream &out, const StructDef &s);
+void GenerateAllocatorForStructDef(ostream &out, const StructDef &s);
 
 void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 {
@@ -93,6 +94,7 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 	for (const StructDef &s : file.structs)
 	{
 		GenerateParserForStructDef(out, s);
+		GenerateAllocatorForStructDef(out, s);
 
 		out << MergeFromJsonDefImpl(s.name);
 
@@ -160,6 +162,7 @@ void GenerateMatchers(ostream &out,
                       int &stateCounter,
                       const vector<Variable>::iterator varsBegin,
                       const vector<Variable>::iterator varsEnd,
+                      string (*fieldMatchedAction)(const string &cppFieldName),
                       size_t matchedChars = 0)
 {
 	if (varsBegin == varsEnd) return;
@@ -185,7 +188,7 @@ void GenerateMatchers(ostream &out,
 		{
 			out << MaybeSkipNullValue();
 		}
-		out << ParseValueIntoField(varsBegin->cppName);
+		out << fieldMatchedAction(varsBegin->cppName);
 		return;
 	}
 
@@ -231,7 +234,8 @@ void GenerateMatchers(ostream &out,
 
 	for (const auto &g : unmatchedGroups)
 	{
-		GenerateMatchers(out, g.matchState, stateCounter, g.begin, g.end, g.matchedChars);
+		GenerateMatchers(out, g.matchState, stateCounter, g.begin, g.end,
+		    fieldMatchedAction, g.matchedChars);
 	}
 }
 
@@ -250,7 +254,35 @@ void GenerateParserForStructDef(ostream &out, const StructDef &s)
 
 	int stateCounter = 0;
 	MatchState initialState = {"", "_Start"};
-	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end());
+	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end(), &ParseValueIntoField);
 
 	out << ParseNextFieldEnd();
+}
+
+void GenerateAllocatorForStructDef(ostream &out, const StructDef &s)
+{
+	out << ReserveNextFieldBegin(s.name);
+
+	vector<Variable> vars;
+	for (const VariableDef &var : s.variables)
+	{
+		if (var.IsReservableType())
+		{
+			vars.push_back(Variable(var));
+		}
+		else
+		{
+			out << "\t// Ignored non-reservable var: " << var.name
+			    << " of type " << var.type.typeName << "\n";
+		}
+	}
+	sort(vars.begin(), vars.end());
+
+	out << ParserCommonStuff();
+
+	int stateCounter = 0;
+	MatchState initialState = {"", "_Start"};
+	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end(), &ReserveValueIntoField);
+
+	out << ReserveNextFieldEnd();
 }

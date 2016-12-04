@@ -56,3 +56,11 @@ struct AAAAAA
 	 */
 	vector< string /* vector of strings */ > field; // is equivalent to list of strings
 };
+
+struct FieldTypes
+{
+	int intField;
+	double doubleField;
+	string stringField;
+	AAAAAA structField;
+};

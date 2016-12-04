@@ -163,6 +163,11 @@ string MemberFunctionDeclarations()
 	    "\t"    "template <typename InputIteratorType>\n"
 	    "\t"    "void ParseNextField(QuantumJsonImpl__::Parser<InputIteratorType> &parser);\n"
 	    "\n"
+	    "\t"    "// Allocator that works on random access input, not to rely on string/vector\n"
+	    "\t"    "// growth performance\n"
+	    "\t"    "template <typename InputIteratorType>\n"
+	    "\t"    "void ReserveNextField(QuantumJsonImpl__::PreAllocator<InputIteratorType> &allocator);\n"
+	    "\n"
 	);
 	return tmpl.format({
 	});
@@ -176,6 +181,19 @@ string FieldNameMatched(const string &cppFieldName)
 	    "\t"    "parser.SkipChar(':'); // Field Separator\n"
 	    "\t"    "parser.SkipWhitespace();\n"
 	    "\n"
+	);
+	return tmpl.format({
+	    {"${cppFieldName}", cppFieldName},
+	});
+}
+
+string ReserveValueIntoField(const string &cppFieldName)
+{
+	Template tmpl(
+	    "\t"    "// Reserve space in field\n"
+	    "\t"    "// TODO FIXME field order is not preserved here\n"
+	    "\t"    "parser.CalculateSpaceToReserveIn(this->${cppFieldName});\n"
+	    "\t"    "return;\n"
 	);
 	return tmpl.format({
 	    {"${cppFieldName}", cppFieldName},
@@ -249,7 +267,31 @@ string ParseNextFieldBegin(const string className)
 	});
 }
 
+string ReserveNextFieldBegin(const string className)
+{
+	Template tmpl(
+	    "template <typename InputIteratorType>\n"
+	    "inline\n"
+	    "void ${className}::ReserveNextField(QuantumJsonImpl__::PreAllocator<InputIteratorType> &parser)\n"
+	    "{\n"
+	    "\n"
+	);
+	return tmpl.format({
+	    {"${className}", className},
+	});
+}
+
 string ParseNextFieldEnd()
+{
+	Template tmpl(
+	    "\t"    "// Should be unreachable\n"
+	    "}\n"
+	);
+	return tmpl.format({
+	});
+}
+
+string ReserveNextFieldEnd()
 {
 	Template tmpl(
 	    "\t"    "// Should be unreachable\n"
