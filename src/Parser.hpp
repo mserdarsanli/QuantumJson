@@ -76,14 +76,6 @@ struct VariableDef
 	std::string name;
 
 	std::map< std::string, AttributeDef > attributes;
-
-	bool IsReservableType() const
-	{
-		return ( type.typeName != "int"
-		      && type.typeName != "double"
-		      && type.typeName != "bool" );
-	}
-
 };
 
 struct StructDef

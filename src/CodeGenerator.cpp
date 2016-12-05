@@ -38,11 +38,18 @@ struct Variable
 {
 	string cppName;
 	string jsonName;
+
+	VariableTypeDef type;
+
 	bool skipNull = false;
+	bool isReservable = false;
+
+	int reservableFieldTag = -1;
 
 	explicit Variable(const VariableDef &var)
 	  : cppName(var.name)
 	  , jsonName("\"" + var.name + "\"")
+	  , type(var.type)
 	{
 		if (var.attributes.find(VarAttributes::JsonFieldName.name) != var.attributes.end())
 		{
@@ -54,6 +61,10 @@ struct Variable
 		{
 			this->skipNull = true;
 		}
+
+		isReservable = ( type.typeName != "int"
+		              && type.typeName != "double"
+		              && type.typeName != "bool" );
 	}
 
 	bool operator<(const Variable &o) const
@@ -66,23 +77,51 @@ struct Variable
 	}
 };
 
-void GenerateParserForStructDef(ostream &out, const StructDef &s);
-void GenerateAllocatorForStructDef(ostream &out, const StructDef &s);
+struct Struct
+{
+	Struct(const StructDef &structDef)
+	{
+		int reservableFieldTag = 0;
+		name = structDef.name;
+		for (const VariableDef &vDef : structDef.variables)
+		{
+			Variable v(vDef);
+			if (v.isReservable)
+			{
+				v.reservableFieldTag = (++reservableFieldTag);
+			}
+
+			allVars.push_back(v);
+		}
+	}
+
+	string name;
+	vector<Variable> allVars;
+};
+
+void GenerateParserForStruct(ostream &out, const Struct &s);
+void GenerateAllocatorForStruct(ostream &out, const Struct &s);
 
 void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 {
+	vector<Struct> allStructs;
+	for (const StructDef &s : file.structs)
+	{
+		allStructs.emplace_back(s);
+	}
+
 	out << IncludeGuard();
 
 	GenerateCommonParserDefinitions(out);
 
 	// Header declerations
-	for (const StructDef &s : file.structs)
+	for (const Struct &s : allStructs)
 	{
 		out << StructDefBegin( s.name );
 
-		for (const VariableDef &var : s.variables)
+		for (const Variable &var : s.allVars)
 		{
-			out << VariableDefinition(var.type.Render(), var.name);
+			out << VariableDefinition(var.type.Render(), var.cppName);
 		}
 
 		out << MemberFunctionDeclarations();
@@ -91,20 +130,18 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 	}
 
 	// Function definitions
-	for (const StructDef &s : file.structs)
+	for (const Struct &s : allStructs)
 	{
-		GenerateParserForStructDef(out, s);
-		GenerateAllocatorForStructDef(out, s);
+		GenerateParserForStruct(out, s);
+		GenerateAllocatorForStruct(out, s);
 
 		out << MergeFromJsonDefImpl(s.name);
 
 		out << SerializeToJsonDefinitionBegin(s.name);
 
 		bool putSeparator = false;
-		for (const VariableDef &var : s.variables)
+		for (const Variable &v : s.allVars)
 		{
-			Variable v(var);
-
 			out << RenderFieldBegin(v.cppName);
 
 			if (putSeparator)
@@ -118,7 +155,7 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 				out << PutCharacter(c);
 			}
 			out << RenderFieldNameEnd();
-			out << SerializeFieldValue(var.name);
+			out << SerializeFieldValue(v.cppName);
 		}
 
 		out << SerializeToJsonDefinitionEnd();
@@ -239,15 +276,11 @@ void GenerateMatchers(ostream &out,
 	}
 }
 
-void GenerateParserForStructDef(ostream &out, const StructDef &s)
+void GenerateParserForStruct(ostream &out, const Struct &s)
 {
 	out << ParseNextFieldBegin(s.name);
 
-	vector<Variable> vars;
-	for (const VariableDef &var : s.variables)
-	{
-		vars.push_back(Variable(var));
-	}
+	vector<Variable> vars = s.allVars;
 	sort(vars.begin(), vars.end());
 
 	out << ParserCommonStuff();
@@ -259,20 +292,20 @@ void GenerateParserForStructDef(ostream &out, const StructDef &s)
 	out << ParseNextFieldEnd();
 }
 
-void GenerateAllocatorForStructDef(ostream &out, const StructDef &s)
+void GenerateAllocatorForStruct(ostream &out, const Struct &s)
 {
 	out << ReserveNextFieldBegin(s.name);
 
 	vector<Variable> vars;
-	for (const VariableDef &var : s.variables)
+	for (const Variable &var : s.allVars)
 	{
-		if (var.IsReservableType())
+		if (var.isReservable)
 		{
-			vars.push_back(Variable(var));
+			vars.push_back(var);
 		}
 		else
 		{
-			out << "\t// Ignored non-reservable var: " << var.name
+			out << "\t// Ignored non-reservable var: " << var.cppName
 			    << " of type " << var.type.typeName << "\n";
 		}
 	}
