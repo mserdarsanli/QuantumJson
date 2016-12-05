@@ -119,6 +119,22 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 	{
 		out << StructDefBegin( s.name );
 
+		// Field tag enum
+		out << StructTagEnumBegin();
+		for (const Variable &var : s.allVars)
+		{
+			if (var.isReservable)
+			{
+				out << StructTagEnumValue(var.cppName, to_string(var.reservableFieldTag));
+			}
+			else
+			{
+				out << "\t\t// Skipped non-reservable field " << var.cppName << "\n";
+			}
+		}
+		out << StructTagEnumEnd();
+
+		// Member fields
 		for (const Variable &var : s.allVars)
 		{
 			out << VariableDefinition(var.type.Render(), var.cppName);

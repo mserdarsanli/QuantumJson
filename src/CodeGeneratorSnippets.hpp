@@ -469,3 +469,36 @@ string SerializeFieldValue(const string &varName)
 	    {"${varName}", varName},
 	});
 }
+
+string StructTagEnumBegin()
+{
+	Template tmpl(
+	    "\n"
+	    "\t"    "// Field tag numbers\n"
+	    "\t"    "enum class __QuantumJsonFieldTag\n"
+	    "\t"    "{\n"
+	);
+	return tmpl.format({
+	});
+}
+
+string StructTagEnumEnd()
+{
+	Template tmpl(
+	    "\t"    "};\n"
+	    "\n"
+	);
+	return tmpl.format({
+	});
+}
+
+string StructTagEnumValue(const string &varName, const string &intValue)
+{
+	Template tmpl(
+	    "\t"    "\t"    "__QUANTUMJSON_FIELD_TAG_${varName} = ${intValue},\n"
+	);
+	return tmpl.format({
+	    {"${varName}", varName},
+	    {"${intValue}", intValue},
+	});
+}
