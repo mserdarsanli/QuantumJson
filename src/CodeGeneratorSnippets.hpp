@@ -73,6 +73,7 @@ string StructDefEnd()
 {
 	Template tmpl(
 	    "\t"    "template <typename T> friend struct QuantumJsonImpl__::Parser;\n"
+	    "\t"    "template <typename T> friend struct QuantumJsonImpl__::PreAllocator;\n"
 	    "};\n"
 	    "\n"
 	);
@@ -166,7 +167,12 @@ string MemberFunctionDeclarations()
 	    "\t"    "// Allocator that works on random access input, not to rely on string/vector\n"
 	    "\t"    "// growth performance\n"
 	    "\t"    "template <typename InputIteratorType>\n"
+	    "\t"    "static\n"
+	    "\t"    "// TODO rename this function to something more descriptive\n"
 	    "\t"    "void ReserveNextField(QuantumJsonImpl__::PreAllocator<InputIteratorType> &allocator);\n"
+	    "\n"
+	    "\t"    "template <typename InputIteratorType>\n"
+	    "\t"    "void ReserveCalculatedSpace(QuantumJsonImpl__::PreAllocator<InputIteratorType> &allocator);\n"
 	    "\n"
 	);
 	return tmpl.format({
@@ -187,20 +193,27 @@ string FieldNameMatched(const string &cppFieldName)
 	});
 }
 
-string ReserveValueIntoField(const string &cppFieldName)
+string ReserveValueIntoField(const string &className, const Variable &v)
 {
 	Template tmpl(
 	    "\t"    "// Reserve space in field\n"
-	    "\t"    "// TODO FIXME field order is not preserved here\n"
-	    "\t"    "parser.CalculateSpaceToReserveIn(this->${cppFieldName});\n"
-	    "\t"    "return;\n"
+	    "\t"    "{\n"
+	    "\t"    "\t"    "size_t fieldSizeIdx = parser.VisitingField(\n"
+	    "\t"    "\t"    "    static_cast<int>(${fieldTag}));\n"
+	    "\t"    "\t"    "parser.CalculateSpaceToReserveIn(fieldSizeIdx,\n"
+	    "\t"    "\t"    "    static_cast<decltype(${className}::${cppFieldName})*>(nullptr));\n"
+	    "\t"    "\t"    "return;\n"
+	    "\t"    "}\n"
 	);
+
 	return tmpl.format({
-	    {"${cppFieldName}", cppFieldName},
+	    {"${className}", className},
+	    {"${cppFieldName}", v.cppName},
+	    {"${fieldTag}", "__QuantumJsonFieldTag::__QUANTUMJSON_FIELD_TAG_" + v.cppName},
 	});
 }
 
-string ParseValueIntoField(const string &cppFieldName)
+string ParseValueIntoField(const Variable &v)
 {
 	Template tmpl(
 	    "\t"    "// Parse the actual value\n"
@@ -208,7 +221,7 @@ string ParseValueIntoField(const string &cppFieldName)
 	    "\t"    "return;\n"
 	);
 	return tmpl.format({
-	    {"${cppFieldName}", cppFieldName},
+	    {"${cppFieldName}", v.cppName},
 	});
 }
 
@@ -285,6 +298,36 @@ string ParseNextFieldEnd()
 {
 	Template tmpl(
 	    "\t"    "// Should be unreachable\n"
+	    "}\n"
+	);
+	return tmpl.format({
+	});
+}
+
+string ReserveCalculatedSpaceBegin(const string className)
+{
+	Template tmpl(
+	    "template <typename InputIteratorType>\n"
+	    "inline\n"
+	    "void ${className}::ReserveCalculatedSpace(QuantumJsonImpl__::PreAllocator<InputIteratorType> &allocator)\n"
+	    "{\n"
+	    "\t"    "std::cout << \"Allocation field \" << allocator.GetFieldTag() << \" size of\" << allocator.GetObjectSize() << std::endl;\n"
+	    "\t"    "allocator.PopObject();\n"
+	    "\t"    "std::cout << \"Allocation field \" << allocator.GetFieldTag() << \" size of\" << allocator.GetObjectSize() << std::endl;\n"
+	    "\t"    "allocator.PopObject();\n"
+	    "\t"    "std::cout << \"Allocation field \" << allocator.GetFieldTag() << \" size of\" << allocator.GetObjectSize() << std::endl;\n"
+	    "\t"    "allocator.PopObject();\n"
+	    "\t"    "std::cout << \"Allocation field \" << allocator.GetFieldTag() << \" size of\" << allocator.GetObjectSize() << std::endl;\n"
+	    "\t"    "allocator.PopObject();\n"
+	);
+	return tmpl.format({
+	    {"${className}", className},
+	});
+}
+
+string ReserveCalculatedSpaceEnd()
+{
+	Template tmpl(
 	    "}\n"
 	);
 	return tmpl.format({
