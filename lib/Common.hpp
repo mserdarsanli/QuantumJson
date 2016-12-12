@@ -469,7 +469,6 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 
 	size_t VisitingField(int fieldTag)
 	{
-		std::cout << "Visiting Field: " << fieldTag << "\n";
 		// TODO restrict fieldTag to int16_t?
 
 		size_t val = fieldTag;
@@ -507,19 +506,24 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 		curSizeIdx++;
 	}
 
+	size_t GetCurIdx()
+	{
+		return curSizeIdx;
+	}
+
 	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const std::string *)
 	{
 		// Reserve just enough space
 		auto begin = this->it;
 		this->SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		// TODO FIXME this size logic does not account for escapes in the string
-		sizes[fieldSizeIdx] = this->it - begin - 2;
+		SetFieldSize(fieldSizeIdx, this->it - begin - 2);
 	}
 
 	void ReserveCalculatedSpaceIn(std::string &obj)
 	{
-		obj.reserve( sizes[0] );
-		sizes.pop_front();
+		obj.resize( GetObjectSize() );
+		PopObject();
 	}
 
 	// Basic types, no-op
@@ -564,14 +568,12 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 			++elemCnt;
 		}
 
-		sizes[ fieldSizeIdx ] = elemCnt;
+		SetFieldSize(fieldSizeIdx, elemCnt);
 	}
 
 	template <typename ObjectType>
 	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const ObjectType *)
 	{
-		std::cout << "CalculateSpaceToReserveIn " << fieldSizeIdx << "(Object)\n";
-		std::cout << "    size(sizes) = " << sizes.size() << "\n";
 		this->SkipWhitespace();
 
 		this->SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
@@ -608,8 +610,8 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 	template <typename ElemType>
 	void ReserveCalculatedSpaceIn(std::vector<ElemType> &obj)
 	{
-		obj.resize( sizes[0] );
-		sizes.pop_front();
+		obj.resize( GetObjectSize() );
+		PopObject();
 
 		for (auto &e : obj)
 		{

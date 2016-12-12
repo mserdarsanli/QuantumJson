@@ -311,14 +311,13 @@ string ReserveCalculatedSpaceBegin(const string className)
 	    "inline\n"
 	    "void ${className}::ReserveCalculatedSpace(QuantumJsonImpl__::PreAllocator<InputIteratorType> &allocator)\n"
 	    "{\n"
-	    "\t"    "std::cout << \"Allocation field \" << allocator.GetFieldTag() << \" size of\" << allocator.GetObjectSize() << std::endl;\n"
+	    "\t"    "size_t objectFieldsEnd = allocator.GetObjectSize();\n"
 	    "\t"    "allocator.PopObject();\n"
-	    "\t"    "std::cout << \"Allocation field \" << allocator.GetFieldTag() << \" size of\" << allocator.GetObjectSize() << std::endl;\n"
-	    "\t"    "allocator.PopObject();\n"
-	    "\t"    "std::cout << \"Allocation field \" << allocator.GetFieldTag() << \" size of\" << allocator.GetObjectSize() << std::endl;\n"
-	    "\t"    "allocator.PopObject();\n"
-	    "\t"    "std::cout << \"Allocation field \" << allocator.GetFieldTag() << \" size of\" << allocator.GetObjectSize() << std::endl;\n"
-	    "\t"    "allocator.PopObject();\n"
+	    "\t"    "while (allocator.GetCurIdx() != objectFieldsEnd)\n"
+	    "\t"    "{\n"
+	    "\t"    "\t"    "int fieldTag = allocator.GetFieldTag();\n"
+	    "\t"    "\t"    "switch(static_cast<__QuantumJsonFieldTag>(fieldTag))\n"
+	    "\t"    "\t"    "{\n"
 	);
 	return tmpl.format({
 	    {"${className}", className},
@@ -328,6 +327,10 @@ string ReserveCalculatedSpaceBegin(const string className)
 string ReserveCalculatedSpaceEnd()
 {
 	Template tmpl(
+	    "\t"    "\t"    "default:\n"
+	    "\t"    "\t"    "\t"    "; // Should not happen\n"
+	    "\t"    "\t"    "}\n"
+	    "\t"    "}\n"
 	    "}\n"
 	);
 	return tmpl.format({

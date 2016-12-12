@@ -347,7 +347,15 @@ void GenerateReserverForStruct(ostream &out, const Struct &s)
 {
 	out << ReserveCalculatedSpaceBegin(s.name);
 
-	out << "\t// TODO FILL\n";
+	for (const Variable &var : s.allVars)
+	{
+		if (var.isReservable)
+		{
+			out << "\t\tcase __QuantumJsonFieldTag::__QUANTUMJSON_FIELD_TAG_" << var.cppName << ":\n";
+			out << "\t\t\tallocator.ReserveCalculatedSpaceIn(this->" << var.cppName << ");\n";
+			out << "\t\t\tbreak;\n";
+		}
+	}
 
 	out << ReserveCalculatedSpaceEnd();
 }
