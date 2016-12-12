@@ -119,6 +119,10 @@ private:
 	ErrorCode errorCode;
 };
 
+template <typename T> struct HasSize : std::true_type {};
+template <> struct HasSize<int>      : std::false_type {};
+template <> struct HasSize<double>   : std::false_type {};
+
 template <typename InputIteratorType>
 struct InputProcessor
 {
@@ -425,6 +429,8 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 	{
 	}
 
+	// TODO ReserveSpaceIn shoudl be the only public member function
+
 	// TODO When used for non recursive types like std::string, std::vector<int>
 	// this will cause two extra memory allocations (for deque) even though
 	// only one value will be necessary. Either handle them specially or use
@@ -432,30 +438,97 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 	template <typename T>
 	void ReserveSpaceIn(T &obj)
 	{
-		CalculateSpaceToReserveIn(static_cast<const T*>(nullptr));
+		size_t idx = AllocateSizeIndexForElem(&obj);
+		CalculateSpaceToReserveIn(idx, static_cast<const T*>(nullptr));
 		ReserveCalculatedSpaceIn(obj);
 	}
 
-private:
-	void CalculateSpaceToReserveIn(const std::string *)
+	void ReserveSpaceIn(std::string &obj)
+	{
+		size_t idx = AllocateSizeIndexForElem(&obj);
+		CalculateSpaceToReserveIn(idx, static_cast<const std::string*>(nullptr));
+		ReserveCalculatedSpaceIn(obj);
+	}
+
+	template <typename T>
+	void ReserveSpaceIn(std::vector<T> &obj)
+	{
+		size_t idx = AllocateSizeIndexForElem(&obj);
+		CalculateSpaceToReserveIn(idx, static_cast<const std::vector<T>*>(nullptr));
+		ReserveCalculatedSpaceIn(obj);
+	}
+
+	void ReserveSpaceIn(int &a)
+	{
+	}
+
+	void ReserveSpaceIn(double &a)
+	{
+	}
+
+
+	size_t VisitingField(int fieldTag)
+	{
+		// TODO restrict fieldTag to int16_t?
+
+		size_t val = fieldTag;
+
+		// Use 16 bits for field tag and 48 bits for size
+		val <<= 48;
+
+		size_t idx = sizes.size();
+		sizes.push_back(val);
+
+		return idx;
+	}
+
+	void SetFieldSize(size_t fieldSizeIdx, size_t size)
+	{
+		size_t &fieldSize = sizes[fieldSizeIdx];
+
+		// TODO use a bitset instead of doing bit opreations
+		fieldSize = ( 0xFFFF000000000000L & fieldSize )
+		          | ( 0x0000FFFFFFFFFFFFL & size );
+	}
+
+	size_t GetFieldTag()
+	{
+		return sizes[ curSizeIdx ] >> 48;
+	}
+
+	size_t GetObjectSize()
+	{
+		return sizes[ curSizeIdx ] & 0x0000FFFFFFFFFFFFL;
+	}
+
+	void PopObject()
+	{
+		curSizeIdx++;
+	}
+
+	size_t GetCurIdx()
+	{
+		return curSizeIdx;
+	}
+
+	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const std::string *)
 	{
 		// Reserve just enough space
 		auto begin = this->it;
 		this->SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		// TODO FIXME this size logic does not account for escapes in the string
-		size_t strSize = this->it - begin - 2;
-		sizes.push_back( strSize );
+		SetFieldSize(fieldSizeIdx, this->it - begin - 2);
 	}
 
 	void ReserveCalculatedSpaceIn(std::string &obj)
 	{
-		obj.reserve( sizes[0] );
-		sizes.pop_front();
+		obj.resize( GetObjectSize() );
+		PopObject();
 	}
 
 	// Basic types, no-op
 	// TODO find a nicer solution here with no unnecessary function calls
-	void CalculateSpaceToReserveIn(const int *)
+	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const int *)
 	{
 		this->SkipNumber();
 	}
@@ -463,11 +536,8 @@ private:
 
 	// Argument is only provided for template overloading, it is not used
 	template <typename ElemType>
-	void CalculateSpaceToReserveIn(const std::vector<ElemType> *)
+	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const std::vector<ElemType> *)
 	{
-		sizes.push_back(0);
-		size_t sizeIdx = sizes.size() - 1;
-
 		// Reserve just enough space
 		size_t elemCnt = 0;
 
@@ -490,21 +560,58 @@ private:
 				this->SkipWhitespace();
 			}
 
-			CalculateSpaceToReserveIn(static_cast<const ElemType*>(nullptr));
+			size_t elemSizeIdx = AllocateSizeIndexForElem(static_cast<const ElemType*>(nullptr));
+			CalculateSpaceToReserveIn(elemSizeIdx, static_cast<const ElemType*>(nullptr));
 			QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 			this->SkipWhitespace();
 			++elemCnt;
 		}
 
-		sizes[ sizeIdx ] = elemCnt;
+		SetFieldSize(fieldSizeIdx, elemCnt);
+	}
+
+	template <typename ObjectType>
+	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const ObjectType *)
+	{
+		this->SkipWhitespace();
+
+		this->SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		this->SkipWhitespace();
+
+		if (this->it != this->end && *(this->it) != '}')
+		{
+			// TODO Or call static function via nullptr?
+			ObjectType::ReserveNextField(*this);
+			this->SkipWhitespace();
+		}
+
+		while (this->it != this->end && *(this->it) != '}')
+		{
+			this->SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			this->SkipWhitespace();
+
+			ObjectType::ReserveNextField(*this);
+			this->SkipWhitespace();
+		}
+
+		this->SkipChar('}'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+
+		// Set object size as current unallocated index
+		SetFieldSize(fieldSizeIdx, sizes.size());
+	}
+
+	template <typename ObjectType>
+	void ReserveCalculatedSpaceIn(ObjectType &obj)
+	{
+		obj.ReserveCalculatedSpace(*this);
 	}
 
 	template <typename ElemType>
 	void ReserveCalculatedSpaceIn(std::vector<ElemType> &obj)
 	{
-		obj.resize( sizes[0] );
-		sizes.pop_front();
+		obj.resize( GetObjectSize() );
+		PopObject();
 
 		for (auto &e : obj)
 		{
@@ -512,6 +619,28 @@ private:
 		}
 	}
 
+
+private:
+	template <typename ElemType>
+	size_t AllocateSizeIndexForElem(const ElemType *)
+	{
+		size_t idx = sizes.size();
+		sizes.push_back(0);
+		return idx;
+	}
+
+	size_t AllocateSizeIndexForElem(const int *)
+	{
+		return -1;
+	}
+
+	size_t AllocateSizeIndexForElem(const double *)
+	{
+		return -1;
+	}
+
+	// Used in PopSize calls while reserving
+	size_t curSizeIdx = 0;
 	std::deque< size_t > sizes;
 };
 

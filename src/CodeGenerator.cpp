@@ -28,7 +28,6 @@
 
 #include "Attributes.hpp"
 #include "CodeGenerator.hpp"
-#include "CodeGeneratorSnippets.hpp"
 #include "JsonParserLibrary.hpp"
 
 using namespace std;
@@ -77,6 +76,9 @@ struct Variable
 	}
 };
 
+// TODO move this somewhere else
+#include "CodeGeneratorSnippets.hpp"
+
 struct Struct
 {
 	Struct(const StructDef &structDef)
@@ -101,6 +103,7 @@ struct Struct
 
 void GenerateParserForStruct(ostream &out, const Struct &s);
 void GenerateAllocatorForStruct(ostream &out, const Struct &s);
+void GenerateReserverForStruct(ostream &out, const Struct &s);
 
 void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 {
@@ -150,6 +153,7 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 	{
 		GenerateParserForStruct(out, s);
 		GenerateAllocatorForStruct(out, s);
+		GenerateReserverForStruct(out, s);
 
 		out << MergeFromJsonDefImpl(s.name);
 
@@ -215,7 +219,7 @@ void GenerateMatchers(ostream &out,
                       int &stateCounter,
                       const vector<Variable>::iterator varsBegin,
                       const vector<Variable>::iterator varsEnd,
-                      string (*fieldMatchedAction)(const string &cppFieldName),
+                      function<string(const Variable &v)> fieldMatchedAction,
                       size_t matchedChars = 0)
 {
 	if (varsBegin == varsEnd) return;
@@ -241,7 +245,7 @@ void GenerateMatchers(ostream &out,
 		{
 			out << MaybeSkipNullValue();
 		}
-		out << fieldMatchedAction(varsBegin->cppName);
+		out << fieldMatchedAction(*varsBegin);
 		return;
 	}
 
@@ -331,7 +335,27 @@ void GenerateAllocatorForStruct(ostream &out, const Struct &s)
 
 	int stateCounter = 0;
 	MatchState initialState = {"", "_Start"};
-	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end(), &ReserveValueIntoField);
+
+	string className = s.name;
+	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end(),
+	  [=](const Variable &v) { return ReserveValueIntoField(className, v); } );
 
 	out << ReserveNextFieldEnd();
+}
+
+void GenerateReserverForStruct(ostream &out, const Struct &s)
+{
+	out << ReserveCalculatedSpaceBegin(s.name);
+
+	for (const Variable &var : s.allVars)
+	{
+		if (var.isReservable)
+		{
+			out << "\t\tcase __QuantumJsonFieldTag::__QUANTUMJSON_FIELD_TAG_" << var.cppName << ":\n";
+			out << "\t\t\tallocator.ReserveCalculatedSpaceIn(this->" << var.cppName << ");\n";
+			out << "\t\t\tbreak;\n";
+		}
+	}
+
+	out << ReserveCalculatedSpaceEnd();
 }

@@ -113,6 +113,16 @@ cc_test(
 )
 
 cc_test(
+	name = "reserved_objects",
+	srcs = [
+		"ReservedObjectSizes.cpp",
+	],
+	deps = [
+		":schema_lib",
+	],
+)
+
+cc_test(
 	name = "utf8_stress_test",
 	srcs = [
 		"Utf8StressTest.cpp",
