@@ -47,3 +47,30 @@ TEST_CASE("Basic object allocation check")
 		CHECK( obj.i2.name.capacity() == 3 );
 	}
 }
+
+TEST_CASE("Reserve lists of objects")
+{
+	string item1 = "{\"name\":\"qweqweqweqwe\"}";
+	string item2 = "{\"name\":\"qweqweqweqweqqqjh\"}";
+	string item3 = "{\"name\":\"qweqwe\"}";
+	string item4 = "{\"name\":\"qweqkkkkkkkkkkkweqweqwe\"}";
+
+	string itemListJson = "{\"items\":["
+	    + item1 + "," + item2 + "," + item3 + "," + item4 + "]}";
+
+	SECTION("Lists of complex structs")
+	{
+		ItemList obj;
+
+		// TODO this part should be automatic
+		QuantumJsonImpl__::PreAllocator<string::const_iterator> preAllocator(
+		    itemListJson.begin(), itemListJson.end());
+		preAllocator.ReserveSpaceIn(obj);
+
+		CHECK( obj.items.size() == 4 );
+		CHECK( obj.items[0].name.capacity() == 12 );
+		CHECK( obj.items[1].name.capacity() == 17 );
+		CHECK( obj.items[2].name.capacity() ==  6 );
+		CHECK( obj.items[3].name.capacity() == 23 );
+	}
+}
