@@ -522,7 +522,7 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 
 	void ReserveCalculatedSpaceIn(std::string &obj)
 	{
-		obj.resize( GetObjectSize() );
+		obj.reserve( GetObjectSize() );
 		PopObject();
 	}
 

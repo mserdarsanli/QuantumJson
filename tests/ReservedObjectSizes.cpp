@@ -32,7 +32,7 @@ using namespace std;
 
 TEST_CASE("Basic object allocation check")
 {
-	string itemsJson = "{\"i1\":{},\"i2\":{\"name\":\"qwe\"}}";
+	string itemsJson = "{\"i1\":{},\"i2\":{\"name\":\"qweqweqweqweqweq\"}}";
 
 	SECTION("Prereserve struct")
 	{
@@ -43,8 +43,8 @@ TEST_CASE("Basic object allocation check")
 		    itemsJson.begin(), itemsJson.end());
 		preAllocator.ReserveSpaceIn(obj);
 
-		CHECK( obj.i1.name.capacity() == 0 );
-		CHECK( obj.i2.name.capacity() == 3 );
+		CHECK( obj.i1.name.capacity() >= 0 );
+		CHECK( obj.i2.name.capacity() >= 16 );
 	}
 }
 
@@ -68,9 +68,9 @@ TEST_CASE("Reserve lists of objects")
 		preAllocator.ReserveSpaceIn(obj);
 
 		CHECK( obj.items.size() == 4 );
-		CHECK( obj.items[0].name.capacity() == 12 );
-		CHECK( obj.items[1].name.capacity() == 17 );
-		CHECK( obj.items[2].name.capacity() ==  6 );
-		CHECK( obj.items[3].name.capacity() == 23 );
+		CHECK( obj.items[0].name.capacity() >= 12 );
+		CHECK( obj.items[1].name.capacity() >= 17 );
+		CHECK( obj.items[2].name.capacity() >=  6 );
+		CHECK( obj.items[3].name.capacity() >= 23 );
 	}
 }
