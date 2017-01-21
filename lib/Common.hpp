@@ -63,6 +63,18 @@
 		return; \
 	}
 
+// Scanning the input once and allocating data for it to be parsed into
+// is guarded by this flag. It didn't perform as well as I expected, so
+// the logic is disabled by default. Though as there is a room for
+// improvement on the preallocate implementation, it is not completely
+// removed.
+// Some issues that need resolving before this logic can be turned on are:
+//   - std::deque does not deallocated memory when all elements are
+//       `pop_front`ed
+//   - std::string `reserve` and `resize` behave inconsistently.
+//       reserve(N) reserves more space than resize(N).
+#define QUANTUMJON_PREALLOCATE_ON_RANDOMACCESSITERATOR false
+
 // TODO add library version checks?
 
 // TODO find a better namespace name
@@ -429,8 +441,15 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 	{
 	}
 
-	// TODO ReserveSpaceIn shoudl be the only public member function
 
+	// // TODO ReserveSpaceIn shoudl be the only public member function
+#if QUANTUMJON_PREALLOCATE_ON_RANDOMACCESSITERATOR
+	template <typename T>
+	void ReserveSpaceIn(T &obj)
+	{
+		// Empty
+	}
+#else
 	// TODO When used for non recursive types like std::string, std::vector<int>
 	// this will cause two extra memory allocations (for deque) even though
 	// only one value will be necessary. Either handle them specially or use
@@ -465,7 +484,7 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 	void ReserveSpaceIn(double &a)
 	{
 	}
-
+#endif
 
 	size_t VisitingField(int fieldTag)
 	{
