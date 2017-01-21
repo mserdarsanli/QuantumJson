@@ -28,7 +28,6 @@
 
 #include "Attributes.hpp"
 #include "CodeGenerator.hpp"
-#include "CodeGeneratorSnippets.hpp"
 #include "JsonParserLibrary.hpp"
 
 using namespace std;
@@ -38,11 +37,18 @@ struct Variable
 {
 	string cppName;
 	string jsonName;
+
+	VariableTypeDef type;
+
 	bool skipNull = false;
+	bool isReservable = false;
+
+	int reservableFieldTag = -1;
 
 	explicit Variable(const VariableDef &var)
 	  : cppName(var.name)
 	  , jsonName("\"" + var.name + "\"")
+	  , type(var.type)
 	{
 		if (var.attributes.find(VarAttributes::JsonFieldName.name) != var.attributes.end())
 		{
@@ -54,6 +60,10 @@ struct Variable
 		{
 			this->skipNull = true;
 		}
+
+		isReservable = ( type.typeName != "int"
+		              && type.typeName != "double"
+		              && type.typeName != "bool" );
 	}
 
 	bool operator<(const Variable &o) const
@@ -66,22 +76,71 @@ struct Variable
 	}
 };
 
-void GenerateParserForStructDef(ostream &out, const StructDef &s);
+// TODO move this somewhere else
+#include "CodeGeneratorSnippets.hpp"
+
+struct Struct
+{
+	Struct(const StructDef &structDef)
+	{
+		int reservableFieldTag = 0;
+		name = structDef.name;
+		for (const VariableDef &vDef : structDef.variables)
+		{
+			Variable v(vDef);
+			if (v.isReservable)
+			{
+				v.reservableFieldTag = (++reservableFieldTag);
+			}
+
+			allVars.push_back(v);
+		}
+	}
+
+	string name;
+	vector<Variable> allVars;
+};
+
+void GenerateParserForStruct(ostream &out, const Struct &s);
+void GenerateAllocatorForStruct(ostream &out, const Struct &s);
+void GenerateReserverForStruct(ostream &out, const Struct &s);
 
 void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 {
+	vector<Struct> allStructs;
+	for (const StructDef &s : file.structs)
+	{
+		allStructs.emplace_back(s);
+	}
+
 	out << IncludeGuard();
 
 	GenerateCommonParserDefinitions(out);
 
 	// Header declerations
-	for (const StructDef &s : file.structs)
+	for (const Struct &s : allStructs)
 	{
 		out << StructDefBegin( s.name );
 
-		for (const VariableDef &var : s.variables)
+		// Field tag enum
+		out << StructTagEnumBegin();
+		for (const Variable &var : s.allVars)
 		{
-			out << VariableDefinition(var.type.Render(), var.name);
+			if (var.isReservable)
+			{
+				out << StructTagEnumValue(var.cppName, to_string(var.reservableFieldTag));
+			}
+			else
+			{
+				out << "\t\t// Skipped non-reservable field " << var.cppName << "\n";
+			}
+		}
+		out << StructTagEnumEnd();
+
+		// Member fields
+		for (const Variable &var : s.allVars)
+		{
+			out << VariableDefinition(var.type.Render(), var.cppName);
 		}
 
 		out << MemberFunctionDeclarations();
@@ -90,19 +149,19 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 	}
 
 	// Function definitions
-	for (const StructDef &s : file.structs)
+	for (const Struct &s : allStructs)
 	{
-		GenerateParserForStructDef(out, s);
+		GenerateParserForStruct(out, s);
+		GenerateAllocatorForStruct(out, s);
+		GenerateReserverForStruct(out, s);
 
 		out << MergeFromJsonDefImpl(s.name);
 
 		out << SerializeToJsonDefinitionBegin(s.name);
 
 		bool putSeparator = false;
-		for (const VariableDef &var : s.variables)
+		for (const Variable &v : s.allVars)
 		{
-			Variable v(var);
-
 			out << RenderFieldBegin(v.cppName);
 
 			if (putSeparator)
@@ -116,7 +175,7 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 				out << PutCharacter(c);
 			}
 			out << RenderFieldNameEnd();
-			out << SerializeFieldValue(var.name);
+			out << SerializeFieldValue(v.cppName);
 		}
 
 		out << SerializeToJsonDefinitionEnd();
@@ -160,6 +219,7 @@ void GenerateMatchers(ostream &out,
                       int &stateCounter,
                       const vector<Variable>::iterator varsBegin,
                       const vector<Variable>::iterator varsEnd,
+                      function<string(const Variable &v)> fieldMatchedAction,
                       size_t matchedChars = 0)
 {
 	if (varsBegin == varsEnd) return;
@@ -185,7 +245,7 @@ void GenerateMatchers(ostream &out,
 		{
 			out << MaybeSkipNullValue();
 		}
-		out << ParseValueIntoField(varsBegin->cppName);
+		out << fieldMatchedAction(*varsBegin);
 		return;
 	}
 
@@ -231,18 +291,43 @@ void GenerateMatchers(ostream &out,
 
 	for (const auto &g : unmatchedGroups)
 	{
-		GenerateMatchers(out, g.matchState, stateCounter, g.begin, g.end, g.matchedChars);
+		GenerateMatchers(out, g.matchState, stateCounter, g.begin, g.end,
+		    fieldMatchedAction, g.matchedChars);
 	}
 }
 
-void GenerateParserForStructDef(ostream &out, const StructDef &s)
+void GenerateParserForStruct(ostream &out, const Struct &s)
 {
 	out << ParseNextFieldBegin(s.name);
 
+	vector<Variable> vars = s.allVars;
+	sort(vars.begin(), vars.end());
+
+	out << ParserCommonStuff();
+
+	int stateCounter = 0;
+	MatchState initialState = {"", "_Start"};
+	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end(), &ParseValueIntoField);
+
+	out << ParseNextFieldEnd();
+}
+
+void GenerateAllocatorForStruct(ostream &out, const Struct &s)
+{
+	out << ReserveNextFieldBegin(s.name);
+
 	vector<Variable> vars;
-	for (const VariableDef &var : s.variables)
+	for (const Variable &var : s.allVars)
 	{
-		vars.push_back(Variable(var));
+		if (var.isReservable)
+		{
+			vars.push_back(var);
+		}
+		else
+		{
+			out << "\t// Ignored non-reservable var: " << var.cppName
+			    << " of type " << var.type.typeName << "\n";
+		}
 	}
 	sort(vars.begin(), vars.end());
 
@@ -250,7 +335,27 @@ void GenerateParserForStructDef(ostream &out, const StructDef &s)
 
 	int stateCounter = 0;
 	MatchState initialState = {"", "_Start"};
-	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end());
 
-	out << ParseNextFieldEnd();
+	string className = s.name;
+	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end(),
+	  [=](const Variable &v) { return ReserveValueIntoField(className, v); } );
+
+	out << ReserveNextFieldEnd();
+}
+
+void GenerateReserverForStruct(ostream &out, const Struct &s)
+{
+	out << ReserveCalculatedSpaceBegin(s.name);
+
+	for (const Variable &var : s.allVars)
+	{
+		if (var.isReservable)
+		{
+			out << "\t\tcase __QuantumJsonFieldTag::__QUANTUMJSON_FIELD_TAG_" << var.cppName << ":\n";
+			out << "\t\t\tallocator.ReserveCalculatedSpaceIn(this->" << var.cppName << ");\n";
+			out << "\t\t\tbreak;\n";
+		}
+	}
+
+	out << ReserveCalculatedSpaceEnd();
 }

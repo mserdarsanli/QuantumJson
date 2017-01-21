@@ -26,6 +26,7 @@
 #include <cinttypes>
 #include <cmath>
 #include <cstdlib>
+#include <deque>
 #include <functional>
 #include <iostream>
 #include <iterator>
@@ -50,15 +51,15 @@
 // preventing inlining (though I am not really sure about why).
 // So this simple alternative is used.
 #define QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE \
-	if (QUANTUMJSON_UNLIKELY(errorCode != ErrorCode::NoError)) \
+	if (QUANTUMJSON_UNLIKELY(this->errorCode != ErrorCode::NoError)) \
 	{ \
 		return; \
 	}
 
 #define QUANTUMJSON_CHECK_EOF_AND_PROPAGATE \
-	if (QUANTUMJSON_UNLIKELY(it == end)) \
+	if (QUANTUMJSON_UNLIKELY(this->it == this->end)) \
 	{ \
-		errorCode = ErrorCode::UnexpectedEOF; \
+		this->errorCode = ErrorCode::UnexpectedEOF; \
 		return; \
 	}
 
@@ -118,10 +119,14 @@ private:
 	ErrorCode errorCode;
 };
 
+template <typename T> struct HasSize : std::true_type {};
+template <> struct HasSize<int>      : std::false_type {};
+template <> struct HasSize<double>   : std::false_type {};
+
 template <typename InputIteratorType>
-struct Parser
+struct InputProcessor
 {
-	Parser(InputIteratorType begin, InputIteratorType end)
+	InputProcessor(InputIteratorType begin, InputIteratorType end)
 	  : it(begin), end(end)
 	{
 	}
@@ -393,14 +398,266 @@ struct Parser
 		}
 	}
 
-	inline
-	int fromHex(char c)
+
+	ErrorCode errorCode = ErrorCode::NoError;
+	InputIteratorType it;
+	InputIteratorType end;
+};
+
+
+// Class that goes over the JSON and allocates string/vector members to
+// relevant sizes. Later, `Parser` goes over the JSON again and parses the
+// data into vectors/strings that have reserved capacities. This prevents
+// strings/vectors growing with `push_back` calls and prevents copying of
+// data.
+//
+// In the first pass, JSON list/string sizes are computed and stored in
+// `sizes` deque. Second pass is over the `sizes` which is used to
+// reserve space in containers.
+template <typename InputIteratorType>
+struct PreAllocator : InputProcessor<InputIteratorType>
+{
+	// PreAllocator does not instantiate when the input is not a
+	// `random_acceess_iterator`.
+	static_assert(std::is_base_of<
+	                  std::random_access_iterator_tag,
+	                  typename std::iterator_traits<InputIteratorType>::iterator_category
+	              >::value, "PreAllocator only works with random access iterators");
+
+	PreAllocator(InputIteratorType begin, InputIteratorType end)
+	  : InputProcessor<InputIteratorType>(begin, end)
 	{
-		if (QUANTUMJSON_LIKELY(c >= '0' && c <= '9')) return c - '0';
-		if (QUANTUMJSON_LIKELY(c >= 'a' && c <= 'f')) return c - 'a' + 10;
-		if (QUANTUMJSON_LIKELY(c >= 'A' && c <= 'F')) return c - 'A' + 10;
-		errorCode = ErrorCode::UnexpectedChar;
+	}
+
+	// TODO ReserveSpaceIn shoudl be the only public member function
+
+	// TODO When used for non recursive types like std::string, std::vector<int>
+	// this will cause two extra memory allocations (for deque) even though
+	// only one value will be necessary. Either handle them specially or use
+	// a deque that can holde a few elemnts without dynamic allocation.
+	template <typename T>
+	void ReserveSpaceIn(T &obj)
+	{
+		size_t idx = AllocateSizeIndexForElem(&obj);
+		CalculateSpaceToReserveIn(idx, static_cast<const T*>(nullptr));
+		ReserveCalculatedSpaceIn(obj);
+	}
+
+	void ReserveSpaceIn(std::string &obj)
+	{
+		size_t idx = AllocateSizeIndexForElem(&obj);
+		CalculateSpaceToReserveIn(idx, static_cast<const std::string*>(nullptr));
+		ReserveCalculatedSpaceIn(obj);
+	}
+
+	template <typename T>
+	void ReserveSpaceIn(std::vector<T> &obj)
+	{
+		size_t idx = AllocateSizeIndexForElem(&obj);
+		CalculateSpaceToReserveIn(idx, static_cast<const std::vector<T>*>(nullptr));
+		ReserveCalculatedSpaceIn(obj);
+	}
+
+	void ReserveSpaceIn(int &a)
+	{
+	}
+
+	void ReserveSpaceIn(double &a)
+	{
+	}
+
+
+	size_t VisitingField(int fieldTag)
+	{
+		// TODO restrict fieldTag to int16_t?
+
+		size_t idx = fieldSizes.size();
+		fieldSizes.push_back( FieldSizeInfo(fieldTag, 0) );
+
+		return idx;
+	}
+
+	void SetFieldSize(size_t fieldSizeIdx, size_t size)
+	{
+		fieldSizes[fieldSizeIdx].objectSize = size;
+	}
+
+	size_t GetFieldTag()
+	{
+		return fieldSizes[fieldSizeIdx].fieldTag;
+	}
+
+	size_t GetObjectSize()
+	{
+		return fieldSizes[fieldSizeIdx].objectSize;
+	}
+
+	void PopObject()
+	{
+		fieldSizeIdx++;
+	}
+
+	size_t GetCurIdx()
+	{
+		return fieldSizeIdx;
+	}
+
+	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const std::string *)
+	{
+		// Reserve just enough space
+		auto begin = this->it;
+		this->SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		// TODO FIXME this size logic does not account for escapes in the string
+		SetFieldSize(fieldSizeIdx, this->it - begin - 2);
+	}
+
+	void ReserveCalculatedSpaceIn(std::string &obj)
+	{
+		obj.reserve( GetObjectSize() );
+		PopObject();
+	}
+
+	// Basic types, no-op
+	// TODO find a nicer solution here with no unnecessary function calls
+	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const int *)
+	{
+		this->SkipNumber();
+	}
+	void ReserveCalculatedSpaceIn(int &obj) { }
+
+	// Argument is only provided for template overloading, it is not used
+	template <typename ElemType>
+	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const std::vector<ElemType> *)
+	{
+		// Reserve just enough space
+		size_t elemCnt = 0;
+
+		this->SkipChar('['); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		this->SkipWhitespace();
+
+		while (1)
+		{
+			QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
+
+			if (QUANTUMJSON_UNLIKELY(*(this->it) == ']'))
+			{
+				++this->it;
+				break;
+			}
+
+			if (elemCnt > 0)
+			{
+				this->SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+				this->SkipWhitespace();
+			}
+
+			size_t elemSizeIdx = AllocateSizeIndexForElem(static_cast<const ElemType*>(nullptr));
+			CalculateSpaceToReserveIn(elemSizeIdx, static_cast<const ElemType*>(nullptr));
+			QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+
+			this->SkipWhitespace();
+			++elemCnt;
+		}
+
+		SetFieldSize(fieldSizeIdx, elemCnt);
+	}
+
+	template <typename ObjectType>
+	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const ObjectType *)
+	{
+		this->SkipWhitespace();
+
+		this->SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		this->SkipWhitespace();
+
+		if (this->it != this->end && *(this->it) != '}')
+		{
+			// TODO Or call static function via nullptr?
+			ObjectType::ReserveNextField(*this);
+			this->SkipWhitespace();
+		}
+
+		while (this->it != this->end && *(this->it) != '}')
+		{
+			this->SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			this->SkipWhitespace();
+
+			ObjectType::ReserveNextField(*this);
+			this->SkipWhitespace();
+		}
+
+		this->SkipChar('}'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+
+		// Set object size as current unallocated index
+		SetFieldSize(fieldSizeIdx, fieldSizes.size());
+	}
+
+	template <typename ObjectType>
+	void ReserveCalculatedSpaceIn(ObjectType &obj)
+	{
+		obj.ReserveCalculatedSpace(*this);
+	}
+
+	template <typename ElemType>
+	void ReserveCalculatedSpaceIn(std::vector<ElemType> &obj)
+	{
+		obj.resize( GetObjectSize() );
+		PopObject();
+
+		for (auto &e : obj)
+		{
+			ReserveCalculatedSpaceIn(e);
+		}
+	}
+
+
+private:
+	template <typename ElemType>
+	size_t AllocateSizeIndexForElem(const ElemType *)
+	{
+		size_t idx = fieldSizes.size();
+		fieldSizes.push_back( FieldSizeInfo() );
+		return idx;
+	}
+
+	size_t AllocateSizeIndexForElem(const int *)
+	{
 		return -1;
+	}
+
+	size_t AllocateSizeIndexForElem(const double *)
+	{
+		return -1;
+	}
+
+	struct FieldSizeInfo
+	{
+		int64_t fieldTag:   16;
+		int64_t objectSize: 48;
+
+		FieldSizeInfo()
+		    : fieldTag(0), objectSize(0)
+		{
+		}
+
+		FieldSizeInfo(int16_t fieldTag, int64_t objectSize)
+		    : fieldTag(fieldTag), objectSize(0)
+		{
+		}
+	};
+
+	// Used in PopSize calls while reserving
+	size_t fieldSizeIdx = 0;
+	std::deque< FieldSizeInfo > fieldSizes;
+};
+
+
+template <typename InputIteratorType>
+struct Parser : InputProcessor<InputIteratorType>
+{
+	Parser(InputIteratorType begin, InputIteratorType end)
+	  : InputProcessor<InputIteratorType>(begin, end)
+	{
 	}
 
 	inline
@@ -435,7 +692,7 @@ struct Parser
 		else
 		{
 			// TODO this check should be moved to surrogate pair parsing place
-			errorCode = ErrorCode::UnsupportedUnicodeRange;
+			this->errorCode = ErrorCode::UnsupportedUnicodeRange;
 			return;
 		}
 	}
@@ -444,42 +701,52 @@ struct Parser
 	{
 		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
-		if (QUANTUMJSON_LIKELY(*it == 't'))
+		if (QUANTUMJSON_LIKELY(*(this->it) == 't'))
 		{
-			SkipTrue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			this->SkipTrue(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			obj = true;
 			return;
 		}
-		else if (QUANTUMJSON_LIKELY(*it == 'f'))
+		else if (QUANTUMJSON_LIKELY(*(this->it) == 'f'))
 		{
-			SkipFalse(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			this->SkipFalse(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			obj = false;
 			return;
 		}
 
-		errorCode = ErrorCode::UnexpectedToken;
+		this->errorCode = ErrorCode::UnexpectedToken;
 	}
 
-	void ParseValueIntoStringImpl(std::string &obj)
+	inline
+	int fromHex(char c)
 	{
-		SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		if (QUANTUMJSON_LIKELY(c >= '0' && c <= '9')) return c - '0';
+		if (QUANTUMJSON_LIKELY(c >= 'a' && c <= 'f')) return c - 'a' + 10;
+		if (QUANTUMJSON_LIKELY(c >= 'A' && c <= 'F')) return c - 'A' + 10;
+		this->errorCode = ErrorCode::UnexpectedChar;
+		return -1;
+	}
+
+	void ParseValueInto(std::string &obj)
+	{
+		this->SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 		// Parse string characters
-		while (QUANTUMJSON_LIKELY(it != end && *it != '"'))
+		while (QUANTUMJSON_LIKELY(this->it != this->end && *(this->it) != '"'))
 		{
-			if ((*it & 0b11100000) == 0)
+			if ((*(this->it) & 0b11100000) == 0)
 			{
-				errorCode = ErrorCode::ControlCharacterInString;
+				this->errorCode = ErrorCode::ControlCharacterInString;
 				return;
 			}
 
-			if (*it == '\\')
+			if (*(this->it) == '\\')
 			{
-				++it;
+				++this->it;
 
 				QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
-				switch (*(it++))
+				switch (*(this->it++))
 				{
 					case '"':  obj.push_back('"');  break;
 					case '\\': obj.push_back('\\'); break;
@@ -495,23 +762,23 @@ struct Parser
 						// Code-point consists of 4 hexadecimal numbers
 
 						// TODO EOF checks neede here
-						cp |= fromHex(*(it++)) << 12;
-						cp |= fromHex(*(it++)) << 8;
-						cp |= fromHex(*(it++)) << 4;
-						cp |= fromHex(*(it++));
+						cp |= fromHex(*(this->it++)) << 12;
+						cp |= fromHex(*(this->it++)) << 8;
+						cp |= fromHex(*(this->it++)) << 4;
+						cp |= fromHex(*(this->it++));
 
 						// Check if value is UTF-16 surrogate pair
 						if (cp >= 0xD800 && cp <= 0xDFFF)
 						{
-							SkipChar('\\'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-							SkipChar('u'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+							this->SkipChar('\\'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+							this->SkipChar('u'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 							int cp2 = 0;
 							// TODO eof check
-							cp2 |= fromHex(*(it++)) << 12;
-							cp2 |= fromHex(*(it++)) << 8;
-							cp2 |= fromHex(*(it++)) << 4;
-							cp2 |= fromHex(*(it++));
+							cp2 |= fromHex(*(this->it++)) << 12;
+							cp2 |= fromHex(*(this->it++)) << 8;
+							cp2 |= fromHex(*(this->it++)) << 4;
+							cp2 |= fromHex(*(this->it++));
 
 							// TODO verify range of cp2
 							// https://en.wikipedia.org/wiki/UTF-16#U.2BD800_to_U.2BDFFF
@@ -525,25 +792,25 @@ struct Parser
 					}
 
 					default:
-						errorCode = ErrorCode::InvalidEscape;
+						this->errorCode = ErrorCode::InvalidEscape;
 						return;
 				}
 			}
-			else if ((*it & 0b11000000) == 0b11000000)
+			else if ((*(this->it) & 0b11000000) == 0b11000000)
 			{
 	#define SKIP_CONTINUATION_BYTE \
-		if (it == end || ((*it & 0b11000000) != 0b10000000)) \
+		if (this->it == this->end || ((*(this->it) & 0b11000000) != 0b10000000)) \
 		{ \
-			errorCode = ErrorCode::InvalidUtf8Sequence; \
+			this->errorCode = ErrorCode::InvalidUtf8Sequence; \
 			return; \
 		} \
-		obj.push_back(*it); \
-		++it;
+		obj.push_back(*(this->it)); \
+		++this->it;
 				// Unicode start byte
-				if ((*it & 0b11111100) == 0b11111100)
+				if ((*(this->it) & 0b11111100) == 0b11111100)
 				{
-					obj.push_back(*it);
-					++it;
+					obj.push_back(*(this->it));
+					++this->it;
 					// 5 bytes should follow
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
@@ -551,172 +818,125 @@ struct Parser
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 				}
-				else if ((*it & 0b11111000) == 0b11111000)
+				else if ((*(this->it) & 0b11111000) == 0b11111000)
 				{
-					obj.push_back(*it);
-					++it;
+					obj.push_back(*(this->it));
+					++this->it;
 					// 4 bytes should follow
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 				}
-				else if ((*it & 0b11110000) == 0b11110000)
+				else if ((*(this->it) & 0b11110000) == 0b11110000)
 				{
-					obj.push_back(*it);
-					++it;
+					obj.push_back(*(this->it));
+					++this->it;
 					// 3 bytes should follow
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 				}
-				else if ((*it & 0b11100000) == 0b11100000)
+				else if ((*(this->it) & 0b11100000) == 0b11100000)
 				{
-					obj.push_back(*it);
-					++it;
+					obj.push_back(*(this->it));
+					++this->it;
 					// 2 bytes should follow
 					SKIP_CONTINUATION_BYTE
 					SKIP_CONTINUATION_BYTE
 				}
-				else // if ((*it & 0b11000000) == 0b11000000)
+				else // if ((*(this->it) & 0b11000000) == 0b11000000)
 				{
-					obj.push_back(*it);
-					++it;
+					obj.push_back(*(this->it));
+					++this->it;
 					// 1 byte should follow
 					SKIP_CONTINUATION_BYTE
 				}
 	#undef SKIP_CONTINUATION_BYTE
 			}
-			else if ((*it & 0b11000000) == 0b10000000)
+			else if ((*(this->it) & 0b11000000) == 0b10000000)
 			{
 				// Unexpected continuation character
-				errorCode = ErrorCode::InvalidUtf8Sequence;
+				this->errorCode = ErrorCode::InvalidUtf8Sequence;
 				return;
 			}
 			else
 			{
-				obj.push_back(*it);
-				++it;
+				obj.push_back(*(this->it));
+				++this->it;
 			}
 		}
 
-		SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-	}
-
-	// Following two functions use SFINAE to provide two different string
-	// parsers, allowing random access iterators one to measure and reserve
-	// size before, to prevent unnecessary allocations.
-	// InputIterator alternative is using default std::string growth.
-
-	// Faster parser that works for random access iterator
-	template <typename IteratorType>
-	void ParseValueIntoHelper(std::string &obj,
-	    typename std::enable_if<
-	        std::is_base_of<
-	            std::random_access_iterator_tag,
-	            typename std::iterator_traits<IteratorType>::iterator_category
-	        >::value
-	    >::type * = 0)
-	{
-		obj.clear();
-
-		// Reserve just enough space
-		auto begin = it;
-		SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-		// TODO FIXME this size logic does not account for escapes in the string
-		size_t strSize = it - begin - 2;
-		it = begin;
-		obj.reserve( strSize );
-
-		ParseValueIntoStringImpl(obj); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-	}
-
-	// Slower parser that works for any iterator
-	template <typename IteratorType>
-	void ParseValueIntoHelper(std::string &obj,
-	    typename std::enable_if<
-	        ! std::is_base_of<
-	            std::random_access_iterator_tag,
-	            typename std::iterator_traits<IteratorType>::iterator_category
-	        >::value
-	    >::type * = 0)
-	{
-		obj.clear();
-		ParseValueIntoStringImpl(obj); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-	}
-
-	void ParseValueInto(std::string &obj)
-	{
-		ParseValueIntoHelper< InputIteratorType >(obj); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		this->SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	// TODO FIXME it == end checks are not done here
 	void ParseValueInto(double &obj)
 	{
-		if (QUANTUMJSON_UNLIKELY(*it != '-' && (*it < '0' || *it > '9')))
+		if (QUANTUMJSON_UNLIKELY(*(this->it) != '-' && (*(this->it) < '0' || *(this->it) > '9')))
 		{
-			errorCode = ErrorCode::UnexpectedToken;
+			this->errorCode = ErrorCode::UnexpectedToken;
 			return;
 		}
 
-		InputIteratorType begin = it;
+		InputIteratorType begin = this->it;
 
 		// skip_negative_sign:
-		if (*it == '-') ++it;
+		if (*(this->it) == '-') ++this->it;
 
 		// skip_digits:
-		if (*it == '0')
+		if (*(this->it) == '0')
 		{
-			++it;
+			++this->it;
 			goto skip_decimal_fractions;
 		}
-		else if (*it > '0' && *it <= '9')
+		else if (*(this->it) > '0' && *(this->it) <= '9')
 		{
-			++it;
-			while (*it >= '0' && *it <= '9')
+			++this->it;
+			while (*(this->it) >= '0' && *(this->it) <= '9')
 			{
-				++it;
+				++this->it;
 			}
 		}
 		else
 		{
-			errorCode = ErrorCode::UnexpectedToken;
+			this->errorCode = ErrorCode::UnexpectedToken;
 			return;
 		}
 
 		skip_decimal_fractions:
-		if (*it == '.')
+		if (*(this->it) == '.')
 		{
-			++it;
+			++this->it;
 
-			if (*it < '0' || *it > '9')
+			if (*(this->it) < '0' || *(this->it) > '9')
 			{
 				// There must be a number after separator
-				errorCode = ErrorCode::UnexpectedToken;
+				this->errorCode = ErrorCode::UnexpectedToken;
 				return;
 			}
-			++it;
+			++this->it;
 
-			while (*it >= '0' && *it <= '9')
+			while (*(this->it) >= '0' && *(this->it) <= '9')
 			{
-				++it;
+				++this->it;
 			}
 		}
 
 		// skip_exponent:
-		if (*it == 'e' || *it == 'E')
+		if (*(this->it) == 'e' || *(this->it) == 'E')
 		{
-			++it;
+			++this->it;
 
-			if (*it == '-' || *it == '+')
-				++it;
+			if (*(this->it) == '-' || *(this->it) == '+')
+				++this->it;
 
-			while (*it >= '0' && *it <= '9')
-				++it;
+			while (*(this->it) >= '0' && *(this->it) <= '9')
+				++this->it;
 		}
 
 		// TODO FIXME strtod only works with c-strings?
-		std::string doubleStr(begin, it);
+		std::string doubleStr(begin, this->it);
 		obj = strtod(doubleStr.c_str(), nullptr);
 
 		// No error checks done here, as assuming the format should be good for strtod.
@@ -729,12 +949,12 @@ struct Parser
 	{
 		std::string num;
 		// TODO parse this correctly
-		while (it != end)
+		while (this->it != this->end)
 		{
-			if ((*it >= '0' && *it <= '9') || *it == '-' || *it == '+')
+			if ((*(this->it) >= '0' && *(this->it) <= '9') || *(this->it) == '-' || *(this->it) == '+')
 			{
-				num.push_back(*it);
-				++it;
+				num.push_back(*(this->it));
+				++this->it;
 				continue;
 			}
 			break;
@@ -743,7 +963,7 @@ struct Parser
 
 		if (num.size() == 0)
 		{
-			errorCode = ErrorCode::UnexpectedToken;
+			this->errorCode = ErrorCode::UnexpectedToken;
 			return;
 		}
 
@@ -754,30 +974,30 @@ struct Parser
 	void ParseValueInto(std::vector<ArrayElemType> &obj)
 	{
 		obj.clear();
-		SkipChar('['); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-		SkipWhitespace();
+		this->SkipChar('['); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		this->SkipWhitespace();
 
 		while (1)
 		{
 			QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
-			if (QUANTUMJSON_UNLIKELY(*it == ']'))
+			if (QUANTUMJSON_UNLIKELY(*(this->it) == ']'))
 			{
-				++it;
+				++this->it;
 				return;
 			}
 
 			if (obj.size() > 0)
 			{
-				SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-				SkipWhitespace();
+				this->SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+				this->SkipWhitespace();
 			}
 
 			ArrayElemType elem;
 			ParseValueInto(elem); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 			obj.push_back( std::move(elem) );
 
-			SkipWhitespace();
+			this->SkipWhitespace();
 		}
 	}
 
@@ -785,66 +1005,66 @@ struct Parser
 	void ParseValueInto(std::map<std::string, MapElemType> &obj)
 	{
 		obj.clear();
-		SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-		SkipWhitespace();
+		this->SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		this->SkipWhitespace();
 
 		while (1)
 		{
 			QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
 
-			if (QUANTUMJSON_UNLIKELY(*it == '}'))
+			if (QUANTUMJSON_UNLIKELY(*(this->it) == '}'))
 			{
-				++it;
+				++this->it;
 				return;
 			}
 
 			if (obj.size() > 0)
 			{
-				SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-				SkipWhitespace();
+				this->SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+				this->SkipWhitespace();
 			}
 
 			std::string key;
 			ParseValueInto(key); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-			SkipWhitespace();
+			this->SkipWhitespace();
 
-			SkipChar(':'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-			SkipWhitespace();
+			this->SkipChar(':'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			this->SkipWhitespace();
 
 			MapElemType value;
 			ParseValueInto(value); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-			SkipWhitespace();
+			this->SkipWhitespace();
 
 			obj.insert( std::pair<std::string,MapElemType>(std::move(key), std::move(value)) );
 		}
 
-		errorCode = ErrorCode::UnexpectedEOF;
+		this->errorCode = ErrorCode::UnexpectedEOF;
 	}
 
 	template <typename ObjectType>
 	void ParseObject(ObjectType &obj)
 	{
-		SkipWhitespace();
+		this->SkipWhitespace();
 
-		SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-		SkipWhitespace();
+		this->SkipChar('{'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		this->SkipWhitespace();
 
-		if (it != end && *it != '}')
+		if (this->it != this->end && *(this->it) != '}')
 		{
 			obj.ParseNextField(*this);
-			SkipWhitespace();
+			this->SkipWhitespace();
 		}
 
-		while (it != end && *it != '}')
+		while (this->it != this->end && *(this->it) != '}')
 		{
-			SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-			SkipWhitespace();
+			this->SkipChar(','); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			this->SkipWhitespace();
 
 			obj.ParseNextField(*this);
-			SkipWhitespace();
+			this->SkipWhitespace();
 		}
 
-		SkipChar('}'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		this->SkipChar('}'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 	}
 
 	template <typename ObjectType>
@@ -852,11 +1072,6 @@ struct Parser
 	{
 		ParseObject(obj);
 	}
-
-
-	ErrorCode errorCode = ErrorCode::NoError;
-	InputIteratorType it;
-	InputIteratorType end;
 };
 
 template <typename OutputIteratorType>

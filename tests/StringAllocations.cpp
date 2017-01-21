@@ -93,6 +93,11 @@ TEST_CASE("Minimal allocations check")
 		string out;
 
 		resetAllocationStats();
+
+		// TODO this part should be automatic
+		QuantumJsonImpl__::PreAllocator<string::const_iterator> preAllocator(in.begin(), in.end());
+		preAllocator.ReserveSpaceIn(out);
+
 		QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
 		p.ParseValueInto(out);
 
@@ -118,6 +123,11 @@ TEST_CASE("Minimal allocations check")
 		resetAllocationStats();
 		const char *begin = largeJsonString;
 		const char *end = largeJsonString + strlen(largeJsonString);
+
+		// TODO this part should be automatic
+		QuantumJsonImpl__::PreAllocator<const char*> preAllocator(begin, end);
+		preAllocator.ReserveSpaceIn(out);
+
 		QuantumJsonImpl__::Parser<const char*> p(begin, end);
 		p.ParseValueInto(out);
 
