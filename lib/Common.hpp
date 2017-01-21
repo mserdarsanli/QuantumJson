@@ -471,44 +471,35 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 	{
 		// TODO restrict fieldTag to int16_t?
 
-		size_t val = fieldTag;
-
-		// Use 16 bits for field tag and 48 bits for size
-		val <<= 48;
-
-		size_t idx = sizes.size();
-		sizes.push_back(val);
+		size_t idx = fieldSizes.size();
+		fieldSizes.push_back( FieldSizeInfo(fieldTag, 0) );
 
 		return idx;
 	}
 
 	void SetFieldSize(size_t fieldSizeIdx, size_t size)
 	{
-		size_t &fieldSize = sizes[fieldSizeIdx];
-
-		// TODO use a bitset instead of doing bit opreations
-		fieldSize = ( 0xFFFF000000000000L & fieldSize )
-		          | ( 0x0000FFFFFFFFFFFFL & size );
+		fieldSizes[fieldSizeIdx].objectSize = size;
 	}
 
 	size_t GetFieldTag()
 	{
-		return sizes[ curSizeIdx ] >> 48;
+		return fieldSizes[fieldSizeIdx].fieldTag;
 	}
 
 	size_t GetObjectSize()
 	{
-		return sizes[ curSizeIdx ] & 0x0000FFFFFFFFFFFFL;
+		return fieldSizes[fieldSizeIdx].objectSize;
 	}
 
 	void PopObject()
 	{
-		curSizeIdx++;
+		fieldSizeIdx++;
 	}
 
 	size_t GetCurIdx()
 	{
-		return curSizeIdx;
+		return fieldSizeIdx;
 	}
 
 	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const std::string *)
@@ -598,7 +589,7 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 		this->SkipChar('}'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 		// Set object size as current unallocated index
-		SetFieldSize(fieldSizeIdx, sizes.size());
+		SetFieldSize(fieldSizeIdx, fieldSizes.size());
 	}
 
 	template <typename ObjectType>
@@ -624,8 +615,8 @@ private:
 	template <typename ElemType>
 	size_t AllocateSizeIndexForElem(const ElemType *)
 	{
-		size_t idx = sizes.size();
-		sizes.push_back(0);
+		size_t idx = fieldSizes.size();
+		fieldSizes.push_back( FieldSizeInfo() );
 		return idx;
 	}
 
@@ -639,9 +630,25 @@ private:
 		return -1;
 	}
 
+	struct FieldSizeInfo
+	{
+		int64_t fieldTag:   16;
+		int64_t objectSize: 48;
+
+		FieldSizeInfo()
+		    : fieldTag(0), objectSize(0)
+		{
+		}
+
+		FieldSizeInfo(int16_t fieldTag, int64_t objectSize)
+		    : fieldTag(fieldTag), objectSize(0)
+		{
+		}
+	};
+
 	// Used in PopSize calls while reserving
-	size_t curSizeIdx = 0;
-	std::deque< size_t > sizes;
+	size_t fieldSizeIdx = 0;
+	std::deque< FieldSizeInfo > fieldSizes;
 };
 
 
