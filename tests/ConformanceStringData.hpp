@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 
-// Note: TEST_DOUBLE lines below are copied from
+// Note: TEST_STRING lines below are copied from
 // https://github.com/miloyip/nativejson-benchmark/blob/master/src/main.cpp
 
 TEST_STRING("[\"\"]", "");
