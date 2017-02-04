@@ -97,7 +97,33 @@ TEST_CASE("Invalid Unicode Sequence")
 
 TEST_CASE("Unicode Escape")
 {
-	// TODO implement \uxxxx and \uxxxx\uxxxx characters
+	SECTION("Simple test in BMP (lowercase hexadecimal)")
+	{
+		string in = R"("\u011e\u011f")";
+		string out;
+		QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+		p.ParseValueInto(out);
+		REQUIRE(out == u8"Ğğ");
+	}
+
+	SECTION("Simple test in BMP (uppercase hexadecimal)")
+	{
+		string in = R"("\u011E\u011F")";
+		string out;
+		QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+		p.ParseValueInto(out);
+		REQUIRE(out == u8"Ğğ");
+	}
+
+	SECTION("Simple surrogate pair")
+	{
+		// MATHEMATICAL BOLD CAPITAL A
+		string in = R"("\uD835\uDC00")";
+		string out;
+		QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+		p.ParseValueInto(out);
+		REQUIRE(out == u8"𝐀");
+	}
 }
 
 TEST_CASE("Invalid Unicode Escape")
