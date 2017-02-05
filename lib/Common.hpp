@@ -446,11 +446,11 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 
 
 	// // TODO ReserveSpaceIn shoudl be the only public member function
-#if QUANTUMJON_PREALLOCATE_ON_RANDOMACCESSITERATOR
+#if QUANTUMJON_PREALLOCATE_ON_RANDOMACCESSITERATOR == false
 	template <typename T>
 	void ReserveSpaceIn(T &obj)
 	{
-		// Empty
+		// Do not preallocate anything
 	}
 #else
 	// TODO When used for non recursive types like std::string, std::vector<int>

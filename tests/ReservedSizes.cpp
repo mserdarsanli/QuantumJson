@@ -30,6 +30,9 @@
 
 using namespace std;
 
+// Tests are only valid when preallocation is enabled
+#if QUANTUMJON_PREALLOCATE_ON_RANDOMACCESSITERATOR
+
 TEST_CASE("Basic element type allocations check")
 {
 	string listValue16 = "[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]";
@@ -117,3 +120,5 @@ TEST_CASE("Reserve list of strings")
 		CHECK( obj[2].capacity() > obj[0].capacity() );
 	}
 }
+
+#endif

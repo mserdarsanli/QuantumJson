@@ -30,6 +30,9 @@
 
 using namespace std;
 
+// Tests are only valid when preallocation is enabled
+#if QUANTUMJON_PREALLOCATE_ON_RANDOMACCESSITERATOR
+
 TEST_CASE("Basic object allocation check")
 {
 	string itemsJson = "{\"i1\":{},\"i2\":{\"name\":\"qweqweqweqweqweq\"}}";
@@ -74,3 +77,5 @@ TEST_CASE("Reserve lists of objects")
 		CHECK( obj.items[3].name.capacity() >= 23 );
 	}
 }
+
+#endif
