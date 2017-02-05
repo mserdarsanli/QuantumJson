@@ -128,8 +128,56 @@ TEST_CASE("Unicode Escape")
 
 TEST_CASE("Invalid Unicode Escape")
 {
-	// TODO test forbidden \uxxxx\uxxxx surrogate pairs
-	// TODO test invalid escapes
+	SECTION("Incomplete escape")
+	{
+		string in = R"("\uD8)";
+		string out;
+		QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+		p.ParseValueInto(out);
+		REQUIRE(p.errorCode == QuantumJsonImpl__::ErrorCode::UnexpectedEOF);
+	}
+
+	SECTION("Invalid escape")
+	{
+		string in = R"("\uD8")";
+		string out;
+		QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+		p.ParseValueInto(out);
+		REQUIRE(p.errorCode == QuantumJsonImpl__::ErrorCode::UnexpectedChar);
+	}
+}
+
+TEST_CASE("Invalid surrogates")
+{
+	// Utf-16 surrogate pairs have range (0xD800..0xDBFF, 0xDC00..0xDFFF)
+	//                                    <----high---->  <-----low---->
+
+	SECTION("Unpaired high surrogate")
+	{
+		string in = R"("\uD835")";
+		string out;
+		QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+		p.ParseValueInto(out);
+		REQUIRE(p.errorCode == QuantumJsonImpl__::ErrorCode::UnexpectedChar); // Expected next surrogate
+	}
+
+	SECTION("Low surrogate at start")
+	{
+		string in = R"("\uDC00")";
+		string out;
+		QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+		p.ParseValueInto(out);
+		REQUIRE(p.errorCode == QuantumJsonImpl__::ErrorCode::InvalidSurrogate);
+	}
+
+	SECTION("High surrogate followed by high surrogate")
+	{
+		string in = R"("\uD835\uD835")";
+		string out;
+		QuantumJsonImpl__::Parser<string::const_iterator> p(in.begin(), in.end());
+		p.ParseValueInto(out);
+		REQUIRE(p.errorCode == QuantumJsonImpl__::ErrorCode::InvalidSurrogate);
+	}
 }
 
 TEST_CASE("Parse List")
