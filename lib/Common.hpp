@@ -89,6 +89,7 @@ enum class ErrorCode
 	UnexpectedToken,
 	InvalidEscape,
 	InvalidUtf8Sequence,
+	InvalidSurrogate,
 	UnsupportedUnicodeRange,
 	ControlCharacterInString,
 };
@@ -117,6 +118,8 @@ public:
 			return "Invalid Escape";
 		case ErrorCode::InvalidUtf8Sequence:
 			return "Invalid UTF-8 Sequence";
+		case ErrorCode::InvalidSurrogate:
+			return "Invalid Surrogate";
 		case ErrorCode::UnsupportedUnicodeRange:
 			return "Unsupported Unicode Range";
 		case ErrorCode::ControlCharacterInString:
@@ -737,13 +740,43 @@ struct Parser : InputProcessor<InputIteratorType>
 	}
 
 	inline
-	int fromHex(char c)
+	int parseHexadecimalByte()
 	{
+		// FIXME can't use QUANTUMJSON_CHECK_EOF_AND_PROPAGATE as return value is non void
+		if (QUANTUMJSON_UNLIKELY(this->it == this->end))
+		{
+			this->errorCode = ErrorCode::UnexpectedEOF;
+			return -1;
+		}
+		char c = *(this->it++);
 		if (QUANTUMJSON_LIKELY(c >= '0' && c <= '9')) return c - '0';
 		if (QUANTUMJSON_LIKELY(c >= 'a' && c <= 'f')) return c - 'a' + 10;
 		if (QUANTUMJSON_LIKELY(c >= 'A' && c <= 'F')) return c - 'A' + 10;
 		this->errorCode = ErrorCode::UnexpectedChar;
 		return -1;
+	}
+
+	// Parses the 4 byte hex region for excaped characters \uFFFF
+	//                                                       <-->
+	// and returns the corresponding unicode code point.
+	inline
+	int getEscapedCharCodePoint()
+	{
+		int codePoint = 0;
+
+		for (int i = 0; i < 4; ++i)
+		{
+			codePoint <<= 4;
+			int hexValue = parseHexadecimalByte();
+			// FIXME can't use QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE as return value is non void
+			if (QUANTUMJSON_UNLIKELY(this->errorCode != ErrorCode::NoError))
+			{
+				return -1;
+			}
+			codePoint |= hexValue;
+		}
+
+		return codePoint;
 	}
 
 	void ParseValueInto(std::string &obj)
@@ -777,30 +810,31 @@ struct Parser : InputProcessor<InputIteratorType>
 					case 't':  obj.push_back('\t'); break;
 					case 'u':
 					{
-						int cp = 0;
 						// Code-point consists of 4 hexadecimal numbers
-
-						// TODO EOF checks neede here
-						cp |= fromHex(*(this->it++)) << 12;
-						cp |= fromHex(*(this->it++)) << 8;
-						cp |= fromHex(*(this->it++)) << 4;
-						cp |= fromHex(*(this->it++));
+						int cp = getEscapedCharCodePoint(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 						// Check if value is UTF-16 surrogate pair
 						if (cp >= 0xD800 && cp <= 0xDFFF)
 						{
+							if (cp >= 0xDC00)
+							{
+								// Must start with high surrogate
+								this->errorCode = ErrorCode::InvalidSurrogate;
+								return;
+							}
+
+							// Parse the pair
 							this->SkipChar('\\'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 							this->SkipChar('u'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
-							int cp2 = 0;
-							// TODO eof check
-							cp2 |= fromHex(*(this->it++)) << 12;
-							cp2 |= fromHex(*(this->it++)) << 8;
-							cp2 |= fromHex(*(this->it++)) << 4;
-							cp2 |= fromHex(*(this->it++));
+							int cp2 = getEscapedCharCodePoint(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+							if (cp2 < 0xDC00 || cp2 > 0xDFFF)
+							{
+								// Surrogate pair must be followed by low surrogate
+								this->errorCode = ErrorCode::InvalidSurrogate;
+								return;
+							}
 
-							// TODO verify range of cp2
-							// https://en.wikipedia.org/wiki/UTF-16#U.2BD800_to_U.2BDFFF
 							cp = 0x10000 + ((cp & 0x3FF) << 10) + (cp2 & 0x3FF);
 						}
 
