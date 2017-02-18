@@ -1299,6 +1299,9 @@ struct Serializer
 namespace QuantumJson
 {
 	// Helper struct to get retrun type polymorphism
+	// TODO FIXME Proxy not working with operator=
+	// Object o = QuantumJson::Parse(..); // works
+	// Object o; o = QuantumJson::Parse(..); // does not work
 	template<typename InputIteratorType>
 	struct ParserProxy
 	{
