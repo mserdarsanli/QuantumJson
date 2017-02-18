@@ -26,6 +26,7 @@
 #include <cinttypes>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <deque>
 #include <functional>
 #include <iostream>
@@ -1290,9 +1291,72 @@ struct Serializer
 };
 
 
-}  // namespace JsonDef
+}  // namespace QuantumJsonImpl__
 
 #undef QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE
 #undef QUANTUMJSON_CHECK_EOF_AND_PROPAGATE
+
+// Public API is defined here
+namespace QuantumJson
+{
+	// Helper struct to get retrun type polymorphism
+	// TODO FIXME Proxy not working with operator=
+	// Object o = QuantumJson::Parse(..); // works
+	// Object o; o = QuantumJson::Parse(..); // does not work
+	template<typename InputIteratorType>
+	struct ParserProxy
+	{
+		// TODO hide constructors so this couln't be created by the user
+		ParserProxy(InputIteratorType begin, InputIteratorType end)
+		  : begin(begin), end(end)
+		{
+		}
+
+		// Parses the json as type T
+		//
+		// Following does the expected thing
+		// vector<int> v = QuantumJson::Parse("[10, 20]");
+		// Following throws parse exception
+		// string s = QuantumJson::Parse("[10, 20]");
+		template <typename JsonType>
+		operator JsonType ()
+		{
+			JsonType val;
+
+			// TODO add QuantumJsonImpl__::PreAllocator based on InputIteratorType
+
+			QuantumJsonImpl__::Parser<InputIteratorType> parser(begin, end);
+			parser.ParseValueInto(val);
+
+			if (parser.errorCode != QuantumJsonImpl__::ErrorCode::NoError)
+			{
+				throw QuantumJsonImpl__::JsonError(parser.errorCode);
+			}
+
+			return val;
+		}
+
+	private:
+		InputIteratorType begin, end;
+	};
+
+	template <typename InputIteratorType>
+	ParserProxy<InputIteratorType> Parse(InputIteratorType begin, InputIteratorType end)
+	{
+		return ParserProxy<InputIteratorType>(begin, end);
+	}
+
+	inline
+	ParserProxy<std::string::const_iterator> Parse(const std::string &s)
+	{
+		return ParserProxy<std::string::const_iterator>(s.begin(), s.end());
+	}
+
+	inline
+	ParserProxy<const char*> Parse(const char *cstr)
+	{
+		return ParserProxy<const char*>(cstr, cstr + strlen(cstr));
+	}
+}
 
 #endif  // QUANTUMJSON_LIB_IMPL_

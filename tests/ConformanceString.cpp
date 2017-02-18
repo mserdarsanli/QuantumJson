@@ -41,10 +41,7 @@ using namespace std;
 #define TEST_STRING(json, expect) \
 	TEST_CASE("String conformance test " S__LINE__) \
 	{ \
-		vector< string > v; \
-		string jsonStr( json ); \
-		QuantumJsonImpl__::Parser< std::string::const_iterator> p(jsonStr.begin(), jsonStr.end()); \
-		p.ParseValueInto(v); \
+		vector< string > v = QuantumJson::Parse(json); \
 		REQUIRE( v.size() == 1 ); \
 		\
 		string actualResult = v[0]; \
