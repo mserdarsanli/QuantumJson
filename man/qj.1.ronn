@@ -58,9 +58,9 @@ is needed to be included.
 
 Following is an example usage:
 
-    std::string input = "<some valid json>";
-    Geometry g;
-    g.MergeFromJson(input);
+    // QuantumJson::Parse is return type polymorphic
+    // (via a proxy class overriding conversion operator).
+    Geometry g = QuantumJson::Parse("<some valid json>");
 
     std::cout << g.name << "\n";
     std::cout << g.points[0].x << "\n";
@@ -124,7 +124,24 @@ Some C++ attributes can be used to control specific QuantumJson behaviors.
 
 Following is a synopsis of the generated API. Note that API might change.
 
+### GLOBAL FUNCTIONS
+
+QuantumJson provides following global functions in `QuantumJson` namespace:
+
+    ProxyType Parse(InputIteratorType begin, InputIteratorType end);
+    ProxyType Parse(const std::string&);
+    ProxyType Parse(const char*);
+
+Return type is defined as `ProxyType`, which is used to have return-type
+polymorphism. Actual parsing is triggered based on the conversion type
+when result is assigned to an object. Following snippet parses the input
+for type `Geometry`.
+
+    Geometry g = Parse(json);
+
 ### MEMBER FUNCTIONS
+
+Following are the member functions on user defined types JSON type.
 
     void MergeFromJson(const std::string &in);
 
