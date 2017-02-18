@@ -1290,9 +1290,57 @@ struct Serializer
 };
 
 
-}  // namespace JsonDef
+}  // namespace QuantumJsonImpl__
 
 #undef QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE
 #undef QUANTUMJSON_CHECK_EOF_AND_PROPAGATE
+
+// Public API is defined here
+namespace QuantumJson
+{
+	// Helper struct to get retrun type polymorphism
+	template<typename InputIteratorType>
+	struct ParserProxy
+	{
+		// TODO hide constructors so this couln't be created by the user
+		ParserProxy(InputIteratorType begin, InputIteratorType end)
+		  : begin(begin), end(end)
+		{
+		}
+
+		// Parses the json as type T
+		//
+		// Following does the expected thing
+		// vector<int> v = QuantumJson::Parse("[10, 20]");
+		// Following throws parse exception
+		// string s = QuantumJson::Parse("[10, 20]");
+		template <typename JsonType>
+		operator JsonType ()
+		{
+			JsonType val;
+
+			// TODO add QuantumJsonImpl__::PreAllocator based on InputIteratorType
+
+			QuantumJsonImpl__::Parser<InputIteratorType> parser(begin, end);
+			parser.ParseValueInto(val);
+
+			if (parser.errorCode != QuantumJsonImpl__::ErrorCode::NoError)
+			{
+				throw QuantumJsonImpl__::JsonError(parser.errorCode);
+			}
+
+			return val;
+		}
+
+	private:
+		InputIteratorType begin, end;
+	};
+
+	template <typename InputIteratorType>
+	ParserProxy<InputIteratorType> Parse(InputIteratorType begin, InputIteratorType end)
+	{
+		return ParserProxy<InputIteratorType>(begin, end);
+	}
+}
 
 #endif  // QUANTUMJSON_LIB_IMPL_
