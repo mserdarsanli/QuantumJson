@@ -32,14 +32,14 @@ using namespace std;
 TEST_CASE("Simple Parser")
 {
 	string in = "{\"kind\":\"sadsda\"}";
-	Listing l = QuantumJson::Parse(in.begin(), in.end());
+	Listing l = QuantumJson::Parse(in);
 	REQUIRE( l.kind == "sadsda" );
 }
 
 TEST_CASE("String escape sequences")
 {
 	string in = R"({"kind":"\"\\\/\b\f\n\r\t"})";
-	Listing l = QuantumJson::Parse(in.begin(), in.end());
+	Listing l = QuantumJson::Parse(in);
 
 	REQUIRE( l.kind == "\"\\/\b\f\n\r\t" );
 }
@@ -47,7 +47,7 @@ TEST_CASE("String escape sequences")
 TEST_CASE("Unicode escapes")
 {
 	string in = R"({"kind":"\u002f"})";
-	Listing l = QuantumJson::Parse(in.begin(), in.end());
+	Listing l = QuantumJson::Parse(in);
 
 	REQUIRE( l.kind == "/" );
 }
@@ -56,7 +56,7 @@ TEST_CASE("Unicode surrogate pairs")
 {
 	// Test this arbitrary chinese character
 	string in = R"({"kind":"\ud87e\udcb4"})";
-	Listing l = QuantumJson::Parse(in.begin(), in.end());
+	Listing l = QuantumJson::Parse(in);
 
 	REQUIRE( l.kind == "扝" );
 }
@@ -69,7 +69,7 @@ TEST_CASE("Attributes")
 		  "attr-2": "val2"
 		}
 	)";
-	AttributeTester o = QuantumJson::Parse(in.begin(), in.end());
+	AttributeTester o = QuantumJson::Parse(in);
 
 	REQUIRE( o.attr1 == "val1" );
 	REQUIRE( o.attr2 == "val2" );
@@ -85,7 +85,7 @@ TEST_CASE("Nullable fields")
 			  "attr_regular": "val2"
 			}
 		)";
-		SkipNullTester o = QuantumJson::Parse(in.begin(), in.end());
+		SkipNullTester o = QuantumJson::Parse(in);
 
 		REQUIRE( o.attr_accepting_null == "" );
 		REQUIRE( o.attr_regular == "val2" );
@@ -100,7 +100,7 @@ TEST_CASE("Nullable fields")
 			}
 		)";
 		REQUIRE_THROWS_WITH(
-		    SkipNullTester o = QuantumJson::Parse(json.begin(), json.end()),
+		    SkipNullTester o = QuantumJson::Parse(json),
 		    "Unexpected Char" );
 	}
 }
@@ -113,7 +113,7 @@ TEST_CASE("Unknown Attributes")
 		  "attr1": "wqwqeweqeq"
 		}
 	)";
-	AttributeTester o = QuantumJson::Parse(in.begin(), in.end());
+	AttributeTester o = QuantumJson::Parse(in);
 
 	// Check of parsing completes successfully
 	REQUIRE( o.attr1 == "wqwqeweqeq" );

@@ -31,16 +31,14 @@ using namespace std;
 
 TEST_CASE("Simple string")
 {
-	string in = "\"asd\"";
-	string out = QuantumJson::Parse(in.begin(), in.end());
+	string out = QuantumJson::Parse("\"asd\"");
 	REQUIRE(out == "asd");
 }
 
 TEST_CASE("Unterminated string")
 {
-	string in = "\"asd";
 	REQUIRE_THROWS_WITH(
-	    string out = QuantumJson::Parse(in.begin(), in.end()),
+	    string out = QuantumJson::Parse("\"asd"),
 	    "Unexpected EOF");
 }
 
@@ -48,7 +46,7 @@ TEST_CASE("Escape Characters")
 {
 	string in = R"("\\\/\b\f\n\r\t")";
 	string expectedOut = "\\/\b\f\n\r\t";
-	string out = QuantumJson::Parse(in.begin(), in.end());
+	string out = QuantumJson::Parse(in);
 	REQUIRE(out == expectedOut);
 }
 
@@ -56,7 +54,7 @@ TEST_CASE("Invalid Escape")
 {
 	string in = R"("\q")";
 	REQUIRE_THROWS_WITH(
-	    string out = QuantumJson::Parse(in.begin(), in.end()),
+	    string out = QuantumJson::Parse(in),
 	    "Invalid Escape");
 }
 
@@ -65,14 +63,14 @@ TEST_CASE("Unterminated Escape")
 	string in = R"("qweewqew\)";
 	string out;
 	REQUIRE_THROWS_WITH(
-	    string out = QuantumJson::Parse(in.begin(), in.end()),
+	    string out = QuantumJson::Parse(in),
 	    "Unexpected EOF");
 }
 
 TEST_CASE("Unicode")
 {
 	string in = u8"\"ğüşiöçÖÇŞİĞÜIı\"";
-	string out = QuantumJson::Parse(in.begin(), in.end());
+	string out = QuantumJson::Parse(in);
 	REQUIRE(out == u8"ğüşiöçÖÇŞİĞÜIı");
 }
 
@@ -82,7 +80,7 @@ TEST_CASE("Invalid Unicode Sequence")
 	uint8_t invalid_utf8[] = { '"', 196, '"', 0 };
 	string in(reinterpret_cast<const char*>(invalid_utf8));
 	REQUIRE_THROWS_WITH(
-	    string out = QuantumJson::Parse(in.begin(), in.end()),
+	    string out = QuantumJson::Parse(in),
 	    "Invalid UTF-8 Sequence");
 }
 
@@ -91,14 +89,14 @@ TEST_CASE("Unicode Escape")
 	SECTION("Simple test in BMP (lowercase hexadecimal)")
 	{
 		string in = R"("\u011e\u011f")";
-		string out = QuantumJson::Parse(in.begin(), in.end());
+		string out = QuantumJson::Parse(in);
 		REQUIRE(out == u8"Ğğ");
 	}
 
 	SECTION("Simple test in BMP (uppercase hexadecimal)")
 	{
 		string in = R"("\u011E\u011F")";
-		string out = QuantumJson::Parse(in.begin(), in.end());
+		string out = QuantumJson::Parse(in);
 		REQUIRE(out == u8"Ğğ");
 	}
 
@@ -106,7 +104,7 @@ TEST_CASE("Unicode Escape")
 	{
 		// MATHEMATICAL BOLD CAPITAL A
 		string in = R"("\uD835\uDC00")";
-		string out = QuantumJson::Parse(in.begin(), in.end());
+		string out = QuantumJson::Parse(in);
 		REQUIRE(out == u8"𝐀");
 	}
 }
@@ -117,7 +115,7 @@ TEST_CASE("Invalid Unicode Escape")
 	{
 		string in = R"("\uD8)";
 		REQUIRE_THROWS_WITH(
-		    string out = QuantumJson::Parse(in.begin(), in.end()),
+		    string out = QuantumJson::Parse(in),
 		    "Unexpected EOF");
 	}
 
@@ -125,7 +123,7 @@ TEST_CASE("Invalid Unicode Escape")
 	{
 		string in = R"("\uD8")";
 		REQUIRE_THROWS_WITH(
-		    string out = QuantumJson::Parse(in.begin(), in.end()),
+		    string out = QuantumJson::Parse(in),
 		    "Unexpected Char");
 	}
 }
@@ -139,7 +137,7 @@ TEST_CASE("Invalid surrogates")
 	{
 		string in = R"("\uD835")";
 		REQUIRE_THROWS_WITH(
-		    string out = QuantumJson::Parse(in.begin(), in.end()),
+		    string out = QuantumJson::Parse(in),
 		    "Unexpected Char");
 	}
 
@@ -147,7 +145,7 @@ TEST_CASE("Invalid surrogates")
 	{
 		string in = R"("\uDC00")";
 		REQUIRE_THROWS_WITH(
-		    string out = QuantumJson::Parse(in.begin(), in.end()),
+		    string out = QuantumJson::Parse(in),
 		    "Invalid Surrogate");
 	}
 
@@ -155,7 +153,7 @@ TEST_CASE("Invalid surrogates")
 	{
 		string in = R"("\uD835\uD835")";
 		REQUIRE_THROWS_WITH(
-		    string out = QuantumJson::Parse(in.begin(), in.end()),
+		    string out = QuantumJson::Parse(in),
 		    "Invalid Surrogate");
 	}
 }
@@ -163,7 +161,7 @@ TEST_CASE("Invalid surrogates")
 TEST_CASE("Parse List")
 {
 	string in = R"(["val1", "val2"])";
-	vector<string> out = QuantumJson::Parse(in.begin(), in.end());
+	vector<string> out = QuantumJson::Parse(in);
 	REQUIRE(out.size() == 2);
 	REQUIRE(out[0] == "val1");
 	REQUIRE(out[1] == "val2");
@@ -175,7 +173,7 @@ TEST_CASE("Parse string map")
 	    "key1": "val1",
 	    "key2": "val2"
 	})";
-	map<string, string> out = QuantumJson::Parse(in.begin(), in.end());
+	map<string, string> out = QuantumJson::Parse(in);
 	REQUIRE(out.size() == 2);
 	REQUIRE(out.at("key1") == "val1");
 	REQUIRE(out.at("key2") == "val2");
@@ -187,7 +185,7 @@ TEST_CASE("Parse list map")
 	    "key1": ["val1", "val2"],
 	    "key2": ["val6", "val7", "val8"]
 	})";
-	map<string, vector<string>> out = QuantumJson::Parse(in.begin(), in.end());
+	map<string, vector<string>> out = QuantumJson::Parse(in);
 	REQUIRE(out.size() == 2);
 	REQUIRE(out.at("key1").size() == 2);
 	REQUIRE(out.at("key1")[0] == "val1");

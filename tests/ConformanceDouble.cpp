@@ -41,8 +41,7 @@ using namespace std;
 #define TEST_DOUBLE(json, expect) \
 	TEST_CASE("Double conformance test " S__LINE__) \
 	{ \
-		string jsonStr( json ); \
-		vector<double> v = QuantumJson::Parse(jsonStr.begin(), jsonStr.end()); \
+		vector<double> v = QuantumJson::Parse(json); \
 		REQUIRE( v.size() == 1 ); \
 		\
 		double actualResult = v[0]; \
