@@ -26,6 +26,7 @@
 #include <cinttypes>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <deque>
 #include <functional>
 #include <iostream>
@@ -1343,6 +1344,18 @@ namespace QuantumJson
 	ParserProxy<InputIteratorType> Parse(InputIteratorType begin, InputIteratorType end)
 	{
 		return ParserProxy<InputIteratorType>(begin, end);
+	}
+
+	inline
+	ParserProxy<std::string::const_iterator> Parse(const std::string &s)
+	{
+		return ParserProxy<std::string::const_iterator>(s.begin(), s.end());
+	}
+
+	inline
+	ParserProxy<const char*> Parse(const char *cstr)
+	{
+		return ParserProxy<const char*>(cstr, cstr + strlen(cstr));
 	}
 }
 
