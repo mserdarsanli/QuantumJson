@@ -26,6 +26,7 @@
 #include <cinttypes>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <deque>
 #include <functional>
 #include <iostream>
@@ -164,24 +165,114 @@ struct InputProcessor
 		}
 	}
 
-	void SkipHexDigit()
+	inline
+	int parseHexadecimalByte()
 	{
-		QUANTUMJSON_CHECK_EOF_AND_PROPAGATE;
-
-		if (QUANTUMJSON_LIKELY(
-		       (*it >= '0' && *it <= '9')
-		    || (*it >= 'a' && *it <= 'f')
-		    || (*it >= 'A' && *it <= 'F')))
+		// FIXME can't use QUANTUMJSON_CHECK_EOF_AND_PROPAGATE as return value is non void
+		if (QUANTUMJSON_UNLIKELY(this->it == this->end))
 		{
-			++it;
-			return;
+			this->errorCode = ErrorCode::UnexpectedEOF;
+			return -1;
 		}
-
-		errorCode = ErrorCode::UnexpectedChar;
+		char c = *(this->it++);
+		if (QUANTUMJSON_LIKELY(c >= '0' && c <= '9')) return c - '0';
+		if (QUANTUMJSON_LIKELY(c >= 'a' && c <= 'f')) return c - 'a' + 10;
+		if (QUANTUMJSON_LIKELY(c >= 'A' && c <= 'F')) return c - 'A' + 10;
+		this->errorCode = ErrorCode::UnexpectedChar;
+		return -1;
 	}
 
-	void SkipString()
+	// Parses the 4 byte hex region for excaped characters \uFFFF
+	//                                                       <-->
+	// and returns the corresponding unicode code point.
+	inline
+	int getEscapedCharCodePoint()
 	{
+		int codePoint = 0;
+
+		for (int i = 0; i < 4; ++i)
+		{
+			codePoint <<= 4;
+			int hexValue = parseHexadecimalByte();
+			// FIXME can't use QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE as return value is non void
+			if (QUANTUMJSON_UNLIKELY(this->errorCode != ErrorCode::NoError))
+			{
+				return -1;
+			}
+			codePoint |= hexValue;
+		}
+
+		return codePoint;
+	}
+
+	// Gets the code point assuming \u is already parsed,
+	// also parses the next \uXXXX sequence if this is a surrogate pair.
+	inline
+	void getCodePoint(int *out)
+	{
+		// Code-point consists of 4 hexadecimal numbers
+		int cp = getEscapedCharCodePoint(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+
+		// Check if value is UTF-16 surrogate pair
+		if (cp >= 0xD800 && cp <= 0xDFFF)
+		{
+			if (cp >= 0xDC00)
+			{
+				// Must start with high surrogate
+				this->errorCode = ErrorCode::InvalidSurrogate;
+				return;
+			}
+
+			// Parse the pair
+			this->SkipChar('\\'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			this->SkipChar('u'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+
+			int cp2 = getEscapedCharCodePoint(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+			if (cp2 < 0xDC00 || cp2 > 0xDFFF)
+			{
+				// Surrogate pair must be followed by low surrogate
+				this->errorCode = ErrorCode::InvalidSurrogate;
+				return;
+			}
+
+			cp = 0x10000 + ((cp & 0x3FF) << 10) + (cp2 & 0x3FF);
+		}
+
+		*out = cp;
+	}
+
+	// Returns the length of code point when encoded in UTF-8
+	int codePointUtf8Bytes(int codePoint)
+	{
+		if (QUANTUMJSON_LIKELY(codePoint <= 0x7f))
+		{
+			return 1;
+		}
+		if (QUANTUMJSON_LIKELY(codePoint <= 0x7ff))
+		{
+			return 2;
+		}
+		if (QUANTUMJSON_LIKELY(codePoint <= 0xffff))
+		{
+			return 3;
+		}
+		if (QUANTUMJSON_LIKELY(codePoint <= 0x10ffff))
+		{
+			return 4;
+		}
+		else
+		{
+			// Should not happen
+			this->errorCode = ErrorCode::UnsupportedUnicodeRange;
+			return -1;
+		}
+	}
+
+	// Skips string and returns number of bytes required to store the string,
+	// exluding the null terminator.
+	void SkipString(int64_t *outStrSize = nullptr)
+	{
+		int64_t strSize = 0;
 		SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 		while (1)
@@ -197,6 +288,10 @@ struct InputProcessor
 			if (QUANTUMJSON_UNLIKELY(*it == '"'))
 			{
 				++it;
+				if (outStrSize)
+				{
+					*outStrSize = strSize;
+				}
 				return;
 			}
 
@@ -211,16 +306,17 @@ struct InputProcessor
 				    || *it == 'n' || *it == 'r' || *it == 't')
 				{
 					++it;
+					++strSize;
 					continue;
 				}
 
 				if (*it == 'u')
 				{
 					++it;
-					SkipHexDigit(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-					SkipHexDigit(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-					SkipHexDigit(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-					SkipHexDigit(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+					int codePoint;
+					getCodePoint(&codePoint); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+
+					strSize += codePointUtf8Bytes(codePoint);
 					continue;
 				}
 
@@ -228,6 +324,7 @@ struct InputProcessor
 				return;
 			}
 
+			++strSize;
 			++it;
 		}
 	}
@@ -528,9 +625,9 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 	{
 		// Reserve just enough space
 		auto begin = this->it;
-		this->SkipString(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-		// TODO FIXME this size logic does not account for escapes in the string
-		SetFieldSize(fieldSizeIdx, this->it - begin - 2);
+		int64_t strSize;
+		this->SkipString(&strSize); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
+		SetFieldSize(fieldSizeIdx, strSize);
 	}
 
 	void ReserveCalculatedSpaceIn(std::string &obj)
@@ -739,46 +836,6 @@ struct Parser : InputProcessor<InputIteratorType>
 		this->errorCode = ErrorCode::UnexpectedToken;
 	}
 
-	inline
-	int parseHexadecimalByte()
-	{
-		// FIXME can't use QUANTUMJSON_CHECK_EOF_AND_PROPAGATE as return value is non void
-		if (QUANTUMJSON_UNLIKELY(this->it == this->end))
-		{
-			this->errorCode = ErrorCode::UnexpectedEOF;
-			return -1;
-		}
-		char c = *(this->it++);
-		if (QUANTUMJSON_LIKELY(c >= '0' && c <= '9')) return c - '0';
-		if (QUANTUMJSON_LIKELY(c >= 'a' && c <= 'f')) return c - 'a' + 10;
-		if (QUANTUMJSON_LIKELY(c >= 'A' && c <= 'F')) return c - 'A' + 10;
-		this->errorCode = ErrorCode::UnexpectedChar;
-		return -1;
-	}
-
-	// Parses the 4 byte hex region for excaped characters \uFFFF
-	//                                                       <-->
-	// and returns the corresponding unicode code point.
-	inline
-	int getEscapedCharCodePoint()
-	{
-		int codePoint = 0;
-
-		for (int i = 0; i < 4; ++i)
-		{
-			codePoint <<= 4;
-			int hexValue = parseHexadecimalByte();
-			// FIXME can't use QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE as return value is non void
-			if (QUANTUMJSON_UNLIKELY(this->errorCode != ErrorCode::NoError))
-			{
-				return -1;
-			}
-			codePoint |= hexValue;
-		}
-
-		return codePoint;
-	}
-
 	void ParseValueInto(std::string &obj)
 	{
 		this->SkipChar('"'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
@@ -810,33 +867,8 @@ struct Parser : InputProcessor<InputIteratorType>
 					case 't':  obj.push_back('\t'); break;
 					case 'u':
 					{
-						// Code-point consists of 4 hexadecimal numbers
-						int cp = getEscapedCharCodePoint(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-
-						// Check if value is UTF-16 surrogate pair
-						if (cp >= 0xD800 && cp <= 0xDFFF)
-						{
-							if (cp >= 0xDC00)
-							{
-								// Must start with high surrogate
-								this->errorCode = ErrorCode::InvalidSurrogate;
-								return;
-							}
-
-							// Parse the pair
-							this->SkipChar('\\'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-							this->SkipChar('u'); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-
-							int cp2 = getEscapedCharCodePoint(); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
-							if (cp2 < 0xDC00 || cp2 > 0xDFFF)
-							{
-								// Surrogate pair must be followed by low surrogate
-								this->errorCode = ErrorCode::InvalidSurrogate;
-								return;
-							}
-
-							cp = 0x10000 + ((cp & 0x3FF) << 10) + (cp2 & 0x3FF);
-						}
+						int cp;
+						this->getCodePoint(&cp); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 						// Encode cp as utf-8
 						Utf8Append(cp, obj);
@@ -1290,9 +1322,72 @@ struct Serializer
 };
 
 
-}  // namespace JsonDef
+}  // namespace QuantumJsonImpl__
 
 #undef QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE
 #undef QUANTUMJSON_CHECK_EOF_AND_PROPAGATE
+
+// Public API is defined here
+namespace QuantumJson
+{
+	// Helper struct to get retrun type polymorphism
+	// TODO FIXME Proxy not working with operator=
+	// Object o = QuantumJson::Parse(..); // works
+	// Object o; o = QuantumJson::Parse(..); // does not work
+	template<typename InputIteratorType>
+	struct ParserProxy
+	{
+		// TODO hide constructors so this couln't be created by the user
+		ParserProxy(InputIteratorType begin, InputIteratorType end)
+		  : begin(begin), end(end)
+		{
+		}
+
+		// Parses the json as type T
+		//
+		// Following does the expected thing
+		// vector<int> v = QuantumJson::Parse("[10, 20]");
+		// Following throws parse exception
+		// string s = QuantumJson::Parse("[10, 20]");
+		template <typename JsonType>
+		operator JsonType ()
+		{
+			JsonType val;
+
+			// TODO add QuantumJsonImpl__::PreAllocator based on InputIteratorType
+
+			QuantumJsonImpl__::Parser<InputIteratorType> parser(begin, end);
+			parser.ParseValueInto(val);
+
+			if (parser.errorCode != QuantumJsonImpl__::ErrorCode::NoError)
+			{
+				throw QuantumJsonImpl__::JsonError(parser.errorCode);
+			}
+
+			return val;
+		}
+
+	private:
+		InputIteratorType begin, end;
+	};
+
+	template <typename InputIteratorType>
+	ParserProxy<InputIteratorType> Parse(InputIteratorType begin, InputIteratorType end)
+	{
+		return ParserProxy<InputIteratorType>(begin, end);
+	}
+
+	inline
+	ParserProxy<std::string::const_iterator> Parse(const std::string &s)
+	{
+		return ParserProxy<std::string::const_iterator>(s.begin(), s.end());
+	}
+
+	inline
+	ParserProxy<const char*> Parse(const char *cstr)
+	{
+		return ParserProxy<const char*>(cstr, cstr + strlen(cstr));
+	}
+}
 
 #endif  // QUANTUMJSON_LIB_IMPL_

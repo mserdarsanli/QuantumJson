@@ -1,4 +1,2 @@
-[Ronn](https://github.com/rtomayko/ronn/) is needed to generate compile `.ronn`
+[Ronn](https://github.com/rtomayko/ronn/) is needed to compile `.ronn`
 files to man pages.
-
-TODO integrate this to build.
