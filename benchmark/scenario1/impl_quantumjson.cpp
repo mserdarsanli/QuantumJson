@@ -33,8 +33,7 @@ void Benchmark(int repeat, const std::string &input)
 	{
 		BENCHMARK_LOOP_BEGIN;
 
-		RedditListing l;
-		l.MergeFromJson(input);
+		RedditListing l = QuantumJson::Parse(input);
 
 		#ifdef BENCHMARK_CHECK_CORRECTNESS
 		std::string url1 = l.data.children[0].data.url;

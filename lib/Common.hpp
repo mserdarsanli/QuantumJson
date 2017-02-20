@@ -624,8 +624,7 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const std::string *)
 	{
 		// Reserve just enough space
-		auto begin = this->it;
-		int64_t strSize;
+		int64_t strSize = -1;
 		this->SkipString(&strSize); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		SetFieldSize(fieldSizeIdx, strSize);
 	}
@@ -1354,7 +1353,10 @@ namespace QuantumJson
 		{
 			JsonType val;
 
-			// TODO add QuantumJsonImpl__::PreAllocator based on InputIteratorType
+			#if QUANTUMJON_PREALLOCATE_ON_RANDOMACCESSITERATOR == true
+			QuantumJsonImpl__::PreAllocator<InputIteratorType> preAllocator(begin, end);
+			preAllocator.ReserveSpaceIn(val);
+			#endif
 
 			QuantumJsonImpl__::Parser<InputIteratorType> parser(begin, end);
 			parser.ParseValueInto(val);

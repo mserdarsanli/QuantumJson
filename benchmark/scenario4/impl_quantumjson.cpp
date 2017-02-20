@@ -33,11 +33,7 @@ void Benchmark(int repeat, const std::string &input)
 	{
 		BENCHMARK_LOOP_BEGIN;
 
-		std::vector<Accident> res;
-		// TODO provide better API for this
-		QuantumJsonImpl__::Parser<std::string::const_iterator> p{
-		    input.begin(), input.end()};
-		p.ParseValueInto(res);
+		std::vector<Accident> res = QuantumJson::Parse(input);
 
 		#ifdef BENCHMARK_CHECK_CORRECTNESS
 

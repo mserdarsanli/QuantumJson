@@ -33,8 +33,7 @@ void Benchmark(int repeat, const std::string &input)
 	{
 		BENCHMARK_LOOP_BEGIN;
 
-		UsersResult m;
-		m.MergeFromJson(input);
+		UsersResult m = QuantumJson::Parse(input);
 
 		#ifdef BENCHMARK_CHECK_CORRECTNESS
 
