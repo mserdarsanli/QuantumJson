@@ -347,13 +347,13 @@ string ReserveNextFieldEnd()
 	});
 }
 
-string ParserCommonStuff()
+string ParserCommonStuff(bool varsEmpty)
 {
 	Template tmpl(
 	    "\t"    "auto &it = parser.it;\n"
 	    "\t"    "auto &end = parser.end;\n"
 	    "\n"
-	    "\t"    "goto _Start; // _Start is the entry point for perser\n"
+	    "\t"    "goto _Start; // _Start is the entry point for parser\n"
 	    "\n"
 	    "\t"    "_UnknownField:\n"
 	    "\t"    "// Field name is not known\n"
@@ -377,8 +377,17 @@ string ParserCommonStuff()
 	    "\t"    "parser.SkipValue();\n"
 	    "\n"
 	    "\t"    "return; // Done parsing this field\n"
+	    "${varsEmpty}"
 	);
+	// TODO FIXME clean up this mess
 	return tmpl.format({
+	    {"${varsEmpty}",
+	        ( varsEmpty ? "\t"    "_Start: // [] has been matched\n"
+	                      "\t"    "// Matching common prefix: [\"]\n"
+	                      "\t"    "if (QUANTUMJSON_UNLIKELY(*it != '\"')) goto _UnknownField;\n"
+	                      "\t"    "\t"    "++it;\n"
+	                      "\t"    "goto _UnknownField;\n"
+	                    : "" ) },
 	});
 }
 
