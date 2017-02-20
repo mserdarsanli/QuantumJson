@@ -214,6 +214,7 @@ string CommonPrefix(const vector<Variable>::iterator varsBegin,
 	              mismatch(first.begin() + matchedChars, first.end(), last.begin() + matchedChars).first);
 }
 
+// TODO this part should be cleanly rewritten
 void GenerateMatchers(ostream &out,
                       const MatchState &ms,
                       int &stateCounter,
@@ -303,7 +304,7 @@ void GenerateParserForStruct(ostream &out, const Struct &s)
 	vector<Variable> vars = s.allVars;
 	sort(vars.begin(), vars.end());
 
-	out << ParserCommonStuff();
+	out << ParserCommonStuff(vars.empty());
 
 	int stateCounter = 0;
 	MatchState initialState = {"", "_Start"};
@@ -331,7 +332,7 @@ void GenerateAllocatorForStruct(ostream &out, const Struct &s)
 	}
 	sort(vars.begin(), vars.end());
 
-	out << ParserCommonStuff();
+	out << ParserCommonStuff(vars.empty());
 
 	int stateCounter = 0;
 	MatchState initialState = {"", "_Start"};
