@@ -313,7 +313,7 @@ struct InputProcessor
 				if (*it == 'u')
 				{
 					++it;
-					int codePoint;
+					int codePoint = -1;
 					getCodePoint(&codePoint); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 					strSize += codePointUtf8Bytes(codePoint);
@@ -867,7 +867,7 @@ struct Parser : InputProcessor<InputIteratorType>
 					case 't':  obj.push_back('\t'); break;
 					case 'u':
 					{
-						int cp;
+						int cp = -1;
 						this->getCodePoint(&cp); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 
 						// Encode cp as utf-8
