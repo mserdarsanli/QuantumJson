@@ -1353,7 +1353,10 @@ namespace QuantumJson
 		{
 			JsonType val;
 
-			// TODO add QuantumJsonImpl__::PreAllocator based on InputIteratorType
+			#if QUANTUMJON_PREALLOCATE_ON_RANDOMACCESSITERATOR == true
+			QuantumJsonImpl__::PreAllocator<InputIteratorType> preAllocator(begin, end);
+			preAllocator.ReserveSpaceIn(val);
+			#endif
 
 			QuantumJsonImpl__::Parser<InputIteratorType> parser(begin, end);
 			parser.ParseValueInto(val);
