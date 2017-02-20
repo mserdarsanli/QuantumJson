@@ -20,46 +20,67 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FROM debian:sid
+FROM ubuntu:16.04
 
 RUN apt-get update
 RUN apt-get -y install \
     build-essential \
     ca-certificates \
+    cmake \
+    flex \
     gengetopt \
-    g++-6 \
+    groff \
+    g++ \
     libboost-dev \
+    libmpc-dev \
     openjdk-8-jdk \
     openjdk-8-jre \
     openjdk-8-jre-headless \
-    wget \
-    xxd
+    python3 \
+    ruby \
+    ruby-dev \
+    unzip \
+    vim-common \
+    wget
 
 RUN apt-get -y install \
-    unzip
+    zlib1g-dev \
+    bash-completion
 
-RUN wget -O bazel-installer.sh -q \
-  https://github.com/bazelbuild/bazel/releases/download/0.4.0/bazel-0.4.0-installer-linux-x86_64.sh \
-  && bash bazel-installer.sh \
-  && rm bazel-installer.sh
+# Install ronn (manpage generator)
+RUN gem install ronn
+
+RUN wget -O bazel.deb -q \
+  https://github.com/bazelbuild/bazel/releases/download/0.4.3/bazel_0.4.3-linux-x86_64.deb \
+  && dpkg -i bazel.deb \
+  && apt-get install -f \
+  && rm bazel.deb
+
+# Build & install GCC7
+RUN  cd $(mktemp -d)                                                           \
+  && wget  https://github.com/gcc-mirror/gcc/archive/master.zip                \
+  && unzip master.zip                                                          \
+  && cd gcc-master                                                             \
+  && mkdir build                                                               \
+  && cd build                                                                  \
+  && ../configure --disable-multilib                                           \
+  && make                                                                      \
+  && make install
 
 # Catch Test Framework [v1.5.8]
 RUN wget https://raw.githubusercontent.com/philsquared/Catch/e27c4ee04282f60aefcc9b1062a74f92cf6c1a2b/single_include/catch.hpp -O /usr/local/include/catch.hpp
 
-# nlohmann/json [v2.0.7]
-RUN wget https://github.com/nlohmann/json/releases/download/v2.0.7/json.hpp -O /usr/local/include/nlohmann_json.hpp
+# nlohmann/json [v2.1.0]
+RUN wget https://github.com/nlohmann/json/releases/download/v2.1.0/json.hpp -O /usr/local/include/nlohmann_json.hpp
 
 
-RUN apt-get -y install \
-    cmake
-
-# jsoncpp [v1.7.7]
+# jsoncpp [v1.8.0]
 RUN bash -c "                                                                        \
     (                                                                                \
            cd $(mktemp -d)                                                           \
-        && wget https://github.com/open-source-parsers/jsoncpp/archive/1.7.7.zip     \
-        && unzip 1.7.7.zip                                                           \
-        && cd jsoncpp-1.7.7                                                          \
+        && wget https://github.com/open-source-parsers/jsoncpp/archive/1.8.0.zip     \
+        && unzip 1.8.0.zip                                                           \
+        && cd jsoncpp-1.8.0                                                          \
         && cmake .                                                                   \
         && make install                                                              \
     )                                                                                \
@@ -73,17 +94,17 @@ RUN bash -c "                                                                   
         && unzip v1.1.0.zip                                                          \
         && cd rapidjson-1.1.0                                                        \
         && cmake .                                                                   \
-        && make install                                                              \
+        && make CXX_FLAGS='-Wimplicit-fallthrough' install                           \
     )                                                                                \
 "
 
-# staticjson [v0.4.1]
+# staticjson [v0.5.0]
 RUN bash -c "                                                                        \
     (                                                                                \
            cd $(mktemp -d)                                                           \
-        && wget https://github.com/netheril96/StaticJSON/archive/0.4.1.zip           \
-        && unzip 0.4.1.zip                                                           \
-        && cd StaticJSON-0.4.1                                                       \
+        && wget https://github.com/netheril96/StaticJSON/archive/0.5.0.zip           \
+        && unzip 0.5.0.zip                                                           \
+        && cd StaticJSON-0.5.0                                                       \
         && mv include/staticjson /usr/local/include                                  \
         && g++ -c src/staticjson.cpp                                                 \
         && ar rvs libstaticjson.a staticjson.o                                       \
@@ -91,12 +112,5 @@ RUN bash -c "                                                                   
     )                                                                                \
 "
 
-# Install ronn (manpage generator)
-RUN apt-get -y install \
-    ruby \
-    ruby-dev \
-    groff
-RUN gem install ronn
-
-RUN apt-get -y install \
-    python3
+# Extract bazel installation
+RUN bazel

@@ -22,7 +22,9 @@
 
 // See https://stackoverflow.com/a/6083624
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <dlfcn.h>
 
 #include <stdio.h>
