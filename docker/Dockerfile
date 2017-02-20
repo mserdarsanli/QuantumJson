@@ -111,3 +111,6 @@ RUN bash -c "                                                                   
         && mv libstaticjson.a /usr/local/lib                                         \
     )                                                                                \
 "
+
+# Extract bazel installation
+RUN bazel
