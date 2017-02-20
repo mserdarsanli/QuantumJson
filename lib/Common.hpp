@@ -624,8 +624,7 @@ struct PreAllocator : InputProcessor<InputIteratorType>
 	void CalculateSpaceToReserveIn(size_t fieldSizeIdx, const std::string *)
 	{
 		// Reserve just enough space
-		auto begin = this->it;
-		int64_t strSize;
+		int64_t strSize = -1;
 		this->SkipString(&strSize); QUANTUMJSON_CHECK_ERROR_AND_PROPAGATE;
 		SetFieldSize(fieldSizeIdx, strSize);
 	}
