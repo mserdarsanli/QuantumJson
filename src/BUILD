@@ -71,6 +71,15 @@ genrule(
 )
 
 cc_test(
+	name = "test_field_parser",
+	srcs = [
+		"FieldParser.cpp",
+		"FieldParser.hpp",
+		"TestFieldParser.cpp",
+	],
+)
+
+cc_test(
 	name = "test_attributes",
 	srcs = [
 		"TestAttributes.cpp",
