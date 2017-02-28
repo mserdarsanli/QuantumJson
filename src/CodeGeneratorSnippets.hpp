@@ -213,18 +213,6 @@ string ReserveValueIntoField(const string &className, const Variable &v)
 	});
 }
 
-string ParseValueIntoField(const Variable &v)
-{
-	Template tmpl(
-	    "\t"    "// Parse the actual value\n"
-	    "\t"    "parser.ParseValueInto(this->${cppFieldName});\n"
-	    "\t"    "return;\n"
-	);
-	return tmpl.format({
-	    {"${cppFieldName}", v.cppName},
-	});
-}
-
 string MaybeSkipNullValue()
 {
 	Template tmpl(
@@ -266,44 +254,6 @@ string MergeFromJsonDefImpl(const string className)
 	});
 }
 
-string ParseNextFieldBegin(const string className)
-{
-	Template tmpl(
-	    "template <typename InputIteratorType>\n"
-	    "inline\n"
-	    "void ${className}::ParseNextField(QuantumJsonImpl__::Parser<InputIteratorType> &parser)\n"
-	    "{\n"
-	    "\n"
-	);
-	return tmpl.format({
-	    {"${className}", className},
-	});
-}
-
-string ReserveNextFieldBegin(const string className)
-{
-	Template tmpl(
-	    "template <typename InputIteratorType>\n"
-	    "inline\n"
-	    "void ${className}::ReserveNextField(QuantumJsonImpl__::PreAllocator<InputIteratorType> &parser)\n"
-	    "{\n"
-	    "\n"
-	);
-	return tmpl.format({
-	    {"${className}", className},
-	});
-}
-
-string ParseNextFieldEnd()
-{
-	Template tmpl(
-	    "\t"    "// Should be unreachable\n"
-	    "}\n"
-	);
-	return tmpl.format({
-	});
-}
-
 string ReserveCalculatedSpaceBegin(const string className)
 {
 	Template tmpl(
@@ -334,60 +284,6 @@ string ReserveCalculatedSpaceEnd()
 	    "}\n"
 	);
 	return tmpl.format({
-	});
-}
-
-string ReserveNextFieldEnd()
-{
-	Template tmpl(
-	    "\t"    "// Should be unreachable\n"
-	    "}\n"
-	);
-	return tmpl.format({
-	});
-}
-
-string ParserCommonStuff(bool varsEmpty)
-{
-	Template tmpl(
-	    "\t"    "auto &it = parser.it;\n"
-	    "\t"    "auto &end = parser.end;\n"
-	    "\n"
-	    "\t"    "goto _Start; // _Start is the entry point for parser\n"
-	    "\n"
-	    "\t"    "_UnknownField:\n"
-	    "\t"    "// Field name is not known\n"
-	    "\t"    "// Skip the field completely.\n"
-	    "\t"    "// TODO make this an exception if flag is given to\n"
-	    "\t"    "while (it != end && *it != '\"')\n"
-	    "\t"    "\t"    "++it;\n"
-	    "\t"    "if (it == end)\n"
-	    "\t"    "{\n"
-	    "\t"    "\t"    "parser.errorCode = QuantumJsonImpl__::ErrorCode::UnexpectedEOF;\n"
-	    "\t"    "\t"    "return;\n"
-	    "\t"    "}\n"
-	    "\n"
-	    "\t"    "// Closing quote\n"
-	    "\t"    "++it;\n"
-	    "\n"
-	    "\t"    "parser.SkipWhitespace();\n"
-	    "\t"    "parser.SkipChar(':'); // Field Separator\n"
-	    "\t"    "parser.SkipWhitespace();\n"
-	    "\n"
-	    "\t"    "parser.SkipValue();\n"
-	    "\n"
-	    "\t"    "return; // Done parsing this field\n"
-	    "${varsEmpty}"
-	);
-	// TODO FIXME clean up this mess
-	return tmpl.format({
-	    {"${varsEmpty}",
-	        ( varsEmpty ? "\t"    "_Start: // [] has been matched\n"
-	                      "\t"    "// Matching common prefix: [\"]\n"
-	                      "\t"    "if (QUANTUMJSON_UNLIKELY(*it != '\"')) goto _UnknownField;\n"
-	                      "\t"    "\t"    "++it;\n"
-	                      "\t"    "goto _UnknownField;\n"
-	                    : "" ) },
 	});
 }
 

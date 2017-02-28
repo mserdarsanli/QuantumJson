@@ -21,13 +21,16 @@
 // SOFTWARE.
 
 #include <algorithm>
+#include <cstdarg>
 #include <stack>
+#include <sstream>
 #include <utility>
 
 #include <boost/format.hpp>
 
 #include "Attributes.hpp"
 #include "CodeGenerator.hpp"
+#include "FieldParser.hpp"
 #include "JsonParserLibrary.hpp"
 
 using namespace std;
@@ -47,12 +50,12 @@ struct Variable
 
 	explicit Variable(const VariableDef &var)
 	  : cppName(var.name)
-	  , jsonName("\"" + var.name + "\"")
+	  , jsonName(var.name)
 	  , type(var.type)
 	{
 		if (var.attributes.find(VarAttributes::JsonFieldName.name) != var.attributes.end())
 		{
-			this->jsonName = "\"" + var.attributes.at(VarAttributes::JsonFieldName.name).args[0] + "\"";
+			this->jsonName = var.attributes.at(VarAttributes::JsonFieldName.name).args[0];
 		}
 
 		if (var.attributes.find(VarAttributes::OnNull.name) != var.attributes.end() &&
@@ -170,10 +173,12 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 			}
 			putSeparator = true;
 
+			out << PutCharacter('"');
 			for (char c : v.jsonName)
 			{
 				out << PutCharacter(c);
 			}
+			out << PutCharacter('"');
 			out << RenderFieldNameEnd();
 			out << SerializeFieldValue(v.cppName);
 		}
@@ -214,134 +219,75 @@ string CommonPrefix(const vector<Variable>::iterator varsBegin,
 	              mismatch(first.begin() + matchedChars, first.end(), last.begin() + matchedChars).first);
 }
 
-// TODO this part should be cleanly rewritten
-void GenerateMatchers(ostream &out,
-                      const MatchState &ms,
-                      int &stateCounter,
-                      const vector<Variable>::iterator varsBegin,
-                      const vector<Variable>::iterator varsEnd,
-                      function<string(const Variable &v)> fieldMatchedAction,
-                      size_t matchedChars = 0)
-{
-	if (varsBegin == varsEnd) return;
-
-	out << MatchRangeBegin(varsBegin->jsonName, (varsEnd-1)->jsonName);
-
-	out << GotoLabel(ms.gotoLabelName, ms.matched);
-
-	string commonPrefix = CommonPrefix(varsBegin, varsEnd, matchedChars);
-
-	if (commonPrefix.size())
-	{
-		// All elements share the common prefix, match it here
-		MatchOnlyPrefix(out, commonPrefix);
-	}
-
-	if (varsBegin + 1 == varsEnd)
-	{
-		// There was only one group and we matched that already
-
-		out << FieldNameMatched(varsBegin->cppName);
-		if (varsBegin->skipNull)
-		{
-			out << MaybeSkipNullValue();
-		}
-		out << fieldMatchedAction(*varsBegin);
-		return;
-	}
-
-	matchedChars += commonPrefix.size();
-
-	struct GroupToMatch
-	{
-		MatchState matchState;
-		vector<Variable>::iterator begin, end;
-		size_t matchedChars;
-	};
-	vector<GroupToMatch> unmatchedGroups;
-
-	// Branch out now
-	auto groupBegin = varsBegin;
-	for (auto it = varsBegin + 1; it != varsEnd; ++it)
-	{
-		char initial = (it->jsonName)[matchedChars];
-		if (initial != (groupBegin->jsonName)[matchedChars])
-		{
-			MatchState nextState = {
-			    groupBegin->jsonName.substr(0, matchedChars),
-			    "state_" + to_string(++stateCounter)
-			};
-			unmatchedGroups.emplace_back(
-			    GroupToMatch{nextState, groupBegin, it, matchedChars});
-			groupBegin = it;
-		}
-	}
-	MatchState nextState = {
-	    groupBegin->jsonName.substr(0, matchedChars),
-	    "state_" + to_string(++stateCounter)
-	};
-	unmatchedGroups.emplace_back(GroupToMatch{nextState, groupBegin, varsEnd, matchedChars});
-
-	out << SwitchOnNextChar();
-	for (const auto &g : unmatchedGroups)
-	{
-		out << CaseCharGotoLabel(g.begin->jsonName[g.matchedChars], g.matchState.gotoLabelName);
-	}
-	out << CaseDefaultGotoUnknownField();
-	out << SwitchEnd();
-
-	for (const auto &g : unmatchedGroups)
-	{
-		GenerateMatchers(out, g.matchState, stateCounter, g.begin, g.end,
-		    fieldMatchedAction, g.matchedChars);
-	}
-}
-
 void GenerateParserForStruct(ostream &out, const Struct &s)
 {
-	out << ParseNextFieldBegin(s.name);
+	FieldParser fp;
+	for (const Variable &var : s.allVars)
+	{
+		stringstream action;
+		if (var.skipNull)
+		{
+			action << MaybeSkipNullValue();
+		}
+		action << "parser.ParseValueInto(this->" << var.cppName << ");";
+		fp.addField(var.jsonName, action.str());
+	}
 
-	vector<Variable> vars = s.allVars;
-	sort(vars.begin(), vars.end());
+	// TODO refactor `EmitLine` functions to a shared helper class?
+	auto EmitLine = [&out](const char *fmt, ...)
+	{
+		char line_buffer[2000];
+		va_list ap;
+		va_start(ap, fmt);
+		// TODO check size?
+		vsnprintf(line_buffer, 2000, fmt, ap);
+		va_end(ap);
 
-	out << ParserCommonStuff(vars.empty());
+		out << line_buffer << '\n';
+	};
 
-	int stateCounter = 0;
-	MatchState initialState = {"", "_Start"};
-	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end(), &ParseValueIntoField);
 
-	out << ParseNextFieldEnd();
+	EmitLine("template <typename InputIteratorType>");
+	EmitLine("inline");
+	EmitLine("void %s::ParseNextField(QuantumJsonImpl__::Parser<InputIteratorType> &parser)", s.name.c_str());
+	EmitLine("{");
+	out << fp.generateFieldParserCode();
+	EmitLine("}");
 }
 
 void GenerateAllocatorForStruct(ostream &out, const Struct &s)
 {
-	out << ReserveNextFieldBegin(s.name);
-
-	vector<Variable> vars;
+	FieldParser fp;
 	for (const Variable &var : s.allVars)
 	{
 		if (var.isReservable)
 		{
-			vars.push_back(var);
-		}
-		else
-		{
-			out << "\t// Ignored non-reservable var: " << var.cppName
-			    << " of type " << var.type.typeName << "\n";
+			fp.addField(var.jsonName,
+			    ReserveValueIntoField(s.name, var));
 		}
 	}
-	sort(vars.begin(), vars.end());
 
-	out << ParserCommonStuff(vars.empty());
+	// TODO refactor `EmitLine` functions to a shared helper class?
+	auto EmitLine = [&out](const char *fmt, ...)
+	{
+		char line_buffer[1000];
+		va_list ap;
+		va_start(ap, fmt);
+		// TODO check size?
+		vsnprintf(line_buffer, 1000, fmt, ap);
+		va_end(ap);
 
-	int stateCounter = 0;
-	MatchState initialState = {"", "_Start"};
+		out << line_buffer << '\n';
+	};
 
-	string className = s.name;
-	GenerateMatchers(out, initialState, stateCounter, vars.begin(), vars.end(),
-	  [=](const Variable &v) { return ReserveValueIntoField(className, v); } );
 
-	out << ReserveNextFieldEnd();
+	EmitLine("template <typename InputIteratorType>");
+	EmitLine("inline");
+	EmitLine("void %s::ReserveNextField(QuantumJsonImpl__::PreAllocator<InputIteratorType> &parser)",
+	     s.name.c_str());
+	EmitLine("{");
+	out << fp.generateFieldParserCode();
+	EmitLine("}");
 }
 
 void GenerateReserverForStruct(ostream &out, const Struct &s)

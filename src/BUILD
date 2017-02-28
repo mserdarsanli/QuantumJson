@@ -25,6 +25,7 @@ cc_library(
 	srcs = [
 		"Attributes.cpp",
 		"CodeGenerator.cpp",
+		"FieldParser.cpp",
 		"JsonParserLibrary.cpp",
 		"Parser.cpp",
 		"Tokenizer.cpp",
@@ -32,6 +33,7 @@ cc_library(
 		"Attributes.hpp",
 		"CodeGenerator.hpp",
 		"CodeGeneratorSnippets.hpp",
+		"FieldParser.hpp",
 		"JsonParserLibrary.hpp",
 		"Parser.hpp",
 		"Tokenizer.hpp",

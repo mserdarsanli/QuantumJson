@@ -63,9 +63,10 @@ string FieldParser::generateFieldParserCode()
 
 	const vector<FieldInfo> fields(fieldInfos.begin(), fieldInfos.end());
 
-	EmitLine("parser.SkipChar('\"')");
+	EmitLine("parser.SkipChar('\"');");
 
 	int nextMatchStateId = 100;
+	int firstStateId = nextMatchStateId + 1;
 
 	struct MatchState
 	{
@@ -103,9 +104,15 @@ string FieldParser::generateFieldParserCode()
 		MatchState st = matchStack.top();
 		matchStack.pop();
 
-		if (st.matchComplete)
+		// Generate code for current state
+
+		if (st.stateId != firstStateId) // First label emits unused warnings
 		{
 			EmitLine("state_%d:", st.stateId);
+		}
+
+		if (st.matchComplete)
+		{
 			EmitLine("// Matched field [%s]", fields[st.firstFieldIdx].fieldName.c_str());
 
 			EmitLine("parser.SkipWhitespace();");
@@ -157,8 +164,6 @@ string FieldParser::generateFieldParserCode()
 			}
 		}
 
-		// Generate code for current state
-		EmitLine("state_%d:", st.stateId);
 		EmitLine("// Currently matched prefix [%s]",
 		             fields[st.firstFieldIdx].fieldName.substr(0, st.matchedCharCnt).c_str());
 		EmitLine("if (parser.it == parser.end)");
