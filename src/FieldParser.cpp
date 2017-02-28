@@ -51,11 +51,11 @@ string FieldParser::generateFieldParserCode()
 
 	auto EmitLine = [&out,&curIndent](const char *fmt, ...)
 	{
-		char line_buffer[100];
+		char line_buffer[2000];
 		va_list ap;
 		va_start(ap, fmt);
 		// TODO check size?
-		vsnprintf(line_buffer, 100, fmt, ap);
+		vsnprintf(line_buffer, 2000, fmt, ap);
 		va_end(ap);
 
 		out << string(curIndent, '\t') << line_buffer << '\n';
@@ -87,6 +87,8 @@ string FieldParser::generateFieldParserCode()
 	};
 
 	std::stack<MatchState> matchStack;
+
+	if (fields.size())
 	{
 		MatchState init;
 		init.stateId = ++nextMatchStateId;

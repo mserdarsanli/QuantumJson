@@ -55,3 +55,15 @@ TEST_CASE("Test generated code simple")
 	REQUIRE(code.find("state_unknown_field_matching:") != string::npos);
 	REQUIRE(code.find("state_unknown_field_matched:") != string::npos);
 }
+
+TEST_CASE("Test no fields")
+{
+	FieldParser fp;
+	// no field added
+
+	string code = fp.generateFieldParserCode();
+
+	// Simple sanity checks
+	REQUIRE(code.find("state_unknown_field_matching:") != string::npos);
+	REQUIRE(code.find("state_unknown_field_matched:") != string::npos);
+}
