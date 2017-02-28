@@ -100,3 +100,11 @@ cc_test(
 		":src_lib",
 	],
 )
+
+cc_test(
+	name = "test_util",
+	srcs = [
+		"TestUtil.cpp",
+		"Util.hpp",
+	],
+)
