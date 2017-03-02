@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cstdarg>
 #include <stack>
+#include <string>
 #include <sstream>
 #include <utility>
 
@@ -31,7 +32,10 @@
 #include "Attributes.hpp"
 #include "CodeGenerator.hpp"
 #include "FieldParser.hpp"
-#include "JsonParserLibrary.hpp"
+#include "Util.hpp"
+
+// Code that will be embedded to generated output
+#include "lib/LibCommonDef.hpp"
 
 using namespace std;
 using boost::format;
@@ -79,9 +83,6 @@ struct Variable
 	}
 };
 
-// TODO move this somewhere else
-#include "CodeGeneratorSnippets.hpp"
-
 struct Struct
 {
 	Struct(const StructDef &structDef)
@@ -104,11 +105,11 @@ struct Struct
 	vector<Variable> allVars;
 };
 
-void GenerateParserForStruct(ostream &out, const Struct &s);
-void GenerateAllocatorForStruct(ostream &out, const Struct &s);
-void GenerateReserverForStruct(ostream &out, const Struct &s);
+void GenerateParserForStruct(CodeFormatter &code, const Struct &s);
+void GenerateAllocatorForStruct(CodeFormatter &code, const Struct &s);
+void GenerateReserverForStruct(CodeFormatter &code, const Struct &s);
 
-void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
+void GenerateHeaderForFile(CodeFormatter &code, const ParsedFile &file)
 {
 	vector<Struct> allStructs;
 	for (const StructDef &s : file.structs)
@@ -116,110 +117,156 @@ void GenerateHeaderForFile(ostream &out, const ParsedFile &file)
 		allStructs.emplace_back(s);
 	}
 
-	out << IncludeGuard();
+	// TODO provide an option to generate #ifndef style guards
+	code.EmitLine("#pragma once");
 
-	GenerateCommonParserDefinitions(out);
+	code.raw().write(reinterpret_cast<const char *>(&libCommonData[0]), libCommonData.size());
 
 	// Header declerations
 	for (const Struct &s : allStructs)
 	{
-		out << StructDefBegin( s.name );
+		code.EmitLine("struct %s", s.name.c_str());
+		code.EmitLine("{");
+		code.EmitLine("%s() = default;", s.name.c_str());
+		code.EmitLine("%s(const %s &) = default;", s.name.c_str(), s.name.c_str());
+		code.EmitLine("%s(%s &&) = default;", s.name.c_str(), s.name.c_str());
+		code.EmitLine("");
+		code.EmitLine("%s& operator=(const %s &) = default;", s.name.c_str(), s.name.c_str());
+		code.EmitLine("");
 
-		// Field tag enum
-		out << StructTagEnumBegin();
+		code.EmitLine("// Field tag numbers");
+		code.EmitLine("enum class __QuantumJsonFieldTag");
+		code.EmitLine("{");
 		for (const Variable &var : s.allVars)
 		{
 			if (var.isReservable)
 			{
-				out << StructTagEnumValue(var.cppName, to_string(var.reservableFieldTag));
+				code.EmitLine("__QUANTUMJSON_FIELD_TAG_%s = %d,",
+				    var.cppName.c_str(), var.reservableFieldTag);
 			}
 			else
 			{
-				out << "\t\t// Skipped non-reservable field " << var.cppName << "\n";
+				code.EmitLine("// Skipped non-reservable field %s", var.cppName.c_str());
 			}
 		}
-		out << StructTagEnumEnd();
+		code.EmitLine("}");
+		code.EmitLine(";"); // TODO fix?
 
 		// Member fields
 		for (const Variable &var : s.allVars)
 		{
-			out << VariableDefinition(var.type.Render(), var.cppName);
+			code.EmitLine("%s %s;", var.type.Render().c_str(), var.cppName.c_str());
 		}
 
-		out << MemberFunctionDeclarations();
+		code.EmitLine("// Parsing functions");
 
-		out << StructDefEnd();
+		code.EmitLine("void MergeFromJson(const std::string &json)");
+		code.EmitLine("{");
+			code.EmitLine("MergeFromJson(json.begin(), json.end());");
+		code.EmitLine("}");
+
+		code.EmitLine("template <typename InputIteratorType>");
+		code.EmitLine("void MergeFromJson(InputIteratorType it, InputIteratorType end);");
+
+		code.EmitLine("// Serialization functions");
+
+		code.EmitLine("template <typename OutputIteratorType>");
+		code.EmitLine("void SerializeTo(OutputIteratorType out) const");
+		code.EmitLine("{");
+			code.EmitLine("QuantumJsonImpl__::Serializer<OutputIteratorType> s(out);");
+			code.EmitLine("this->SerializeTo(s);");
+		code.EmitLine("}");
+
+		code.EmitLine("template <typename OutputIteratorType>");
+		code.EmitLine("void SerializeTo(QuantumJsonImpl__::Serializer<OutputIteratorType> &s) const;");
+
+		code.EmitLine("private:");
+		code.EmitLine("// Private methods that are called by parser");
+
+		code.EmitLine("// Function that parses one field only");
+		code.EmitLine("// If the object is as follows:");
+		code.EmitLine("// {\"a\": \"sadsadsa\", \"b\": 123}");
+		code.EmitLine("//  <------------->  <------>");
+		code.EmitLine("// marked regions would map to ParseNextField calls.");
+		code.EmitLine("template <typename InputIteratorType>");
+		code.EmitLine("void ParseNextField(QuantumJsonImpl__::Parser<InputIteratorType> &parser);");
+
+		code.EmitLine("// Allocator that works on random access input, not to rely on string/vector");
+		code.EmitLine("// growth performance");
+		code.EmitLine("template <typename InputIteratorType>");
+		code.EmitLine("static");
+		code.EmitLine("// TODO rename this function to something more descriptive");
+		code.EmitLine("void ReserveNextField(QuantumJsonImpl__::PreAllocator<InputIteratorType> &allocator);");
+
+		code.EmitLine("template <typename InputIteratorType>");
+		code.EmitLine("void ReserveCalculatedSpace(QuantumJsonImpl__::PreAllocator<InputIteratorType> &allocator);");
+
+
+		code.EmitLine("template <typename T> friend struct QuantumJsonImpl__::Parser;");
+		code.EmitLine("template <typename T> friend struct QuantumJsonImpl__::PreAllocator;");
+		code.EmitLine("}");
+		code.EmitLine(";"); // TODO fix
 	}
 
 	// Function definitions
 	for (const Struct &s : allStructs)
 	{
-		GenerateParserForStruct(out, s);
-		GenerateAllocatorForStruct(out, s);
-		GenerateReserverForStruct(out, s);
+		GenerateParserForStruct(code, s);
+		GenerateAllocatorForStruct(code, s);
+		GenerateReserverForStruct(code, s);
 
-		out << MergeFromJsonDefImpl(s.name);
+		code.EmitLine("template <typename InputIteratorType>");
+		code.EmitLine("inline");
+		code.EmitLine("void %s::MergeFromJson(InputIteratorType it,", s.name.c_str());
+		code.EmitLine("     %s                InputIteratorType end)", string(s.name.size(), ' ').c_str());
+		code.EmitLine("{");
+			code.EmitLine("QuantumJsonImpl__::Parser<InputIteratorType> parser(it, end);");
+			code.EmitLine("parser.ParseObject(*this);");
+			code.EmitLine("");
+			code.EmitLine("// Throw when parsing fails");
+			code.EmitLine("if (parser.errorCode != QuantumJsonImpl__::ErrorCode::NoError)");
+			code.EmitLine("{");
+				code.EmitLine("throw QuantumJsonImpl__::JsonError(parser.errorCode);");
+			code.EmitLine("}");
+		code.EmitLine("}");
 
-		out << SerializeToJsonDefinitionBegin(s.name);
+		code.EmitLine("template <typename OutputIteratorType>");
+		code.EmitLine("void %s::SerializeTo(", s.name.c_str());
+		code.EmitLine("    QuantumJsonImpl__::Serializer<OutputIteratorType> &s");
+		code.EmitLine("    ) const");
+		code.EmitLine("{");
+			code.EmitLine("*(s.out++) = '{';");
+
 
 		bool putSeparator = false;
 		for (const Variable &v : s.allVars)
 		{
-			out << RenderFieldBegin(v.cppName);
+			code.EmitLine("");
+			code.EmitLine("// Render field %s", v.cppName.c_str());
 
 			if (putSeparator)
 			{
-				out << PutFieldSeperator();
+				code.EmitLine("*(s.out++) = ',';");
 			}
 			putSeparator = true;
 
-			out << PutCharacter('"');
+			code.EmitLine("*(s.out++) = '\"';");
 			for (char c : v.jsonName)
 			{
-				out << PutCharacter(c);
+				code.EmitLine("*(s.out++) = '%c';", c);
 			}
-			out << PutCharacter('"');
-			out << RenderFieldNameEnd();
-			out << SerializeFieldValue(v.cppName);
+			code.EmitLine("*(s.out++) = '\"';");
+			code.EmitLine("*(s.out++) = ':';");
+
+			code.EmitLine("s.SerializeValue(this->%s);", v.cppName.c_str());
 		}
 
-		out << SerializeToJsonDefinitionEnd();
+			code.EmitLine("*(s.out++) = '}';");
+		code.EmitLine("}");
 	}
 }
 
-// A state for the matcher state machine
-// Keeps track of what has been matched until now
-// Only used in code generation, and in comment of output.
-struct MatchState
-{
-	string matched;
-	string gotoLabelName;
-};
-
-// When all known fields start with the same prefix
-// Not matching will jump to unknown field label
-void MatchOnlyPrefix(ostream &out, const string &prefix)
-{
-	out << MatchCommonPrefixBegin(prefix);
-	for (char c : prefix)
-	{
-		out << MatchKnownFieldChar(c);
-	}
-}
-
-// Returns common prefix for a range of sorted strings
-string CommonPrefix(const vector<Variable>::iterator varsBegin,
-                    const vector<Variable>::iterator varsEnd,
-                    int matchedChars)
-{
-	string first = varsBegin->jsonName;
-	string last = (varsEnd - 1)->jsonName;
-
-	return string(first.begin() + matchedChars,
-	              mismatch(first.begin() + matchedChars, first.end(), last.begin() + matchedChars).first);
-}
-
-void GenerateParserForStruct(ostream &out, const Struct &s)
+void GenerateParserForStruct(CodeFormatter &code, const Struct &s)
 {
 	FieldParser fp;
 	for (const Variable &var : s.allVars)
@@ -227,82 +274,90 @@ void GenerateParserForStruct(ostream &out, const Struct &s)
 		stringstream action;
 		if (var.skipNull)
 		{
-			action << MaybeSkipNullValue();
+			action << "\t"    "// Skip null values for this field.\n"
+			          "\t"    "{\n"
+			          "\t"    "\t"    "bool skipped = false;\n"
+			          "\t"    "\t"    "parser.MaybeSkipNull(&skipped);\n"
+			          "\t"    "\t"    "if (skipped)\n"
+			          "\t"    "\t"    "{\n"
+			          "\t"    "\t"    "\t"    "return;\n"
+			          "\t"    "\t"    "}\n"
+			          "\t"    "}\n";
 		}
-		action << "parser.ParseValueInto(this->" << var.cppName << ");";
+		action << "\t"    "parser.ParseValueInto(this->" << var.cppName << ");";
 		fp.addField(var.jsonName, action.str());
 	}
 
-	// TODO refactor `EmitLine` functions to a shared helper class?
-	auto EmitLine = [&out](const char *fmt, ...)
-	{
-		char line_buffer[2000];
-		va_list ap;
-		va_start(ap, fmt);
-		// TODO check size?
-		vsnprintf(line_buffer, 2000, fmt, ap);
-		va_end(ap);
 
-		out << line_buffer << '\n';
-	};
-
-
-	EmitLine("template <typename InputIteratorType>");
-	EmitLine("inline");
-	EmitLine("void %s::ParseNextField(QuantumJsonImpl__::Parser<InputIteratorType> &parser)", s.name.c_str());
-	EmitLine("{");
-	out << fp.generateFieldParserCode();
-	EmitLine("}");
+	code.EmitLine("template <typename InputIteratorType>");
+	code.EmitLine("inline");
+	code.EmitLine("void %s::ParseNextField(QuantumJsonImpl__::Parser<InputIteratorType> &parser)", s.name.c_str());
+	code.EmitLine("{");
+	code.raw() << fp.generateFieldParserCode();
+	code.EmitLine("}");
 }
 
-void GenerateAllocatorForStruct(ostream &out, const Struct &s)
+void GenerateAllocatorForStruct(CodeFormatter &code, const Struct &s)
 {
 	FieldParser fp;
 	for (const Variable &var : s.allVars)
 	{
 		if (var.isReservable)
 		{
-			fp.addField(var.jsonName,
-			    ReserveValueIntoField(s.name, var));
+			stringstream action;
+			action << "\t"    "// Reserve space in field\n"
+			          "\t"    "{\n"
+			          "\t"    "\t"    "size_t fieldSizeIdx = parser.VisitingField(\n"
+			          "\t"    "\t"    "    static_cast<int>(__QuantumJsonFieldTag::__QUANTUMJSON_FIELD_TAG_" << var.cppName << "));\n"
+			          "\t"    "\t"    "parser.CalculateSpaceToReserveIn(fieldSizeIdx,\n"
+			          "\t"    "\t"    "    static_cast<decltype(" << s.name << "::" << var.cppName << ")*>(nullptr));\n"
+			          "\t"    "\t"    "return;\n"
+			          "\t"    "}\n";
+
+
+			fp.addField(var.jsonName, action.str());
 		}
 	}
 
-	// TODO refactor `EmitLine` functions to a shared helper class?
-	auto EmitLine = [&out](const char *fmt, ...)
-	{
-		char line_buffer[1000];
-		va_list ap;
-		va_start(ap, fmt);
-		// TODO check size?
-		vsnprintf(line_buffer, 1000, fmt, ap);
-		va_end(ap);
 
-		out << line_buffer << '\n';
-	};
-
-
-	EmitLine("template <typename InputIteratorType>");
-	EmitLine("inline");
-	EmitLine("void %s::ReserveNextField(QuantumJsonImpl__::PreAllocator<InputIteratorType> &parser)",
+	code.EmitLine("template <typename InputIteratorType>");
+	code.EmitLine("inline");
+	code.EmitLine("void %s::ReserveNextField(QuantumJsonImpl__::PreAllocator<InputIteratorType> &parser)",
 	     s.name.c_str());
-	EmitLine("{");
-	out << fp.generateFieldParserCode();
-	EmitLine("}");
+	code.EmitLine("{");
+	code.raw() << fp.generateFieldParserCode();
+	code.EmitLine("}");
 }
 
-void GenerateReserverForStruct(ostream &out, const Struct &s)
+void GenerateReserverForStruct(CodeFormatter &code, const Struct &s)
 {
-	out << ReserveCalculatedSpaceBegin(s.name);
+	code.EmitLine("template <typename InputIteratorType>");
+	code.EmitLine("inline");
+	code.EmitLine("void %s::ReserveCalculatedSpace(QuantumJsonImpl__::PreAllocator<InputIteratorType> &allocator)", s.name.c_str());
+	code.EmitLine("{");
+		code.EmitLine("size_t objectFieldsEnd = allocator.GetObjectSize();");
+		code.EmitLine("allocator.PopObject();");
+		code.EmitLine("while (allocator.GetCurIdx() != objectFieldsEnd)");
+		code.EmitLine("{");
+			code.EmitLine("int fieldTag = allocator.GetFieldTag();");
+			code.EmitLine("switch(static_cast<__QuantumJsonFieldTag>(fieldTag))");
+			code.EmitLine("{");
 
 	for (const Variable &var : s.allVars)
 	{
 		if (var.isReservable)
 		{
-			out << "\t\tcase __QuantumJsonFieldTag::__QUANTUMJSON_FIELD_TAG_" << var.cppName << ":\n";
-			out << "\t\t\tallocator.ReserveCalculatedSpaceIn(this->" << var.cppName << ");\n";
-			out << "\t\t\tbreak;\n";
+			code.EmitLine("case __QuantumJsonFieldTag::__QUANTUMJSON_FIELD_TAG_%s:", var.cppName.c_str());
+			code.EmitLine("{");
+				code.EmitLine("allocator.ReserveCalculatedSpaceIn(this->%s);", var.cppName.c_str());
+				code.EmitLine("break;");
+			code.EmitLine("}");
 		}
 	}
 
-	out << ReserveCalculatedSpaceEnd();
+				code.EmitLine("default:");
+				code.EmitLine("; // Should not happen");
+			code.EmitLine("}");
+		code.EmitLine("}");
+	code.EmitLine("}");
 }

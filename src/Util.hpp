@@ -20,7 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#ifndef UTIL_HPP
+#define UTIL_HPP
+
 #include <cstdarg>
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -98,7 +102,15 @@ public:
 	{
 		return codeBuffer.str();
 	}
+
+	std::ostream& raw()
+	{
+		return codeBuffer;
+	}
+
 private:
 	int curIndent = 0;
 	std::stringstream codeBuffer;
 };
+
+#endif // UTIL_HPP

@@ -46,24 +46,16 @@ void FieldParser::addField(const string fieldName,
 
 string FieldParser::generateFieldParserCode()
 {
-	stringstream out;
-	int curIndent = 1;
+	CodeFormatter code;
+	this->generateFieldParserCode(code);
+	return code.getFormattedCode();
+}
 
-	auto EmitLine = [&out,&curIndent](const char *fmt, ...)
-	{
-		char line_buffer[2000];
-		va_list ap;
-		va_start(ap, fmt);
-		// TODO check size?
-		vsnprintf(line_buffer, 2000, fmt, ap);
-		va_end(ap);
-
-		out << string(curIndent, '\t') << line_buffer << '\n';
-	};
-
+void FieldParser::generateFieldParserCode(CodeFormatter &code)
+{
 	const vector<FieldInfo> fields(fieldInfos.begin(), fieldInfos.end());
 
-	EmitLine("parser.SkipChar('\"');");
+	code.EmitLine("parser.SkipChar('\"');");
 
 	int nextMatchStateId = 100;
 	int firstStateId = nextMatchStateId + 1;
@@ -108,19 +100,19 @@ string FieldParser::generateFieldParserCode()
 
 		if (st.stateId != firstStateId) // First label emits unused warnings
 		{
-			EmitLine("state_%d:", st.stateId);
+			code.EmitLine("state_%d:", st.stateId);
 		}
 
 		if (st.matchComplete)
 		{
-			EmitLine("// Matched field [%s]", fields[st.firstFieldIdx].fieldName.c_str());
+			code.EmitLine("// Matched field [%s]", fields[st.firstFieldIdx].fieldName.c_str());
 
-			EmitLine("parser.SkipWhitespace();");
-			EmitLine("parser.SkipChar(':'); // Field Separator");
-			EmitLine("parser.SkipWhitespace();");
+			code.EmitLine("parser.SkipWhitespace();");
+			code.EmitLine("parser.SkipChar(':'); // Field Separator");
+			code.EmitLine("parser.SkipWhitespace();");
 
-			EmitLine("%s", fields[st.firstFieldIdx].matchedAction.c_str());
-			EmitLine("return;");
+			code.EmitLine("%s", fields[st.firstFieldIdx].matchedAction.c_str());
+			code.EmitLine("return;");
 
 			continue;
 		}
@@ -164,30 +156,26 @@ string FieldParser::generateFieldParserCode()
 			}
 		}
 
-		EmitLine("// Currently matched prefix [%s]",
+		code.EmitLine("// Currently matched prefix [%s]",
 		             fields[st.firstFieldIdx].fieldName.substr(0, st.matchedCharCnt).c_str());
-		EmitLine("if (parser.it == parser.end)");
-		EmitLine("{");
-		{
-			++curIndent;
-			EmitLine("parser.errorCode = QuantumJsonImpl__::ErrorCode::UnexpectedEOF;");
-			EmitLine("return;");
-			--curIndent;
-		}
-		EmitLine("}");
+		code.EmitLine("if (parser.it == parser.end)");
+		code.EmitLine("{");
+			code.EmitLine("parser.errorCode = QuantumJsonImpl__::ErrorCode::UnexpectedEOF;");
+			code.EmitLine("return;");
+		code.EmitLine("}");
 
-		EmitLine("switch (*(parser.it++))");
-		EmitLine("{");
+		code.EmitLine("switch (*(parser.it++))");
+		code.EmitLine("{");
 		for (auto it : nextStates)
 		{
-			EmitLine("case '%c': goto state_%d;", it.first, it.second.stateId);
+			code.EmitLine("case '%c': goto state_%d;", it.first, it.second.stateId);
 		}
 		if (nextStates.count('"') == 0)
 		{
-			EmitLine("case '\"': goto state_unknown_field_matched;");
+			code.EmitLine("case '\"': goto state_unknown_field_matched;");
 		}
-		EmitLine("default: goto state_unknown_field_matching;");
-		EmitLine("}");
+		code.EmitLine("default: goto state_unknown_field_matching;");
+		code.EmitLine("}");
 
 		// Push the next states in reverse order so lexicographically first one
 		// would be popped first.
@@ -197,20 +185,17 @@ string FieldParser::generateFieldParserCode()
 		}
 	}
 
-	EmitLine("state_unknown_field_matching:");
-	EmitLine("switch (*(parser.it++))");
-	EmitLine("{");
-	EmitLine("case '\"': goto state_unknown_field_matched;");
-	EmitLine("default: goto state_unknown_field_matching;");
-	EmitLine("}");
+	code.EmitLine("state_unknown_field_matching:");
+	code.EmitLine("switch (*(parser.it++))");
+	code.EmitLine("{");
+	code.EmitLine("case '\"': goto state_unknown_field_matched;");
+	code.EmitLine("default: goto state_unknown_field_matching;");
+	code.EmitLine("}");
 
-	EmitLine("state_unknown_field_matched:");
-	EmitLine("parser.SkipWhitespace();");
-	EmitLine("parser.SkipChar(':'); // Field Separator");
-	EmitLine("parser.SkipWhitespace();");
-	EmitLine("parser.SkipValue();");
-	EmitLine("return;");
-
-
-	return out.str();
+	code.EmitLine("state_unknown_field_matched:");
+	code.EmitLine("parser.SkipWhitespace();");
+	code.EmitLine("parser.SkipChar(':'); // Field Separator");
+	code.EmitLine("parser.SkipWhitespace();");
+	code.EmitLine("parser.SkipValue();");
+	code.EmitLine("return;");
 }
