@@ -71,10 +71,10 @@ public:
 			++curIndent;
 			return;
 		}
-		if (fmt == std::string("}"))
+		if (fmt == std::string("}") || fmt == std::string("};"))
 		{
 			--curIndent;
-			codeBuffer << std::string(curIndent, '\t') << "}\n";
+			codeBuffer << std::string(curIndent, '\t') << fmt << "\n";
 			return;
 		}
 

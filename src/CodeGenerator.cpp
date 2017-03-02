@@ -149,8 +149,7 @@ void GenerateHeaderForFile(CodeFormatter &code, const ParsedFile &file)
 				code.EmitLine("// Skipped non-reservable field %s", var.cppName.c_str());
 			}
 		}
-		code.EmitLine("}");
-		code.EmitLine(";"); // TODO fix?
+		code.EmitLine("};");
 
 		// Member fields
 		for (const Variable &var : s.allVars)
@@ -204,8 +203,7 @@ void GenerateHeaderForFile(CodeFormatter &code, const ParsedFile &file)
 
 		code.EmitLine("template <typename T> friend struct QuantumJsonImpl__::Parser;");
 		code.EmitLine("template <typename T> friend struct QuantumJsonImpl__::PreAllocator;");
-		code.EmitLine("}");
-		code.EmitLine(";"); // TODO fix
+		code.EmitLine("};");
 	}
 
 	// Function definitions
