@@ -24,7 +24,6 @@
 #include <cstdarg>
 #include <stack>
 #include <string>
-#include <sstream>
 #include <utility>
 
 #include <boost/format.hpp>
@@ -120,7 +119,7 @@ void GenerateHeaderForFile(CodeFormatter &code, const ParsedFile &file)
 	// TODO provide an option to generate #ifndef style guards
 	code.EmitLine("#pragma once");
 
-	code.raw().write(reinterpret_cast<const char *>(&libCommonData[0]), libCommonData.size());
+	code.EmitCode( string(reinterpret_cast<const char *>(&libCommonData[0]), libCommonData.size()) );
 
 	// Header declerations
 	for (const Struct &s : allStructs)
@@ -269,21 +268,21 @@ void GenerateParserForStruct(CodeFormatter &code, const Struct &s)
 	FieldParser fp;
 	for (const Variable &var : s.allVars)
 	{
-		stringstream action;
+		CodeFormatter action;
 		if (var.skipNull)
 		{
-			action << "\t"    "// Skip null values for this field.\n"
-			          "\t"    "{\n"
-			          "\t"    "\t"    "bool skipped = false;\n"
-			          "\t"    "\t"    "parser.MaybeSkipNull(&skipped);\n"
-			          "\t"    "\t"    "if (skipped)\n"
-			          "\t"    "\t"    "{\n"
-			          "\t"    "\t"    "\t"    "return;\n"
-			          "\t"    "\t"    "}\n"
-			          "\t"    "}\n";
+			action.EmitLine("// Skip null values for this field.");
+			action.EmitLine("{");
+				action.EmitLine("bool skipped = false;");
+				action.EmitLine("parser.MaybeSkipNull(&skipped);");
+				action.EmitLine("if (skipped)");
+				action.EmitLine("{");
+					action.EmitLine("return;");
+				action.EmitLine("}");
+			action.EmitLine("}");
 		}
-		action << "\t"    "parser.ParseValueInto(this->" << var.cppName << ");";
-		fp.addField(var.jsonName, action.str());
+		action.EmitLine("parser.ParseValueInto(this->%s);", var.cppName.c_str());
+		fp.addField(var.jsonName, action.getFormattedCode());
 	}
 
 
@@ -291,7 +290,7 @@ void GenerateParserForStruct(CodeFormatter &code, const Struct &s)
 	code.EmitLine("inline");
 	code.EmitLine("void %s::ParseNextField(QuantumJsonImpl__::Parser<InputIteratorType> &parser)", s.name.c_str());
 	code.EmitLine("{");
-	code.raw() << fp.generateFieldParserCode();
+	fp.generateFieldParserCode(code);
 	code.EmitLine("}");
 }
 
@@ -302,18 +301,18 @@ void GenerateAllocatorForStruct(CodeFormatter &code, const Struct &s)
 	{
 		if (var.isReservable)
 		{
-			stringstream action;
-			action << "\t"    "// Reserve space in field\n"
-			          "\t"    "{\n"
-			          "\t"    "\t"    "size_t fieldSizeIdx = parser.VisitingField(\n"
-			          "\t"    "\t"    "    static_cast<int>(__QuantumJsonFieldTag::__QUANTUMJSON_FIELD_TAG_" << var.cppName << "));\n"
-			          "\t"    "\t"    "parser.CalculateSpaceToReserveIn(fieldSizeIdx,\n"
-			          "\t"    "\t"    "    static_cast<decltype(" << s.name << "::" << var.cppName << ")*>(nullptr));\n"
-			          "\t"    "\t"    "return;\n"
-			          "\t"    "}\n";
+			CodeFormatter action;
+			action.EmitLine("// Reserve space in field");
+			action.EmitLine("{");
+				action.EmitLine("size_t fieldSizeIdx = parser.VisitingField(");
+				action.EmitLine("    static_cast<int>(__QuantumJsonFieldTag::__QUANTUMJSON_FIELD_TAG_%s));", var.cppName.c_str());
+				action.EmitLine("parser.CalculateSpaceToReserveIn(fieldSizeIdx,");
+				action.EmitLine("    static_cast<decltype(%s::%s)*>(nullptr));", s.name.c_str(), var.cppName.c_str());
+				action.EmitLine("return;");
+			action.EmitLine("}");
 
 
-			fp.addField(var.jsonName, action.str());
+			fp.addField(var.jsonName, action.getFormattedCode());
 		}
 	}
 
@@ -323,7 +322,7 @@ void GenerateAllocatorForStruct(CodeFormatter &code, const Struct &s)
 	code.EmitLine("void %s::ReserveNextField(QuantumJsonImpl__::PreAllocator<InputIteratorType> &parser)",
 	     s.name.c_str());
 	code.EmitLine("{");
-	code.raw() << fp.generateFieldParserCode();
+	fp.generateFieldParserCode(code);
 	code.EmitLine("}");
 }
 

@@ -98,14 +98,25 @@ public:
 		codeBuffer << std::string(curIndent, '\t') << buf.get() << '\n';
 	}
 
+	void EmitCode(const std::string &snippet)
+	{
+		char lastCh = '\n';
+
+		for (char c : snippet)
+		{
+			if (lastCh == '\n')
+			{
+				codeBuffer << std::string(curIndent, '\t');
+			}
+
+			codeBuffer << c;
+			lastCh = c;
+		}
+	}
+
 	std::string getFormattedCode()
 	{
 		return codeBuffer.str();
-	}
-
-	std::ostream& raw()
-	{
-		return codeBuffer;
 	}
 
 private:

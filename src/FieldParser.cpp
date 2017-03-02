@@ -111,7 +111,7 @@ void FieldParser::generateFieldParserCode(CodeFormatter &code)
 			code.EmitLine("parser.SkipChar(':'); // Field Separator");
 			code.EmitLine("parser.SkipWhitespace();");
 
-			code.EmitLine("%s", fields[st.firstFieldIdx].matchedAction.c_str());
+			code.EmitCode(fields[st.firstFieldIdx].matchedAction);
 			code.EmitLine("return;");
 
 			continue;
