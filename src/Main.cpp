@@ -30,6 +30,7 @@
 #include "CodeGenerator.hpp"
 #include "Parser.hpp"
 #include "Tokenizer.hpp"
+#include "Util.hpp"
 
 #include "src/CommandLineFlags.hpp"
 
@@ -66,7 +67,9 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	GenerateHeaderForFile(oHeader, f);
+	CodeFormatter code;
+	GenerateHeaderForFile(code, f);
+	oHeader << code.getFormattedCode();
 
 	oHeader.flush();
 	if (oHeader.bad())

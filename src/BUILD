@@ -25,16 +25,16 @@ cc_library(
 	srcs = [
 		"Attributes.cpp",
 		"CodeGenerator.cpp",
-		"JsonParserLibrary.cpp",
+		"FieldParser.cpp",
 		"Parser.cpp",
 		"Tokenizer.cpp",
 
 		"Attributes.hpp",
 		"CodeGenerator.hpp",
-		"CodeGeneratorSnippets.hpp",
-		"JsonParserLibrary.hpp",
+		"FieldParser.hpp",
 		"Parser.hpp",
 		"Tokenizer.hpp",
+		"Util.hpp",
 	],
 	deps = [
 		"//lib",
@@ -71,6 +71,17 @@ genrule(
 )
 
 cc_test(
+	name = "test_field_parser",
+	srcs = [
+		"FieldParser.cpp",
+		"FieldParser.hpp",
+		"Util.hpp",
+
+		"TestFieldParser.cpp",
+	],
+)
+
+cc_test(
 	name = "test_attributes",
 	srcs = [
 		"TestAttributes.cpp",
@@ -87,5 +98,13 @@ cc_test(
 	],
 	deps = [
 		":src_lib",
+	],
+)
+
+cc_test(
+	name = "test_util",
+	srcs = [
+		"TestUtil.cpp",
+		"Util.hpp",
 	],
 )
