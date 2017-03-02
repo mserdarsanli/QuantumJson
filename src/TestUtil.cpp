@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Mustafa Serdar Sanli
+// Copyright (c) 2017 Mustafa Serdar Sanli
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,54 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <iostream>
+#include <string>
 
-void GenerateCommonParserDefinitions(std::ostream &out);
+#define CATCH_CONFIG_MAIN
+#include <catch.hpp>
+
+#include "Util.hpp"
+
+using namespace std;
+
+TEST_CASE("CodeFormatter")
+{
+	CodeFormatter code;
+
+	code.EmitLine("int sum(int a, int b)");
+	code.EmitLine("{");
+		code.EmitLine("return a + %d + b;", 111);
+	code.EmitLine("}");
+	code.EmitLine("// done");
+
+	string expectedOut = 1 + R"(
+int sum(int a, int b)
+{
+	return a + 111 + b;
+}
+// done
+)";
+
+	REQUIRE(expectedOut == code.getFormattedCode());
+}
+
+TEST_CASE("CodeFormatter indent")
+{
+	CodeFormatter code;
+
+	code.EmitLine("{");
+	code.EmitLine("{");
+	code.EmitLine("{");
+	code.EmitLine("}");
+	code.EmitLine("}");
+	code.EmitLine("}");
+	string expectedOut = 1 + R"(
+{
+	{
+		{
+		}
+	}
+}
+)";
+
+	REQUIRE(expectedOut == code.getFormattedCode());
+}

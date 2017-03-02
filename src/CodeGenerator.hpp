@@ -22,8 +22,7 @@
 
 #pragma once
 
-#include <iostream>
-
 #include "Parser.hpp"
+#include "Util.hpp"
 
-void GenerateHeaderForFile(std::ostream &out, const ParsedFile &file);
+void GenerateHeaderForFile(CodeFormatter &code, const ParsedFile &file);

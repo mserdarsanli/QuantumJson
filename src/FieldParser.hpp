@@ -23,6 +23,8 @@
 #include <set>
 #include <string>
 
+#include "Util.hpp"
+
 // State machine generator used to match known field names while parsing json
 // objects. This allows preventing unnecessary allocations, which is one of
 // the main reasons making QuantumJson fast and memory efficient.
@@ -47,6 +49,7 @@ public:
 	void addField(const std::string fieldName,
 	              const std::string matchedAction);
 	std::string generateFieldParserCode();
+	void generateFieldParserCode(CodeFormatter &code);
 
 private:
 	struct FieldInfo
