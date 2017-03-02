@@ -1,5 +1,21 @@
 # Change Log
 
+## Unreleased
+
+### Added
+
+- Better `Parse` API
+- PreAllocationg support for better memory usage
+
+### Fixed
+
+- Bug in matching field names in state machine
+- String parsing is fully implemented with surrogate pair verification
+
+### Changed
+
+- Using GCC7 in development environment and benchmarks
+
 ## [0.3.0] - 2016-11-13
 
 ### Added
