@@ -27,6 +27,7 @@ cc_json_schema_lib(
 	srcs = [
 		"Schema1.json.hpp",
 		"Schema2.json.hpp",
+		"SchemaNS.json.hpp",
 	],
 )
 
@@ -47,6 +48,16 @@ cc_test(
 	],
 	deps = [
 		"//lib:lib_impl",
+	],
+)
+
+cc_test(
+	name = "namespace_tests",
+	srcs = [
+		"NamespaceTests.cpp",
+	],
+	deps = [
+		":schema_lib",
 	],
 )
 

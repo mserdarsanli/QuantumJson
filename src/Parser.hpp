@@ -80,6 +80,8 @@ struct VariableDef
 
 struct StructDef
 {
+	std::vector<std::string> inNamespace;
+
 	std::string name;
 	std::vector<VariableDef> variables;
 };
