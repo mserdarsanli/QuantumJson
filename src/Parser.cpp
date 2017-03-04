@@ -36,16 +36,8 @@ void AssertToken(TokenIt it, Token::Type t)
 {
 	if (it->type != t)
 	{
-		cerr << "Assertion failed: Expected token " << (int)t << " found " << (int)it->type << "\n";
-		exit(1);
-	}
-}
-
-void AssertToken(TokenIt it, Token::Type t, string val)
-{
-	if (it->type != t || it->strValue != val)
-	{
-		cerr << "Assertion failed: Expected token " << (int)t << " " << val << "\n";
+		cerr << "ERROR: At line: " << it->line << " col: " << it->col << "\n"
+		     << "  Expected token: " << (int)t << ", but found " << (int)it->type << "\n";
 		exit(1);
 	}
 }
@@ -303,8 +295,8 @@ ParsedFile Parse(const vector<Token> &tokens)
 				goto parsing_finished;
 			default:
 			unknown_token:
-				cerr << "Unable to understand next token: "
-				     << (int)it->type << ": " << it->strValue << "\n";
+				cerr << "ERROR: At line: " << it->line << " col: " << it->col << "\n"
+				     << "  Unexpected token: " << (int)it->type << ": " << it->strValue << "\n";
 				exit(1);
 		}
 	}
