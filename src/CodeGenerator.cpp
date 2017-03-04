@@ -85,9 +85,10 @@ struct Variable
 struct Struct
 {
 	Struct(const StructDef &structDef)
+	   : name(structDef.name)
+	   , inNamespace(structDef.inNamespace)
 	{
 		int reservableFieldTag = 0;
-		name = structDef.name;
 		for (const VariableDef &vDef : structDef.variables)
 		{
 			Variable v(vDef);
@@ -102,6 +103,7 @@ struct Struct
 
 	string name;
 	vector<Variable> allVars;
+	vector<string> inNamespace;
 };
 
 void GenerateParserForStruct(CodeFormatter &code, const Struct &s);
@@ -124,6 +126,12 @@ void GenerateHeaderForFile(CodeFormatter &code, const ParsedFile &file)
 	// Header declerations
 	for (const Struct &s : allStructs)
 	{
+		// Begin namespaces
+		for (auto it = s.inNamespace.begin(); it != s.inNamespace.end(); ++it)
+		{
+			code.EmitLine("namespace %s {", it->c_str());
+		}
+
 		code.EmitLine("struct %s", s.name.c_str());
 		code.EmitLine("{");
 		code.EmitLine("%s() = default;", s.name.c_str());
@@ -203,11 +211,23 @@ void GenerateHeaderForFile(CodeFormatter &code, const ParsedFile &file)
 		code.EmitLine("template <typename T> friend struct QuantumJsonImpl__::Parser;");
 		code.EmitLine("template <typename T> friend struct QuantumJsonImpl__::PreAllocator;");
 		code.EmitLine("};");
+
+		// End namespaces
+		for (auto it = s.inNamespace.rbegin(); it != s.inNamespace.rend(); ++it)
+		{
+			code.EmitLine("} // namespace %s", it->c_str());
+		}
 	}
 
 	// Function definitions
 	for (const Struct &s : allStructs)
 	{
+		// Begin namespaces
+		for (auto it = s.inNamespace.begin(); it != s.inNamespace.end(); ++it)
+		{
+			code.EmitLine("namespace %s {", it->c_str());
+		}
+
 		GenerateParserForStruct(code, s);
 		GenerateAllocatorForStruct(code, s);
 		GenerateReserverForStruct(code, s);
@@ -260,6 +280,12 @@ void GenerateHeaderForFile(CodeFormatter &code, const ParsedFile &file)
 
 			code.EmitLine("*(s.out++) = '}';");
 		code.EmitLine("}");
+
+		// End namespaces
+		for (auto it = s.inNamespace.rbegin(); it != s.inNamespace.rend(); ++it)
+		{
+			code.EmitLine("} // namespace %s", it->c_str());
+		}
 	}
 }
 

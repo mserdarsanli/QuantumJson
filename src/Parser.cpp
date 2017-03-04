@@ -36,7 +36,7 @@ void AssertToken(TokenIt it, Token::Type t)
 {
 	if (it->type != t)
 	{
-		cerr << "Assertion failed: Expected token " << (int)t << "\n";
+		cerr << "Assertion failed: Expected token " << (int)t << " found " << (int)it->type << "\n";
 		exit(1);
 	}
 }
@@ -196,7 +196,7 @@ TokenIt ParseVariableDef(TokenIt it, TokenIt end, VariableDef *vOut)
 
 TokenIt ParseStructDef(TokenIt it, TokenIt end, StructDef* sOut)
 {
-	AssertToken(it++, Token::Type::Name, "struct");
+	AssertToken(it++, Token::Type::KeywordStruct);
 	AssertToken(it, Token::Type::Name);
 	sOut->name = it->strValue;
 	++it;
@@ -218,25 +218,80 @@ TokenIt ParseStructDef(TokenIt it, TokenIt end, StructDef* sOut)
 // Parses a tokenized file, and returns extracted `ParsedFile`
 ParsedFile Parse(const vector<Token> &tokens)
 {
-	ParsedFile f;
-	TokenIt begin = tokens.begin();
-	TokenIt end   = tokens.end();
+	// namespace A {
+	// namespace B::C {
+	// ...
+	// would be represented as [ [ "A" ], [ "B", "C" ] ]
+	vector< vector<string> > currentNamespace;
 
-	while (begin != end)
+	auto flatten = [](const vector< vector<string>> &namespaces) -> vector<string>
 	{
-		const Token &nextToken = *begin;
+		vector<string> res;
 
-		if (nextToken.type == Token::Type::Name &&
-		    nextToken.strValue == "struct")
+		for (const vector<string> &nsDef : namespaces)
 		{
-			f.structs.resize(f.structs.size() + 1);
-			begin = ParseStructDef(begin, end, &f.structs[f.structs.size() - 1]);
-			continue;
+			for (const string &ns : nsDef)
+			{
+				res.push_back(ns);
+			}
 		}
 
-		cerr << "Unable to understand next token: " << (int)begin->type << ": " << begin->strValue << "\n";
-		exit(1);
+		return res;
+	};
+
+	ParsedFile f;
+	TokenIt it = tokens.begin();
+	TokenIt end   = tokens.end();
+
+	while (it != end)
+	{
+		const Token &nextToken = *it;
+
+		switch (nextToken.type)
+		{
+			case Token::Type::KeywordStruct:
+				f.structs.resize(f.structs.size() + 1);
+				f.structs.back().inNamespace = flatten(currentNamespace);
+				it = ParseStructDef(it, end, &f.structs[f.structs.size() - 1]);
+				continue;
+			case Token::Type::KeywordNamespace:
+			{
+				++it;
+				AssertToken(it, Token::Type::Name);
+				currentNamespace.emplace_back(1, it->strValue);
+				++it;
+
+				while (it->type == Token::Type::NamespaceSeparator)
+				{
+					++it;
+					AssertToken(it, Token::Type::Name);
+					currentNamespace.back().push_back(it->strValue);
+					++it;
+				}
+
+				AssertToken(it++, Token::Type::BracesOpen); // TODO add skiptoken fn
+				break;
+			}
+			case Token::Type::BracesClose:
+			{
+				++it;
+				if (currentNamespace.size() == 0)
+				{
+					goto unknown_token;
+				}
+				currentNamespace.pop_back();
+				break;
+			}
+			case Token::Type::EndOfFile:
+				goto parsing_finished;
+			default:
+			unknown_token:
+				cerr << "Unable to understand next token: "
+				     << (int)it->type << ": " << it->strValue << "\n";
+				exit(1);
+		}
 	}
+	parsing_finished:
 
 	return f;
 }

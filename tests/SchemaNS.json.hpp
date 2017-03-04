@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Mustafa Serdar Sanli
+// Copyright (c) 2017 Mustafa Serdar Sanli
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,47 +20,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
 
-#include <string>
-#include <vector>
-
-struct Token
+struct GlobalObj
 {
-	enum class Type
-	{
-		EndOfFile, // Helper token to prevent dereferencing invalid iterator
-		Name,
-		TemplateOpen,
-		TemplateClose,
-		ParenthesesOpen,
-		ParenthesesClose,
-		BracesOpen,
-		BracesClose,
-		Semicolon,
-		AttributeOpen,
-		AttributeClose,
-		String,
-		Comma,
-		NamespaceSeparator,
-		KeywordNamespace,
-		KeywordStruct,
-	};
-
-	Token(Type t)
-		: type(t)
-	{
-	}
-	Token(Type t, const std::string &s)
-		: type(t), strValue(s)
-	{
-	}
-
-	// TODO add line/col info to tokens
-
-	Type type;
-	// For tokens that has value, like string or name tokens
-	std::string strValue;
 };
 
-std::vector<Token> Tokenize(const std::string &in);
+namespace foo {
+
+struct ObjInFoo
+{
+
+};
+
+namespace bar {
+
+struct ObjInFooBar
+{
+};
+
+
+} // namespace bar
+} // namespace foo
+
+namespace foo::bar {
+
+namespace a::b {
+} // namespace a::b
+
+namespace baz {
+
+struct ObjInFooBarBaz
+{
+};
+
+} // namespace baz
+} // namespace foo::bar

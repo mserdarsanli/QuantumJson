@@ -79,7 +79,21 @@ vector<Token> Tokenize(const string &in)
 			{
 				word.push_back(in[++i]);
 			}
-			res.emplace_back(Token::Type::Name, word);
+
+			// Handle keywords
+			if (word == "namespace")
+			{
+				res.emplace_back(Token::Type::KeywordNamespace);
+			}
+			else if (word == "struct")
+			{
+				res.emplace_back(Token::Type::KeywordStruct);
+			}
+			else
+			{
+				res.emplace_back(Token::Type::Name, word);
+			}
+
 			continue;
 		}
 
@@ -115,6 +129,13 @@ vector<Token> Tokenize(const string &in)
 			continue;
 		}
 
+		if (in[i] == ':' && in[i+1] == ':')
+		{
+			++i;
+			res.emplace_back(Token::Type::NamespaceSeparator);
+			continue;
+		}
+
 		if (in[i] == '"')
 		{
 			string str;
@@ -136,5 +157,6 @@ vector<Token> Tokenize(const string &in)
 		exit(1);
 	}
 
+	res.emplace_back(Token::Type::EndOfFile);
 	return res;
 }
