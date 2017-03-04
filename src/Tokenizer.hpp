@@ -47,20 +47,12 @@ struct Token
 		KeywordStruct,
 	};
 
-	Token(Type t)
-		: type(t)
-	{
-	}
-	Token(Type t, const std::string &s)
-		: type(t), strValue(s)
-	{
-	}
-
-	// TODO add line/col info to tokens
-
 	Type type;
 	// For tokens that has value, like string or name tokens
 	std::string strValue;
+
+	int line = -1;
+	int col = -1;
 };
 
 std::vector<Token> Tokenize(const std::string &in);
