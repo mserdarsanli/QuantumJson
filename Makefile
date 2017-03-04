@@ -1,11 +1,10 @@
 
 # It is preferable to use bazel files while development,
-# Makefile's wil be provided for each release.
+# Makefiles will be provided for each release.
 
 HDRS = src/Attributes.hpp \
        src/CodeGenerator.hpp \
-       src/CodeGeneratorSnippets.hpp \
-       src/JsonParserLibrary.hpp \
+       src/FieldParser.hpp \
        src/Parser.hpp \
        src/Tokenizer.hpp \
        src/CommandLineFlags.hpp \
@@ -14,7 +13,7 @@ HDRS = src/Attributes.hpp \
 
 OBJS = src/Attributes.o \
        src/CodeGenerator.o \
-       src/JsonParserLibrary.o \
+       src/FieldParser.o \
        src/Parser.o \
        src/Tokenizer.o \
        src/CommandLineFlags.o \
@@ -46,8 +45,8 @@ src/Attributes.o: src/Attributes.cpp $(HDRS)
 	$(CC) -c src/Attributes.cpp -o src/Attributes.o
 src/CodeGenerator.o: src/CodeGenerator.cpp $(HDRS)
 	$(CC) -c src/CodeGenerator.cpp -o src/CodeGenerator.o
-src/JsonParserLibrary.o: src/JsonParserLibrary.cpp $(HDRS)
-	$(CC) -c src/JsonParserLibrary.cpp -o src/JsonParserLibrary.o
+src/FieldParser.o: src/FieldParser.cpp $(HDRS)
+	$(CC) -c src/FieldParser.cpp -o src/FieldParser.o
 src/Parser.o: src/Parser.cpp $(HDRS)
 	$(CC) -c src/Parser.cpp -o src/Parser.o
 src/Tokenizer.o: src/Tokenizer.cpp $(HDRS)

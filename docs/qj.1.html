@@ -122,7 +122,7 @@ struct Geometry
     // has attribute named points which should be a JSON list of Point3
     // objects
     vector&lt; Point3 > points;
-}
+};
 </code></pre>
 
 <p>Since this is not a C++ code, but rather a schema definition,
@@ -134,9 +134,9 @@ is needed to be included.</p>
 
 <p>Following is an example usage:</p>
 
-<pre><code>std::string input = "&lt;some valid json>";
-Geometry g;
-g.MergeFromJson(input);
+<pre><code>// QuantumJson::Parse is return type polymorphic
+// (via a proxy class overriding conversion operator).
+Geometry g = QuantumJson::Parse("&lt;some valid json>");
 
 std::cout &lt;&lt; g.name &lt;&lt; "\n";
 std::cout &lt;&lt; g.points[0].x &lt;&lt; "\n";
@@ -164,6 +164,21 @@ is not considered a conflict and are silently ignored for backwards compatibilit
     ]
 }
 </code></pre>
+
+<h3 id="Namespaces">Namespaces</h3>
+
+<p>You can use namespaces in schema file, like:</p>
+
+<pre><code>namespace math::numbers {
+struct ComplexNumber
+{
+    double real;
+    double imag;
+};
+} // namespace math::numbers
+</code></pre>
+
+<p>Generated struct definition will be in the corresponding namespace.</p>
 
 <h3 id="Attributes">Attributes</h3>
 
@@ -203,7 +218,26 @@ instead of failing.</p>
 
 <p>Following is a synopsis of the generated API. Note that API might change.</p>
 
+<h3 id="GLOBAL-FUNCTIONS">GLOBAL FUNCTIONS</h3>
+
+<p>QuantumJson provides following global functions in <code>QuantumJson</code> namespace:</p>
+
+<pre><code>ProxyType Parse(InputIteratorType begin, InputIteratorType end);
+ProxyType Parse(const std::string&amp;);
+ProxyType Parse(const char*);
+</code></pre>
+
+<p>Return type is defined as <code>ProxyType</code>, which is used to have return-type
+polymorphism. Actual parsing is triggered based on the conversion type
+when result is assigned to an object. Following snippet parses the input
+for type <code>Geometry</code>.</p>
+
+<pre><code>Geometry g = Parse(json);
+</code></pre>
+
 <h3 id="MEMBER-FUNCTIONS">MEMBER FUNCTIONS</h3>
+
+<p>Following are the member functions on user defined types JSON type.</p>
 
 <pre><code>void MergeFromJson(const std::string &amp;in);
 
@@ -240,7 +274,7 @@ not use it on production systems.</p>
 
   <ol class='man-decor man-foot man foot'>
     <li class='tl'></li>
-    <li class='tc'>November 2016</li>
+    <li class='tc'>March 2017</li>
     <li class='tr'>jc(1)</li>
   </ol>
 
