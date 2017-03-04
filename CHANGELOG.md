@@ -6,6 +6,7 @@
 
 - Better `Parse` API
 - PreAllocationg support for better memory usage
+- Support for namespaces
 
 ### Fixed
 
