@@ -54,4 +54,29 @@ struct ObjInFooBarBaz
 };
 
 } // namespace baz
+
+struct ObjInFooBar2
+{
+	GlobalObj   go_1;
+	::GlobalObj go_2;
+
+	foo::ObjInFoo f_1;
+	::foo::ObjInFoo f_2;
+
+	foo::bar::ObjInFooBar fb_1;
+	::foo::bar::ObjInFooBar fb_2;
+	ObjInFooBar fb_3;
+
+
+	foo::bar::baz::ObjInFooBarBaz fbb_1;
+	::foo::bar::baz::ObjInFooBarBaz fbb_2;
+	baz::ObjInFooBarBaz fbb_3;
+
+	string s_1;
+	std::string s_2;
+
+	std::vector< std::string > vs_1;
+	vector<string> vs_2;
+};
+
 } // namespace foo::bar

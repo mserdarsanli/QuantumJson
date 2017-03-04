@@ -73,10 +73,27 @@ static void MakeStandardType(VariableTypeDef* type)
 
 TokenIt ParseVariableType(TokenIt it, TokenIt end, VariableTypeDef* vtOut)
 {
+	// parse type name with namespace
+	if (it->type == Token::Type::NamespaceSeparator)
+	{
+		vtOut->typeName = "::";
+		++it;
+	}
+
 	AssertToken(it, Token::Type::Name);
-	vtOut->typeName = it->strValue;
+	vtOut->typeName += it->strValue;
 	++it;
 
+	while (it->type == Token::Type::NamespaceSeparator)
+	{
+		++it;
+
+		AssertToken(it, Token::Type::Name);
+		vtOut->typeName += "::" + it->strValue;
+		++it;
+	}
+
+	// Parse template parameters
 	if (it->type == Token::Type::TemplateOpen)
 	{
 		++it;
