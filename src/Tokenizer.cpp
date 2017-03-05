@@ -28,6 +28,42 @@
 
 using namespace std;
 
+const char* TokenTypeStr(Token::Type type)
+{
+	switch (type)
+	{
+		default:
+		case Token::Type::Unknown:            return "Unknown";
+		case Token::Type::EndOfFile:          return "EndOfFile";
+		case Token::Type::Name:               return "Name";
+		case Token::Type::TemplateOpen:       return "TemplateOpen";
+		case Token::Type::TemplateClose:      return "TemplateClose";
+		case Token::Type::ParenthesesOpen:    return "ParenthesesOpen";
+		case Token::Type::ParenthesesClose:   return "ParenthesesClose";
+		case Token::Type::BracesOpen:         return "BracesOpen";
+		case Token::Type::BracesClose:        return "BracesClose";
+		case Token::Type::Semicolon:          return "Semicolon";
+		case Token::Type::AttributeOpen:      return "AttributeOpen";
+		case Token::Type::AttributeClose:     return "AttributeClose";
+		case Token::Type::String:             return "String";
+		case Token::Type::Comma:              return "Comma";
+		case Token::Type::NamespaceSeparator: return "NamespaceSeparator";
+		case Token::Type::KeywordNamespace:   return "KeywordNamespace";
+		case Token::Type::KeywordStruct:      return "KeywordStruct";
+	}
+}
+
+std::ostream& operator<<(std::ostream &out, const Token &t)
+{
+	out << "[Token " << TokenTypeStr(t.type);
+	if (t.strValue.size())
+	{
+		out << " \"" << t.strValue << "\"";
+	}
+	out << "]";
+	return out;
+}
+
 vector<Token> Tokenize(const string &in)
 {
 	int currentLineNo = 1;

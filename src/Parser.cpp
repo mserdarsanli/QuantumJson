@@ -36,8 +36,10 @@ void AssertToken(TokenIt it, Token::Type t)
 {
 	if (it->type != t)
 	{
+		Token expected;
+		expected.type = t;
 		cerr << "ERROR: At line: " << it->line << " col: " << it->col << "\n"
-		     << "  Expected token: " << (int)t << ", but found " << (int)it->type << "\n";
+		     << "  Expected token: " << expected << ", but found " << *it << "\n";
 		exit(1);
 	}
 }
@@ -296,7 +298,7 @@ ParsedFile Parse(const vector<Token> &tokens)
 			default:
 			unknown_token:
 				cerr << "ERROR: At line: " << it->line << " col: " << it->col << "\n"
-				     << "  Unexpected token: " << (int)it->type << ": " << it->strValue << "\n";
+				     << "  Unexpected token: " << *it << "\n";
 				exit(1);
 		}
 	}

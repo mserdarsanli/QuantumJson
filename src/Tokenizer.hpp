@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -29,6 +30,7 @@ struct Token
 {
 	enum class Type
 	{
+		Unknown,
 		EndOfFile, // Helper token to prevent dereferencing invalid iterator
 		Name,
 		TemplateOpen,
@@ -47,7 +49,7 @@ struct Token
 		KeywordStruct,
 	};
 
-	Type type;
+	Type type = Type::Unknown;
 	// For tokens that has value, like string or name tokens
 	std::string strValue;
 
@@ -55,4 +57,5 @@ struct Token
 	int col = -1;
 };
 
+std::ostream& operator<<(std::ostream &out, const Token &t);
 std::vector<Token> Tokenize(const std::string &in);
