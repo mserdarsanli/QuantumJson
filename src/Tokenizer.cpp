@@ -28,14 +28,69 @@
 
 using namespace std;
 
+const char* TokenTypeStr(Token::Type type)
+{
+	switch (type)
+	{
+		default:
+		case Token::Type::Unknown:            return "Unknown";
+		case Token::Type::EndOfFile:          return "EndOfFile";
+		case Token::Type::Name:               return "Name";
+		case Token::Type::TemplateOpen:       return "TemplateOpen";
+		case Token::Type::TemplateClose:      return "TemplateClose";
+		case Token::Type::ParenthesesOpen:    return "ParenthesesOpen";
+		case Token::Type::ParenthesesClose:   return "ParenthesesClose";
+		case Token::Type::BracesOpen:         return "BracesOpen";
+		case Token::Type::BracesClose:        return "BracesClose";
+		case Token::Type::Semicolon:          return "Semicolon";
+		case Token::Type::AttributeOpen:      return "AttributeOpen";
+		case Token::Type::AttributeClose:     return "AttributeClose";
+		case Token::Type::String:             return "String";
+		case Token::Type::Comma:              return "Comma";
+		case Token::Type::NamespaceSeparator: return "NamespaceSeparator";
+		case Token::Type::KeywordNamespace:   return "KeywordNamespace";
+		case Token::Type::KeywordStruct:      return "KeywordStruct";
+	}
+}
+
+std::ostream& operator<<(std::ostream &out, const Token &t)
+{
+	out << "[Token " << TokenTypeStr(t.type);
+	if (t.strValue.size())
+	{
+		out << " \"" << t.strValue << "\"";
+	}
+	out << "]";
+	return out;
+}
+
 vector<Token> Tokenize(const string &in)
 {
+	int currentLineNo = 1;
+	size_t lineStardIdx = 0;
+	size_t i = 0;
+
 	vector<Token> res;
 
-	for (size_t i = 0; i < in.size(); ++i)
+	auto EmitToken = [&](Token::Type type, const std::string &s = "")
+	{
+		Token token;
+		token.type = type;
+		token.strValue = s;
+		token.line = currentLineNo;
+		token.col = 1 + (i - lineStardIdx);
+		res.push_back(token);
+	};
+
+	for (i = 0; i < in.size(); ++i)
 	{
 		if (isspace(in[i]))
 		{
+			if (in[i] == '\n')
+			{
+				++currentLineNo;
+				lineStardIdx = i+1;
+			}
 			continue;
 		}
 
@@ -44,6 +99,10 @@ vector<Token> Tokenize(const string &in)
 		{
 			while (in[i] && in[i] != '\n')
 				++i;
+
+			++currentLineNo;
+			lineStardIdx = i+1;
+
 			continue;
 		}
 
@@ -62,6 +121,11 @@ vector<Token> Tokenize(const string &in)
 				{
 					++i;
 					goto end_comment;
+				}
+				if (in[i] == '\n')
+				{
+					++currentLineNo;
+					lineStardIdx = i+1;
 				}
 				++i;
 			}
@@ -83,56 +147,50 @@ vector<Token> Tokenize(const string &in)
 			// Handle keywords
 			if (word == "namespace")
 			{
-				res.emplace_back(Token::Type::KeywordNamespace);
+				EmitToken(Token::Type::KeywordNamespace);
 			}
 			else if (word == "struct")
 			{
-				res.emplace_back(Token::Type::KeywordStruct);
+				EmitToken(Token::Type::KeywordStruct);
 			}
 			else
 			{
-				res.emplace_back(Token::Type::Name, word);
+				EmitToken(Token::Type::Name, word);
 			}
 
 			continue;
 		}
 
-		// A lot of tokects are single character, this macro helps
-		// preventing code repetition
-		#define CHAR_TOKEN(c, type) \
-		if (in[i] == c) \
-		{ \
-			res.emplace_back(type); \
-			continue; \
+		switch (in[i])
+		{
+			case '<': EmitToken(Token::Type::TemplateOpen);     continue;
+			case '>': EmitToken(Token::Type::TemplateClose);    continue;
+			case '(': EmitToken(Token::Type::ParenthesesOpen);  continue;
+			case ')': EmitToken(Token::Type::ParenthesesClose); continue;
+			case '{': EmitToken(Token::Type::BracesOpen);       continue;
+			case '}': EmitToken(Token::Type::BracesClose);      continue;
+			case ';': EmitToken(Token::Type::Semicolon);        continue;
+			case ',': EmitToken(Token::Type::Comma);            continue;
 		}
-		CHAR_TOKEN('<', Token::Type::TemplateOpen);
-		CHAR_TOKEN('>', Token::Type::TemplateClose);
-		CHAR_TOKEN('(', Token::Type::ParenthesesOpen);
-		CHAR_TOKEN(')', Token::Type::ParenthesesClose);
-		CHAR_TOKEN('{', Token::Type::BracesOpen);
-		CHAR_TOKEN('}', Token::Type::BracesClose);
-		CHAR_TOKEN(';', Token::Type::Semicolon);
-		CHAR_TOKEN(',', Token::Type::Comma);
-		#undef CHAR_TOKEN
 
 		if (in[i] == '[' && in[i+1] == '[')
 		{
 			++i;
-			res.emplace_back(Token::Type::AttributeOpen);
+			EmitToken(Token::Type::AttributeOpen);
 			continue;
 		}
 
 		if (in[i] == ']' && in[i+1] == ']')
 		{
 			++i;
-			res.emplace_back(Token::Type::AttributeClose);
+			EmitToken(Token::Type::AttributeClose);
 			continue;
 		}
 
 		if (in[i] == ':' && in[i+1] == ':')
 		{
 			++i;
-			res.emplace_back(Token::Type::NamespaceSeparator);
+			EmitToken(Token::Type::NamespaceSeparator);
 			continue;
 		}
 
@@ -149,7 +207,7 @@ vector<Token> Tokenize(const string &in)
 				++i;
 			}
 
-			res.emplace_back(Token::Type::String, str);
+			EmitToken(Token::Type::String, str);
 			continue;
 		}
 
@@ -157,6 +215,6 @@ vector<Token> Tokenize(const string &in)
 		exit(1);
 	}
 
-	res.emplace_back(Token::Type::EndOfFile);
+	EmitToken(Token::Type::EndOfFile);
 	return res;
 }

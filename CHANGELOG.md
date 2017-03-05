@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Changed
+
+- Better error messages on compiler
+
 ## [0.4.0] - 2017-03-04
 
 ### Added
