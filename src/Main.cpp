@@ -25,6 +25,7 @@
 #include <iostream>
 #include <iterator>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "CodeGenerator.hpp"
@@ -32,38 +33,52 @@
 #include "Tokenizer.hpp"
 #include "Util.hpp"
 
-#include "src/CommandLineFlags.hpp"
-
 using namespace std;
 
 int main(int argc, char* argv[])
 {
-	gengetopt_args_info args;
-	if (cmdline_parser (argc, argv, &args) != 0)
+	using namespace std::literals;
+
+	std::string input_file_name, output_file_name;
+
+	for ( int i = 1; i < argc; )
 	{
-		exit(1);
+		if ( argv[ i ] == "--in"sv )
+		{
+			input_file_name = argv[ i + 1 ];
+			i += 2;
+			continue;
+		}
+		if ( argv[ i ] == "--out"sv )
+		{
+			output_file_name = argv[ i + 1 ];
+			i += 2;
+			continue;
+		}
+		std::cerr << "Unknown flag: " << argv[ i ] << "\n";
+		return 1;
 	}
 
-	ifstream iSource(args.in_arg);
+	ifstream iSource( input_file_name );
 	if (!iSource.is_open())
 	{
-		cerr << "Unable to open input file " << args.in_arg << "\n";
+		cerr << "Unable to open input file " << input_file_name << "\n";
 		return 1;
 	}
 	string input{istreambuf_iterator<char>(iSource),
 	             istreambuf_iterator<char>()};
 	if (iSource.bad())
 	{
-		cerr << "Read error on file " << args.in_arg << "\n";
+		cerr << "Read error on file " << input_file_name << "\n";
 		return 1;
 	}
 
 	ParsedFile f = Parse(Tokenize(input));
 
-	ofstream oHeader(args.out_arg);
+	ofstream oHeader( output_file_name );
 	if (!oHeader.is_open())
 	{
-		cerr << "Unable to open output file " << args.out_arg << "\n";
+		cerr << "Unable to open output file " << output_file_name << "\n";
 		return 1;
 	}
 
@@ -74,7 +89,7 @@ int main(int argc, char* argv[])
 	oHeader.flush();
 	if (oHeader.bad())
 	{
-		cerr << "Write error on file " << args.out_arg << "\n";
+		cerr << "Write error on file " << output_file_name << "\n";
 		return 1;
 	}
 

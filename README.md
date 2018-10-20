@@ -5,10 +5,7 @@ QuantumJson is an attempt to create the fastest JSON parser for C++.
 It is a parser generator, using a `schema` file. The result is type-safe
 and fast json parser for data of known schemas.
 
-View [Installation](#installation) section for instructions.
-
-Benchmarks can be seen on [Benchmark.md](Benchmark.md) or on
-https://mserdarsanli.github.io/QuantumJson/Benchmarks.html with graphs.
+View [Building](#building) section for instructions.
 
 ## Rationale
 
@@ -147,13 +144,25 @@ Native types that are already defined are:
  * string
  * vector<Smth> ( JSON list )
 
-## Installation
+## Building
 
-Easiest way to install is to checkout a release commit and use provided Makefile.
+Building QuantimJson requires ninja build system and python3 installed.
 
 ```
-make
-sudo make install
+./build.py configure
+ninja
+```
+
+Running tests:
+
+```
+./build.py run-tests
+```
+
+Running benchmarks:
+
+```
+./build.py run-benchmarks
 ```
 
 ### Usage
@@ -164,19 +173,6 @@ Generated parser is header-only.
 ```
 jc --in Foo.json.hpp --out Foo.gen.hpp
 ```
-
-### Requirements
-
-* A GNU/Linux environment (or similar)
-* `g++` or `clang++` (any version supporting --std=c++1y flag)
-* `gengetopt`
-* `xxd`
-
-For development of QuantumJson only:
-
-* `docker`
-
-See [Developing page](DEVELOPING.md) for instructions.
 
 # License
 

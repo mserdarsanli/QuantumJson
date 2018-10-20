@@ -24,8 +24,7 @@
 
 #include "tests/Schema1.gen.hpp"
 
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 using namespace std;
 
@@ -99,8 +98,9 @@ TEST_CASE("Nullable fields")
 			  "attr_regular": null
 			}
 		)";
-		REQUIRE_THROWS_WITH(
-		    SkipNullTester o = QuantumJson::Parse(json),
+		REQUIRE_THROWS_WITH([&](){
+		        SkipNullTester o = QuantumJson::Parse(json);
+		    }(),
 		    "Unexpected Char" );
 	}
 }

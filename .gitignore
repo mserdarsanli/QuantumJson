@@ -1,9 +1,5 @@
-# Bazel output dirs
-/bazel-*
-
-# Makefile generated files (in-tree)
-/jc
-/src/*.o
-/lib/LibCommonDef.hpp
-/src/CommandLineFlags.hpp
-/src/CommandLineFlags.cpp
+# Ninja
+build.ninja
+.ninja_deps
+.ninja_log
+out/

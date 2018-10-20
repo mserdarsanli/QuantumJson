@@ -4,6 +4,9 @@
 
 ### Changed
 
+- Updated catch2 version
+- Replaced Bazel with Ninja
+- Removed unnecessary dependencies like docker
 - Better error messages on compiler
 
 ## [0.4.0] - 2017-03-04

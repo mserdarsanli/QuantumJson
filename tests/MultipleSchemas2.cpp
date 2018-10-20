@@ -23,7 +23,7 @@
 #include "tests/Schema1.gen.hpp"
 #include "tests/Schema2.gen.hpp"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 // This test should not compile if there are linker errors
 // while linking both compilation units.

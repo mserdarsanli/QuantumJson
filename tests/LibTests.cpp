@@ -24,8 +24,7 @@
 
 #include "lib/Common.hpp"
 
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 using namespace std;
 
@@ -38,7 +37,7 @@ TEST_CASE("Simple string")
 TEST_CASE("Unterminated string")
 {
 	REQUIRE_THROWS_WITH(
-	    string out = QuantumJson::Parse("\"asd"),
+	    [](){ string out = QuantumJson::Parse("\"asd"); }(),
 	    "Unexpected EOF");
 }
 
@@ -54,7 +53,7 @@ TEST_CASE("Invalid Escape")
 {
 	string in = R"("\q")";
 	REQUIRE_THROWS_WITH(
-	    string out = QuantumJson::Parse(in),
+	    [&](){ string out = QuantumJson::Parse(in); }(),
 	    "Invalid Escape");
 }
 
@@ -63,7 +62,7 @@ TEST_CASE("Unterminated Escape")
 	string in = R"("qweewqew\)";
 	string out;
 	REQUIRE_THROWS_WITH(
-	    string out = QuantumJson::Parse(in),
+	    [&](){ string out = QuantumJson::Parse(in); }(),
 	    "Unexpected EOF");
 }
 
@@ -80,7 +79,7 @@ TEST_CASE("Invalid Unicode Sequence")
 	uint8_t invalid_utf8[] = { '"', 196, '"', 0 };
 	string in(reinterpret_cast<const char*>(invalid_utf8));
 	REQUIRE_THROWS_WITH(
-	    string out = QuantumJson::Parse(in),
+	    [&](){ string out = QuantumJson::Parse(in); }(),
 	    "Invalid UTF-8 Sequence");
 }
 
@@ -115,7 +114,7 @@ TEST_CASE("Invalid Unicode Escape")
 	{
 		string in = R"("\uD8)";
 		REQUIRE_THROWS_WITH(
-		    string out = QuantumJson::Parse(in),
+		    [&](){ string out = QuantumJson::Parse(in); }(),
 		    "Unexpected EOF");
 	}
 
@@ -123,7 +122,7 @@ TEST_CASE("Invalid Unicode Escape")
 	{
 		string in = R"("\uD8")";
 		REQUIRE_THROWS_WITH(
-		    string out = QuantumJson::Parse(in),
+		    [&](){ string out = QuantumJson::Parse(in); }(),
 		    "Unexpected Char");
 	}
 }
@@ -137,7 +136,7 @@ TEST_CASE("Invalid surrogates")
 	{
 		string in = R"("\uD835")";
 		REQUIRE_THROWS_WITH(
-		    string out = QuantumJson::Parse(in),
+		    [&](){ string out = QuantumJson::Parse(in); }(),
 		    "Unexpected Char");
 	}
 
@@ -145,7 +144,7 @@ TEST_CASE("Invalid surrogates")
 	{
 		string in = R"("\uDC00")";
 		REQUIRE_THROWS_WITH(
-		    string out = QuantumJson::Parse(in),
+		    [&](){ string out = QuantumJson::Parse(in); }(),
 		    "Invalid Surrogate");
 	}
 
@@ -153,7 +152,7 @@ TEST_CASE("Invalid surrogates")
 	{
 		string in = R"("\uD835\uD835")";
 		REQUIRE_THROWS_WITH(
-		    string out = QuantumJson::Parse(in),
+		    [&](){ string out = QuantumJson::Parse(in); }(),
 		    "Invalid Surrogate");
 	}
 }

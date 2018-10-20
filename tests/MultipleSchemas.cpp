@@ -23,8 +23,7 @@
 #include "tests/Schema1.gen.hpp"
 #include "tests/Schema2.gen.hpp"
 
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 // This test should not compile if there are conflicting definitions
 // in both generated files.

@@ -27,8 +27,7 @@
 // TODO Work-around not being able to include the base lib stand alone
 #include "lib/Common.hpp"
 
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 using namespace std;
 

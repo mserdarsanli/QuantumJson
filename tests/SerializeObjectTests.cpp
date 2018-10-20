@@ -27,8 +27,7 @@
 
 #include "tests/Schema1.gen.hpp"
 
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 TEST_CASE("Serialize object simple")
 {

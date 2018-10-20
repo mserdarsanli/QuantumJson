@@ -25,8 +25,7 @@
 
 #include "lib/Common.hpp"
 
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 using namespace std;
 
