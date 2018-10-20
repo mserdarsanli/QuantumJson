@@ -129,9 +129,13 @@ And it can be used in your C++ program as follows:
 #include "StackOverflow.gen.hpp"
 
 ...
-UsersResult m;
-m.MergeFromJson(input);
-...
+UsersResult res = QuantumJson::Parse( json_string );
+
+// Access as usuals since it is a regular C++ struct
+for ( const auto &user : res.items )
+{
+    std::cout << user.user_id << " " << user.badge_counts.bronze << "\n";
+}
 ```
 
 ## Native Types
